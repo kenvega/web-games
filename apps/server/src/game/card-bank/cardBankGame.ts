@@ -501,22 +501,6 @@ export class CardBankGameModule
       }
 
       nextState.players[currentPlayerId] = nextCurrentPlayer;
-
-      if (
-        hasBustForValue(
-          nextCurrentPlayer.activeCards,
-          state.pendingSteal.drawnValue
-        )
-      ) {
-        return {
-          accepted: true,
-          nextState: this.revealBust(
-            nextState,
-            currentPlayerId,
-            state.pendingSteal.drawnValue
-          )
-        };
-      }
     }
 
     if (nextState.deck.length === 0) {

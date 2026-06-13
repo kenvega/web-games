@@ -374,6 +374,62 @@ describe("RoomManager", () => {
     ).toBe(2);
   });
 
+  it("does not bust when a steal creates duplicates", () => {
+    const { manager } = createManager(1000, () => [1, 1, 1, 5]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "stop-turn" }
+      })
+    );
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "draw-card" }
+      })
+    );
+    const steal = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "resolve-steal", steal: true }
+      })
+    );
+    expect(steal.state.gameState?.turnPhase).toBe("awaiting-decision");
+    expect(steal.state.gameState?.pendingBust).toBeNull();
+    expect(
+      steal.state.gameState?.players.find(
+        (player) => player.playerId === bobId
+      )?.activeCards[1]
+    ).toBe(3);
+    expect(steal.state.gameState?.discardCount).toBe(0);
+  });
+
   it("busts on the third active card when drawing a duplicate", () => {
     const { manager } = createManager(1000, () => [2, 3, 2, 5]);
     createRoom(manager);

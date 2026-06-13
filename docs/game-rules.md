@@ -114,9 +114,9 @@ If you steal, you take every matching face-up card from every opponent and add
 those cards to your own active area. You never steal from face-down score
 piles.
 
-After a steal, check for bust again using the drawn value. If your active area
-now contains duplicates of the drawn value and has at least 3 total active
-cards, show the same 2-second bust reveal, then discard your entire active area.
+Stealing cannot cause a bust. Only drawing a card from the central deck can
+cause a bust, even if the steal gives you duplicates or at least 3 total active
+cards.
 
 ### 5. Continue or stop
 
@@ -225,10 +225,10 @@ These are the parts that must be covered by tests:
 * A stopped player's active cards remain stealable until that player's next
   turn.
 * A steal takes all matching face-up cards from all opponents.
+* Stealing never causes a bust; only a drawn card can bust the active player.
 * Declining a steal leaves opponents' matching active cards untouched.
 * A draw-created bust shows the bust card for 2 seconds and does not offer a
   steal prompt.
-* Accepting a steal can cause a bust and uses the same 2-second reveal.
 * A bust discards only the current active area, not the banked score pile.
 * A duplicate only causes a bust when the player has at least 3 active cards
   total.
@@ -248,10 +248,10 @@ the player repeatedly draws the top card of the deck into their active area. If
 the drawn card creates a bust, show the busting card for 2 seconds, then discard
 the active area and end the turn without offering a steal. Otherwise, after each
 draw, the player may optionally steal all face-up cards of that same value from
-all other players.
-Accepted steals can still cause a bust. If the player does not bust, they may
-draw again or stop. If they stop, their active cards remain face up and can be
-stolen; they become safe only at the start of that player's next turn. When the
-last deck card is drawn, fully resolve that draw, then bank all remaining active
-cards and score the game. Highest total wins. Ties are broken by most 1s in the
-score pile, then most 2s, then most 3s, continuing upward through 10s.
+all other players. Stealing never causes a bust. If the player does not bust
+from drawing, they may draw again or stop. If they stop, their active cards
+remain face up and can be stolen; they become safe only at the start of that
+player's next turn. When the last deck card is drawn, fully resolve that draw,
+then bank all remaining active cards and score the game. Highest total wins.
+Ties are broken by most 1s in the score pile, then most 2s, then most 3s,
+continuing upward through 10s.
