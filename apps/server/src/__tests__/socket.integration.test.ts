@@ -136,7 +136,7 @@ beforeEach(async () => {
   application = createApplication({
     roomManager: new RoomManager({
       rng: () => 0,
-      deckFactory: () => [2, 3, 2, 4]
+      deckFactory: () => [2, 3, 4, 2]
     }),
     cleanupIntervalMs: 60_000,
     bustRevealMs: 20
@@ -319,6 +319,7 @@ describe("Socket.IO multiplayer flow", () => {
 
     for (const action of [
       { type: "draw-card" as const },
+      { type: "draw-card" as const },
       { type: "draw-card" as const }
     ]) {
       const result = await sendAction(alice, {
@@ -335,8 +336,8 @@ describe("Socket.IO multiplayer flow", () => {
     const resolvedPromise = waitForState(
       bob,
       (state) =>
-        state.gameState?.currentPlayerId === bobId &&
-        state.gameState.discardCount === 3
+        state.phase === "finished" &&
+        state.gameState.discardCount === 4
     );
     const bustDraw = await sendAction(alice, {
       roomCode,
@@ -354,7 +355,7 @@ describe("Socket.IO multiplayer flow", () => {
     expect(
       revealState.gameState?.players.find((player) => player.playerId === aliceId)
         ?.activeCount
-    ).toBe(3);
+    ).toBe(4);
 
     const resolvedState = await resolvedPromise;
     expect(

@@ -143,11 +143,11 @@ function shuffleDeck(
   return shuffled;
 }
 
-function hasBustForValue(
-  activeCards: CardBankCardCounts,
-  value: CardBankCardValue
-): boolean {
-  return activeCards[value] >= 2 && getCardCount(activeCards) >= 3;
+function hasBustForDraw(input: {
+  hadValueBeforeDraw: boolean;
+  activeCountBeforeDraw: number;
+}): boolean {
+  return input.hadValueBeforeDraw && input.activeCountBeforeDraw >= 3;
 }
 
 function compareStandings(
@@ -379,6 +379,7 @@ export class CardBankGameModule
       ...currentPlayer,
       activeCards: cloneCounts(currentPlayer.activeCards)
     };
+    const activeCountBeforeDraw = getCardCount(nextPlayer.activeCards);
     const hadValueBeforeDraw = nextPlayer.activeCards[drawnValue] > 0;
     addCards(nextPlayer.activeCards, drawnValue, 1);
 
@@ -393,10 +394,7 @@ export class CardBankGameModule
       pendingBust: null
     };
 
-    if (
-      hadValueBeforeDraw &&
-      hasBustForValue(nextPlayer.activeCards, drawnValue)
-    ) {
+    if (hasBustForDraw({ hadValueBeforeDraw, activeCountBeforeDraw })) {
       return {
         accepted: true,
         nextState: this.revealBust(nextState, currentPlayerId, drawnValue)

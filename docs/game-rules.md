@@ -82,9 +82,9 @@ Keep your active cards grouped by value.
 
 ### 3. Reveal and resolve busts
 
-If the drawn card matches a value you already had face up before the draw, and
-you now have at least 3 face-up cards total in your active area, you bust
-after a short reveal:
+If you already had at least 3 face-up cards in your active area before drawing,
+and the drawn card matches a value you already had face up before the draw, you
+bust after a short reveal:
 
 * the game shows the busting card and player for 2 seconds
 * player actions are disabled during the reveal
@@ -93,8 +93,9 @@ after a short reveal:
 * none of those discarded cards score
 * already banked score-pile cards are not affected
 
-If the drawn duplicate leaves you with fewer than 3 active cards total, you do
-not bust. This means an early duplicate is safe.
+If you had fewer than 3 active cards before drawing, a drawn duplicate does not
+bust. This means drawing a duplicate as your second or third active card is
+safe.
 
 When the drawn card causes a bust, the game does not offer a steal prompt
 first.
@@ -230,8 +231,8 @@ These are the parts that must be covered by tests:
 * A draw-created bust shows the bust card for 2 seconds and does not offer a
   steal prompt.
 * A bust discards only the current active area, not the banked score pile.
-* A duplicate only causes a bust when the player has at least 3 active cards
-  total.
+* A duplicate only causes a bust when the player already had at least 3 active
+  cards before drawing.
 * The last drawn card is fully resolved before final scoring.
 * Final scoring sums banked card values and applies the 1-through-10
   tiebreaker.
@@ -245,7 +246,8 @@ through 5 appear 13 times each, and values 6 through 10 appear 9 times each.
 Each player has a face-up active area and a face-down score pile. On a player's
 turn, first move all cards from their active area into their score pile. Then
 the player repeatedly draws the top card of the deck into their active area. If
-the drawn card creates a bust, show the busting card for 2 seconds, then discard
+the player already had at least 3 active cards before drawing and the drawn card
+duplicates an active value, show the busting card for 2 seconds, then discard
 the active area and end the turn without offering a steal. Otherwise, after each
 draw, the player may optionally steal all face-up cards of that same value from
 all other players. Stealing never causes a bust. If the player does not bust

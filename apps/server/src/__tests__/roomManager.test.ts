@@ -430,7 +430,7 @@ describe("RoomManager", () => {
     expect(steal.state.gameState?.discardCount).toBe(0);
   });
 
-  it("busts on the third active card when drawing a duplicate", () => {
+  it("does not bust when drawing a duplicate as the third active card", () => {
     const { manager } = createManager(1000, () => [2, 3, 2, 5]);
     createRoom(manager);
     joinBob(manager);
@@ -457,6 +457,43 @@ describe("RoomManager", () => {
 
     const state = manager.getPublicState("23456789AB");
     expect(state?.gameState?.currentPlayerId).toBe(aliceId);
+    expect(state?.gameState?.turnPhase).toBe("awaiting-decision");
+    expect(state?.gameState?.pendingBust).toBeNull();
+    expect(state?.gameState?.discardCount).toBe(0);
+    expect(
+      state?.gameState?.players.find((player) => player.playerId === aliceId)
+        ?.activeCount
+    ).toBe(3);
+  });
+
+  it("busts when drawing a duplicate after already having three active cards", () => {
+    const { manager } = createManager(1000, () => [2, 3, 4, 2, 5]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    for (const action of [
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "draw-card" as const }
+    ]) {
+      expectOk(
+        manager.handleGameAction({
+          roomCode: "23456789AB",
+          guestId: aliceId,
+          action
+        })
+      );
+    }
+
+    const state = manager.getPublicState("23456789AB");
+    expect(state?.gameState?.currentPlayerId).toBe(aliceId);
     expect(state?.gameState?.turnPhase).toBe("revealing-bust");
     expect(state?.gameState?.pendingBust).toEqual({
       playerId: aliceId,
@@ -466,7 +503,7 @@ describe("RoomManager", () => {
     expect(
       state?.gameState?.players.find((player) => player.playerId === aliceId)
         ?.activeCount
-    ).toBe(3);
+    ).toBe(4);
     expectError(
       manager.handleGameAction({
         roomCode: "23456789AB",
@@ -478,7 +515,7 @@ describe("RoomManager", () => {
 
     const resolved = manager.resolvePendingBust("23456789AB");
     expect(resolved?.state.gameState?.currentPlayerId).toBe(bobId);
-    expect(resolved?.state.gameState?.discardCount).toBe(3);
+    expect(resolved?.state.gameState?.discardCount).toBe(4);
     expect(
       resolved?.state.gameState?.players.find(
         (player) => player.playerId === aliceId
