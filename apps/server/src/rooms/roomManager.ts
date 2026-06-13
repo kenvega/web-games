@@ -428,6 +428,33 @@ export class RoomManager {
     });
   }
 
+  resolvePendingBust(roomCode: string): RoomStateResult | null {
+    const parsedRoomCode = roomCodeSchema.safeParse(roomCode);
+    if (!parsedRoomCode.success) {
+      return null;
+    }
+
+    const room = this.rooms.get(parsedRoomCode.data);
+    if (room === undefined || room.phase !== "playing") {
+      return null;
+    }
+
+    const nextGameState = this.gameModule.resolvePendingBust(room);
+    if (nextGameState === null) {
+      return null;
+    }
+
+    room.gameState = nextGameState;
+    if (nextGameState.status === "finished") {
+      room.phase = "finished";
+    }
+    this.syncPlayerScores(room);
+
+    return {
+      state: this.commit(room)
+    };
+  }
+
   disconnectSocket(input: {
     roomCode: string;
     guestId: string;

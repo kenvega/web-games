@@ -136,9 +136,10 @@ beforeEach(async () => {
   application = createApplication({
     roomManager: new RoomManager({
       rng: () => 0,
-      deckFactory: () => [1, 2, 3, 4]
+      deckFactory: () => [2, 3, 2, 4]
     }),
-    cleanupIntervalMs: 60_000
+    cleanupIntervalMs: 60_000,
+    bustRevealMs: 20
   });
 
   await new Promise<void>((resolve) => {
@@ -289,5 +290,77 @@ describe("Socket.IO multiplayer flow", () => {
 
     const reconnectedState = await reconnectedStatePromise;
     expect(reconnectedState.chatMessages[0]?.text).toBe("ready?");
+  });
+
+  it("shows a busting card before automatically discarding and advancing", async () => {
+    const alice = createTestClient();
+    const bob = createTestClient();
+    await Promise.all([waitForConnect(alice), waitForConnect(bob)]);
+
+    const created = await createRoom(alice, {
+      guestId: aliceId,
+      displayName: "Alice"
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      throw new Error(created.error.message);
+    }
+
+    const roomCode = created.data.roomCode;
+    const joined = await joinRoom(bob, {
+      roomCode,
+      guestId: bobId,
+      displayName: "Bob"
+    });
+    expect(joined.ok).toBe(true);
+
+    const started = await startRoom(alice, { roomCode });
+    expect(started.ok).toBe(true);
+
+    for (const action of [
+      { type: "draw-card" as const },
+      { type: "draw-card" as const }
+    ]) {
+      const result = await sendAction(alice, {
+        roomCode,
+        action
+      });
+      expect(result.ok).toBe(true);
+    }
+
+    const revealPromise = waitForState(
+      bob,
+      (state) => state.gameState?.turnPhase === "revealing-bust"
+    );
+    const resolvedPromise = waitForState(
+      bob,
+      (state) =>
+        state.gameState?.currentPlayerId === bobId &&
+        state.gameState.discardCount === 3
+    );
+    const bustDraw = await sendAction(alice, {
+      roomCode,
+      action: {
+        type: "draw-card"
+      }
+    });
+    expect(bustDraw.ok).toBe(true);
+
+    const revealState = await revealPromise;
+    expect(revealState.gameState?.pendingBust).toEqual({
+      playerId: aliceId,
+      cardValue: 2
+    });
+    expect(
+      revealState.gameState?.players.find((player) => player.playerId === aliceId)
+        ?.activeCount
+    ).toBe(3);
+
+    const resolvedState = await resolvedPromise;
+    expect(
+      resolvedState.gameState?.players.find(
+        (player) => player.playerId === aliceId
+      )?.activeCount
+    ).toBe(0);
   });
 });

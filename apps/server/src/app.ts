@@ -23,6 +23,7 @@ type TypedSocketServer = Server<
 export type ApplicationOptions = {
   roomManager?: RoomManager;
   cleanupIntervalMs?: number;
+  bustRevealMs?: number;
 };
 
 export type ApplicationInstance = {
@@ -94,12 +95,18 @@ export function createApplication(
     SocketData
   >(httpServer, socketOptions);
 
-  const handlerOptions =
-    options.cleanupIntervalMs === undefined
+  const handlerOptions = {
+    ...(options.cleanupIntervalMs === undefined
       ? {}
       : {
           cleanupIntervalMs: options.cleanupIntervalMs
-        };
+        }),
+    ...(options.bustRevealMs === undefined
+      ? {}
+      : {
+          bustRevealMs: options.bustRevealMs
+        })
+  };
   const socketLifecycle = registerSocketHandlers(io, roomManager, handlerOptions);
 
   app.use(express.json());

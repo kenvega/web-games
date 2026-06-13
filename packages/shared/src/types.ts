@@ -48,6 +48,7 @@ export type CardBankTurnPhase =
   | "awaiting-draw"
   | "awaiting-steal"
   | "awaiting-decision"
+  | "revealing-bust"
   | "finished";
 
 export type PublicCardBankPlayerState = {
@@ -68,6 +69,11 @@ export type PublicCardBankPendingSteal = {
   totalCount: number;
 };
 
+export type PublicCardBankPendingBust = {
+  playerId: string;
+  cardValue: CardBankCardValue;
+};
+
 export type PublicCardBankStanding = {
   playerId: string;
   rank: number;
@@ -83,6 +89,7 @@ export type PublicCardBankGameState = {
   discardCount: number;
   players: PublicCardBankPlayerState[];
   pendingSteal: PublicCardBankPendingSteal | null;
+  pendingBust: PublicCardBankPendingBust | null;
   finalStandings: PublicCardBankStanding[] | null;
   winnerPlayerIds: string[];
 };

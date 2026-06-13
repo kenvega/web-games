@@ -80,13 +80,15 @@ cards immediately.
 Reveal the top card of the central deck and place it face up in front of you.
 Keep your active cards grouped by value.
 
-### 3. Resolve immediate busts
+### 3. Reveal and resolve busts
 
 If the drawn card matches a value you already had face up before the draw, and
 you now have at least 3 face-up cards total in your active area, you bust
-immediately:
+after a short reveal:
 
-* your turn ends
+* the game shows the busting card and player for 2 seconds
+* player actions are disabled during the reveal
+* after the reveal, your turn ends
 * all cards in your active area are discarded out of the game
 * none of those discarded cards score
 * already banked score-pile cards are not affected
@@ -94,8 +96,8 @@ immediately:
 If the drawn duplicate leaves you with fewer than 3 active cards total, you do
 not bust. This means an early duplicate is safe.
 
-When the drawn card causes an immediate bust, the game does not offer a steal
-prompt first.
+When the drawn card causes a bust, the game does not offer a steal prompt
+first.
 
 ### 4. Optional steal after a safe draw
 
@@ -114,7 +116,7 @@ piles.
 
 After a steal, check for bust again using the drawn value. If your active area
 now contains duplicates of the drawn value and has at least 3 total active
-cards, you bust and discard your entire active area.
+cards, show the same 2-second bust reveal, then discard your entire active area.
 
 ### 5. Continue or stop
 
@@ -187,14 +189,16 @@ The public game state must include enough information for all clients to render
 the game consistently:
 
 * current player id
-* turn phase, such as awaiting draw, awaiting steal, awaiting decision, or
-  finished
+* turn phase, such as awaiting draw, awaiting steal, awaiting decision,
+  revealing bust, or finished
 * remaining deck count
 * discard count
 * each player's active cards grouped by value
 * each player's secured score total
 * pending steal information when a steal decision is available, including the
   drawn value and the matching cards that can be stolen
+* pending bust information during the 2-second reveal, including the busted
+  player and busting card value
 * final scores, final rankings, and tiebreak details when the game is finished
 
 Server-only state must include:
@@ -222,8 +226,9 @@ These are the parts that must be covered by tests:
   turn.
 * A steal takes all matching face-up cards from all opponents.
 * Declining a steal leaves opponents' matching active cards untouched.
-* A draw-created bust discards immediately and does not offer a steal prompt.
-* Accepting a steal can cause a bust.
+* A draw-created bust shows the bust card for 2 seconds and does not offer a
+  steal prompt.
+* Accepting a steal can cause a bust and uses the same 2-second reveal.
 * A bust discards only the current active area, not the banked score pile.
 * A duplicate only causes a bust when the player has at least 3 active cards
   total.
@@ -240,9 +245,10 @@ through 5 appear 13 times each, and values 6 through 10 appear 9 times each.
 Each player has a face-up active area and a face-down score pile. On a player's
 turn, first move all cards from their active area into their score pile. Then
 the player repeatedly draws the top card of the deck into their active area. If
-the drawn card immediately creates a bust, discard the active area and end the
-turn without offering a steal. Otherwise, after each draw, the player may
-optionally steal all face-up cards of that same value from all other players.
+the drawn card creates a bust, show the busting card for 2 seconds, then discard
+the active area and end the turn without offering a steal. Otherwise, after each
+draw, the player may optionally steal all face-up cards of that same value from
+all other players.
 Accepted steals can still cause a bust. If the player does not bust, they may
 draw again or stop. If they stop, their active cards remain face up and can be
 stolen; they become safe only at the start of that player's next turn. When the

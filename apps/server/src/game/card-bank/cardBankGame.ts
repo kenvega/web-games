@@ -5,6 +5,7 @@ import {
   type CardBankCardValue,
   type CardBankGameAction,
   type PublicCardBankGameState,
+  type PublicCardBankPendingBust,
   type PublicCardBankPendingSteal,
   type PublicCardBankStanding
 } from "@multiplayer-blueprint/shared";
@@ -28,12 +29,18 @@ type CardBankPendingSteal = {
   }[];
 };
 
+type CardBankPendingBust = {
+  playerId: string;
+  cardValue: CardBankCardValue;
+};
+
 export type CardBankGameState = {
   status: "playing" | "finished";
   turnPhase:
     | "awaiting-draw"
     | "awaiting-steal"
     | "awaiting-decision"
+    | "revealing-bust"
     | "finished";
   deck: CardBankCardValue[];
   discard: CardBankCardValue[];
@@ -41,6 +48,7 @@ export type CardBankGameState = {
   currentPlayerIndex: number;
   players: Record<string, CardBankPlayerState>;
   pendingSteal: CardBankPendingSteal | null;
+  pendingBust: CardBankPendingBust | null;
   finalStandings: PublicCardBankStanding[] | null;
   winnerPlayerIds: string[];
 };
@@ -205,6 +213,7 @@ export class CardBankGameModule
       currentPlayerIndex,
       players,
       pendingSteal: null,
+      pendingBust: null,
       finalStandings: null,
       winnerPlayerIds: []
     };
@@ -265,13 +274,14 @@ export class CardBankGameModule
       return null;
     }
 
-    if (state.turnPhase === "finished") {
+    if (state.turnPhase === "finished" || state.turnPhase === "revealing-bust") {
       return state;
     }
 
     return this.advanceTurn(room, {
       ...state,
       pendingSteal: null,
+      pendingBust: null,
       turnPhase: "awaiting-draw"
     });
   }
@@ -306,9 +316,25 @@ export class CardBankGameModule
         state.pendingSteal === null
           ? null
           : this.toPublicPendingSteal(state.pendingSteal),
+      pendingBust:
+        state.pendingBust === null ? null : this.toPublicPendingBust(state.pendingBust),
       finalStandings: state.finalStandings,
       winnerPlayerIds: state.winnerPlayerIds
     };
+  }
+
+  resolvePendingBust(room: Room): CardBankGameState | null {
+    const state = room.gameState;
+    if (
+      state === null ||
+      state.status === "finished" ||
+      state.turnPhase !== "revealing-bust" ||
+      state.pendingBust === null
+    ) {
+      return null;
+    }
+
+    return this.resolveBust(room, state, state.pendingBust.playerId);
   }
 
   dispose(): void {
@@ -363,7 +389,8 @@ export class CardBankGameModule
         ...state.players,
         [currentPlayerId]: nextPlayer
       },
-      pendingSteal: null
+      pendingSteal: null,
+      pendingBust: null
     };
 
     if (
@@ -372,7 +399,7 @@ export class CardBankGameModule
     ) {
       return {
         accepted: true,
-        nextState: this.resolveBust(room, nextState, currentPlayerId)
+        nextState: this.revealBust(nextState, currentPlayerId, drawnValue)
       };
     }
 
@@ -432,7 +459,8 @@ export class CardBankGameModule
     const nextState: CardBankGameState = {
       ...state,
       players: { ...state.players },
-      pendingSteal: null
+      pendingSteal: null,
+      pendingBust: null
     };
 
     if (steal) {
@@ -482,7 +510,11 @@ export class CardBankGameModule
       ) {
         return {
           accepted: true,
-          nextState: this.resolveBust(room, nextState, currentPlayerId)
+          nextState: this.revealBust(
+            nextState,
+            currentPlayerId,
+            state.pendingSteal.drawnValue
+          )
         };
       }
     }
@@ -521,6 +553,22 @@ export class CardBankGameModule
     };
   }
 
+  private revealBust(
+    state: CardBankGameState,
+    playerId: string,
+    cardValue: CardBankCardValue
+  ): CardBankGameState {
+    return {
+      ...state,
+      turnPhase: "revealing-bust",
+      pendingSteal: null,
+      pendingBust: {
+        playerId,
+        cardValue
+      }
+    };
+  }
+
   private resolveBust(
     room: Room,
     state: CardBankGameState,
@@ -539,7 +587,8 @@ export class CardBankGameModule
         ...state.players,
         [playerId]: nextPlayer
       },
-      pendingSteal: null
+      pendingSteal: null,
+      pendingBust: null
     };
 
     if (nextState.deck.length === 0) {
@@ -559,7 +608,8 @@ export class CardBankGameModule
       currentPlayerIndex:
         (state.currentPlayerIndex + 1) % state.turnOrder.length,
       turnPhase: "awaiting-draw",
-      pendingSteal: null
+      pendingSteal: null,
+      pendingBust: null
     };
 
     for (let attempts = 0; attempts < state.turnOrder.length; attempts += 1) {
@@ -665,6 +715,7 @@ export class CardBankGameModule
       currentPlayerIndex: 0,
       players,
       pendingSteal: null,
+      pendingBust: null,
       finalStandings,
       winnerPlayerIds
     };
@@ -702,6 +753,15 @@ export class CardBankGameModule
         (total, candidate) => total + candidate.count,
         0
       )
+    };
+  }
+
+  private toPublicPendingBust(
+    pendingBust: CardBankPendingBust
+  ): PublicCardBankPendingBust {
+    return {
+      playerId: pendingBust.playerId,
+      cardValue: pendingBust.cardValue
     };
   }
 

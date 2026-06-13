@@ -400,13 +400,35 @@ describe("RoomManager", () => {
     }
 
     const state = manager.getPublicState("23456789AB");
-    expect(state?.gameState?.currentPlayerId).toBe(bobId);
-    expect(state?.gameState?.discardCount).toBe(3);
+    expect(state?.gameState?.currentPlayerId).toBe(aliceId);
+    expect(state?.gameState?.turnPhase).toBe("revealing-bust");
+    expect(state?.gameState?.pendingBust).toEqual({
+      playerId: aliceId,
+      cardValue: 2
+    });
+    expect(state?.gameState?.discardCount).toBe(0);
     expect(
       state?.gameState?.players.find((player) => player.playerId === aliceId)
         ?.activeCount
+    ).toBe(3);
+    expectError(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "stop-turn" }
+      }),
+      "INVALID_TURN_PHASE"
+    );
+
+    const resolved = manager.resolvePendingBust("23456789AB");
+    expect(resolved?.state.gameState?.currentPlayerId).toBe(bobId);
+    expect(resolved?.state.gameState?.discardCount).toBe(3);
+    expect(
+      resolved?.state.gameState?.players.find(
+        (player) => player.playerId === aliceId
+      )?.activeCount
     ).toBe(0);
-    expect(state?.players.find((player) => player.id === aliceId)?.score).toBe(0);
+    expect(resolved?.state.players.find((player) => player.id === aliceId)?.score).toBe(0);
   });
 
   it("resolves the last card before final scoring and tiebreaks", () => {

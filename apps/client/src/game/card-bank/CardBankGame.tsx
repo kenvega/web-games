@@ -8,7 +8,7 @@ import {
   type PublicPlayer,
   type PublicRoomState
 } from "@multiplayer-blueprint/shared";
-import { Play, Trophy, X } from "lucide-react";
+import { AlertTriangle, Play, Trophy, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "../../components/Button.js";
 
@@ -41,6 +41,8 @@ function formatPhase(
       return `${currentPlayerName} to steal`;
     case "awaiting-decision":
       return `${currentPlayerName} to decide`;
+    case "revealing-bust":
+      return `${currentPlayerName} busted`;
     case "finished":
       return "Finished";
   }
@@ -129,6 +131,30 @@ export function CardBankGame({
             <Stat label="Discard" value={gameState.discardCount} />
           </div>
         </div>
+
+        {gameState.pendingBust !== null ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-rose-200 bg-rose-50 p-3">
+            <div>
+              <p className="flex items-center gap-2 text-sm font-semibold text-rose-950">
+                <AlertTriangle size={16} />
+                {getPlayerName(playerLookup, gameState.pendingBust.playerId)} busted
+              </p>
+              <p className="text-xs text-rose-800">
+                Card {gameState.pendingBust.cardValue} caused the bust. Cards
+                discard in a moment.
+              </p>
+            </div>
+            <div
+              className="grid h-16 w-12 place-items-center rounded-md border border-rose-400 text-center text-lg font-bold shadow-sm"
+              style={{
+                backgroundColor: CARD_BANK_CARD_COLORS[gameState.pendingBust.cardValue],
+                color: getTextColor(gameState.pendingBust.cardValue)
+              }}
+            >
+              {gameState.pendingBust.cardValue}
+            </div>
+          </div>
+        ) : null}
 
         {gameState.pendingSteal !== null ? (
           <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3">
@@ -224,6 +250,11 @@ export function CardBankGame({
                 ? gameState.pendingSteal.drawnValue
                 : null
             }
+            pendingBustValue={
+              gameState.pendingBust?.playerId === playerState.playerId
+                ? gameState.pendingBust.cardValue
+                : null
+            }
             player={playerState}
           />
         ))}
@@ -246,13 +277,15 @@ function PlayerArea({
   name,
   isCurrentPlayer,
   isTurn,
-  pendingStealValue
+  pendingStealValue,
+  pendingBustValue
 }: {
   player: PublicCardBankGameState["players"][number];
   name: string;
   isCurrentPlayer: boolean;
   isTurn: boolean;
   pendingStealValue: CardBankCardValue | null;
+  pendingBustValue: CardBankCardValue | null;
 }) {
   return (
     <article
@@ -280,7 +313,11 @@ function PlayerArea({
         <p className="mb-2 text-xs font-semibold uppercase text-slate-500">
           Active cards ({player.activeCount})
         </p>
-        <CardCounts cards={player.activeCards} pendingValue={pendingStealValue} />
+        <CardCounts
+          cards={player.activeCards}
+          pendingBustValue={pendingBustValue}
+          pendingStealValue={pendingStealValue}
+        />
       </div>
     </article>
   );
@@ -288,10 +325,12 @@ function PlayerArea({
 
 function CardCounts({
   cards,
-  pendingValue
+  pendingBustValue,
+  pendingStealValue
 }: {
   cards: CardBankCardCounts;
-  pendingValue: CardBankCardValue | null;
+  pendingBustValue: CardBankCardValue | null;
+  pendingStealValue: CardBankCardValue | null;
 }) {
   if (getCardTotal(cards) === 0) {
     return (
@@ -307,9 +346,11 @@ function CardCounts({
         cards[value] > 0 ? (
           <div
             className={`grid h-16 w-12 place-items-center rounded-md border text-center shadow-sm ${
-              pendingValue === value
-                ? "border-amber-500 ring-2 ring-amber-300"
-                : "border-black/10"
+              pendingBustValue === value
+                ? "border-rose-500 ring-2 ring-rose-300"
+                : pendingStealValue === value
+                  ? "border-amber-500 ring-2 ring-amber-300"
+                  : "border-black/10"
             }`}
             key={value}
             style={{
