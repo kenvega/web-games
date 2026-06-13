@@ -3,6 +3,9 @@ import {
   gameActionInputSchema,
   guestIdSchema,
   joinRoomInputSchema,
+  MAX_PLAYERS,
+  MIN_PLAYERS,
+  type CardBankCardValue,
   roomCodeSchema,
   roomCommandInputSchema,
   sendChatMessageInputSchema,
@@ -13,7 +16,7 @@ import {
   type SendChatMessageResult
 } from "@multiplayer-blueprint/shared";
 import { createChatMessage, appendChatMessage } from "../chat/chatService.js";
-import { DemoGameModule } from "../game/demo/demoGame.js";
+import { CardBankGameModule } from "../game/card-bank/cardBankGame.js";
 import { defaultRoomCodeFactory, generateRoomCode } from "./roomCodes.js";
 import type { Player, Room } from "./types.js";
 
@@ -24,7 +27,8 @@ type Clock = () => number;
 type RoomManagerOptions = {
   codeFactory?: () => string;
   now?: Clock;
-  startDelayMs?: number;
+  rng?: () => number;
+  deckFactory?: () => CardBankCardValue[];
 };
 
 type JoinRoomResult = {
@@ -36,11 +40,6 @@ type LeaveRoomResult = {
   closedRoomCode: string | null;
   state: PublicRoomState | null;
   message: string | null;
-};
-
-type ActivateRoundResult = {
-  state: PublicRoomState;
-  roundNumber: number;
 };
 
 function ok<T>(data: T): CommandResult<T> {
@@ -64,13 +63,16 @@ export class RoomManager {
   private readonly rooms = new Map<string, Room>();
   private readonly codeFactory: () => string;
   private readonly now: Clock;
-  private readonly gameModule: DemoGameModule;
+  private readonly gameModule: CardBankGameModule;
 
   constructor(options: RoomManagerOptions = {}) {
     this.codeFactory = options.codeFactory ?? defaultRoomCodeFactory;
     this.now = options.now ?? Date.now;
-    this.gameModule = new DemoGameModule({
-      startDelayMs: options.startDelayMs ?? 3000
+    this.gameModule = new CardBankGameModule({
+      ...(options.rng === undefined ? {} : { rng: options.rng }),
+      ...(options.deckFactory === undefined
+        ? {}
+        : { deckFactory: options.deckFactory })
     });
   }
 
@@ -154,6 +156,13 @@ export class RoomManager {
     const existingPlayer = room.players[parsedInput.data.guestId];
     if (existingPlayer === undefined && room.phase !== "waiting") {
       return fail("GAME_ALREADY_STARTED", "This game has already started.");
+    }
+
+    if (
+      existingPlayer === undefined &&
+      Object.keys(room.players).length >= MAX_PLAYERS
+    ) {
+      return fail("ROOM_FULL", "This room is full.");
     }
 
     let previousSocketId: string | null = null;
@@ -249,10 +258,10 @@ export class RoomManager {
     }
 
     if (room.phase === "waiting") {
-      if (this.getConnectedPlayers(room).length < 2) {
+      if (this.getConnectedPlayers(room).length < MIN_PLAYERS) {
         return fail(
           "NOT_ENOUGH_PLAYERS",
-          "At least two connected players are required to start."
+          `At least ${MIN_PLAYERS} connected players are required to start.`
         );
       }
 
@@ -261,24 +270,15 @@ export class RoomManager {
       }
 
       room.phase = "playing";
-      room.gameState = this.gameModule.start(room, this.now());
+      room.gameState = this.gameModule.start(room);
+      this.syncPlayerScores(room);
       return ok({
         state: this.commit(room)
       });
     }
 
     if (room.phase === "playing") {
-      if (room.gameState?.status !== "round-finished") {
-        return fail(
-          "GAME_ALREADY_STARTED",
-          "The current round is already active."
-        );
-      }
-
-      room.gameState = this.gameModule.start(room, this.now());
-      return ok({
-        state: this.commit(room)
-      });
+      return fail("GAME_ALREADY_STARTED", "The game is already in progress.");
     }
 
     return fail(
@@ -403,7 +403,7 @@ export class RoomManager {
     }
 
     if (room.phase !== "playing" || room.gameState === null) {
-      return fail("ROUND_NOT_ACTIVE", "There is no active round.");
+      return fail("ROUND_NOT_ACTIVE", "There is no active game.");
     }
 
     const result = this.gameModule.handleAction({
@@ -417,44 +417,15 @@ export class RoomManager {
       return fail(result.errorCode, result.message);
     }
 
-    if (result.scoringPlayerId !== null) {
-      const scoringPlayer = room.players[result.scoringPlayerId];
-      if (scoringPlayer !== undefined) {
-        scoringPlayer.score += 1;
-      }
-    }
-
     room.gameState = result.nextState;
-    if (result.nextState.status === "match-finished") {
+    if (result.nextState.status === "finished") {
       room.phase = "finished";
     }
+    this.syncPlayerScores(room);
 
     return ok({
       state: this.commit(room)
     });
-  }
-
-  activateRound(roomCode: string, roundNumber: number): ActivateRoundResult | null {
-    const room = this.rooms.get(roomCode);
-    if (
-      room === undefined ||
-      room.phase !== "playing" ||
-      room.gameState === null ||
-      room.gameState.roundNumber !== roundNumber ||
-      room.gameState.status !== "countdown"
-    ) {
-      return null;
-    }
-
-    room.gameState = {
-      ...room.gameState,
-      status: "active"
-    };
-
-    return {
-      state: this.commit(room),
-      roundNumber
-    };
   }
 
   disconnectSocket(input: {
@@ -474,6 +445,14 @@ export class RoomManager {
 
     player.connected = false;
     player.socketId = null;
+    const nextGameState = this.gameModule.handleDisconnectedActivePlayer(room);
+    if (nextGameState !== null) {
+      room.gameState = nextGameState;
+      if (nextGameState.status === "finished") {
+        room.phase = "finished";
+      }
+      this.syncPlayerScores(room);
+    }
 
     return this.commit(room);
   }
@@ -502,6 +481,34 @@ export class RoomManager {
     }
 
     const hostLeft = room.hostPlayerId === guestIdResult.data;
+    const leavingPlayer = room.players[guestIdResult.data];
+    if (leavingPlayer === undefined) {
+      return {
+        closedRoomCode: null,
+        state: null,
+        message: null
+      };
+    }
+
+    if (!hostLeft && room.phase !== "waiting") {
+      leavingPlayer.connected = false;
+      leavingPlayer.socketId = null;
+      const nextGameState = this.gameModule.handleDisconnectedActivePlayer(room);
+      if (nextGameState !== null) {
+        room.gameState = nextGameState;
+        if (nextGameState.status === "finished") {
+          room.phase = "finished";
+        }
+        this.syncPlayerScores(room);
+      }
+
+      return {
+        closedRoomCode: null,
+        state: this.commit(room),
+        message: null
+      };
+    }
+
     delete room.players[guestIdResult.data];
 
     if (Object.keys(room.players).length === 0) {
@@ -578,7 +585,7 @@ export class RoomManager {
   }
 
   private deleteRoom(roomCode: string): void {
-    this.gameModule.dispose?.();
+    this.gameModule.dispose();
     this.rooms.delete(roomCode);
   }
 
@@ -613,5 +620,16 @@ export class RoomManager {
 
   private getConnectedPlayers(room: Room): Player[] {
     return Object.values(room.players).filter((player) => player.connected);
+  }
+
+  private syncPlayerScores(room: Room): void {
+    if (room.gameState === null) {
+      return;
+    }
+
+    const scores = this.gameModule.getPlayerScores(room.gameState);
+    for (const player of Object.values(room.players)) {
+      player.score = scores[player.id] ?? player.score;
+    }
   }
 }

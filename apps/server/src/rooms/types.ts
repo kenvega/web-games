@@ -1,9 +1,9 @@
 import type {
-  DemoGameState,
   PublicChatMessage,
   PublicPlayer,
   RoomPhase
 } from "@multiplayer-blueprint/shared";
+import type { CardBankGameState } from "../game/card-bank/cardBankGame.js";
 
 export type Player = PublicPlayer & {
   socketId: string | null;
@@ -15,7 +15,7 @@ export type Room = {
   phase: RoomPhase;
   players: Record<string, Player>;
   chatMessages: PublicChatMessage[];
-  gameState: DemoGameState | null;
+  gameState: CardBankGameState | null;
   version: number;
   createdAt: number;
   updatedAt: number;

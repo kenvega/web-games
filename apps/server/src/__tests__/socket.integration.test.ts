@@ -132,14 +132,11 @@ function sendAction(
   return new Promise((resolve) => client.emit("game:action", input, resolve));
 }
 
-function delay(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
 beforeEach(async () => {
   application = createApplication({
     roomManager: new RoomManager({
-      startDelayMs: 50
+      rng: () => 0,
+      deckFactory: () => [1, 2, 3, 4]
     }),
     cleanupIntervalMs: 60_000
   });
@@ -165,7 +162,7 @@ afterEach(async () => {
 });
 
 describe("Socket.IO multiplayer flow", () => {
-  it("creates, joins, chats, starts, resolves a reaction, and reconnects", async () => {
+  it("creates, joins, chats, starts a CardBank game, acts, and reconnects", async () => {
     const alice = createTestClient();
     const bob = createTestClient();
     await Promise.all([waitForConnect(alice), waitForConnect(bob)]);
@@ -216,41 +213,54 @@ describe("Socket.IO multiplayer flow", () => {
     const chatState = await chatStatePromise;
     expect(chatState.chatMessages[0]?.text).toBe("ready?");
 
-    const countdownStatePromise = waitForState(
+    const playingStatePromise = waitForState(
       bob,
-      (state) => state.gameState?.status === "countdown"
+      (state) => state.gameState?.turnPhase === "awaiting-draw"
     );
     const started = await startRoom(alice, { roomCode });
     expect(started.ok).toBe(true);
-    const countdownState = await countdownStatePromise;
-    expect(countdownState.phase).toBe("playing");
+    const playingState = await playingStatePromise;
+    expect(playingState.phase).toBe("playing");
+    expect(playingState.gameState?.currentPlayerId).toBe(aliceId);
 
-    await delay(80);
+    const bobEarlyDraw = await sendAction(bob, {
+      roomCode,
+      action: {
+        type: "draw-card"
+      }
+    });
+    expect(bobEarlyDraw.ok).toBe(false);
 
-    const [aliceClaim, bobClaim] = await Promise.all([
-      sendAction(alice, {
-        roomCode,
-        action: {
-          type: "claim-round"
-        }
-      }),
-      sendAction(bob, {
-        roomCode,
-        action: {
-          type: "claim-round"
-        }
-      })
-    ]);
-
-    const claimResults = [aliceClaim, bobClaim];
-    expect(claimResults.filter((result) => result.ok)).toHaveLength(1);
-    const winningState = claimResults.find(
-      (result): result is CommandResult<RoomStateResult> & { ok: true } =>
-        result.ok
-    )?.data.state;
+    const aliceDrawStatePromise = waitForState(
+      bob,
+      (state) => state.gameState?.turnPhase === "awaiting-decision"
+    );
+    const aliceDraw = await sendAction(alice, {
+      roomCode,
+      action: {
+        type: "draw-card"
+      }
+    });
+    expect(aliceDraw.ok).toBe(true);
+    const aliceDrawState = await aliceDrawStatePromise;
     expect(
-      winningState?.players.reduce((total, player) => total + player.score, 0)
+      aliceDrawState.gameState?.players.find(
+        (player) => player.playerId === aliceId
+      )?.activeCount
     ).toBe(1);
+
+    const bobTurnStatePromise = waitForState(
+      bob,
+      (state) => state.gameState?.currentPlayerId === bobId
+    );
+    const stop = await sendAction(alice, {
+      roomCode,
+      action: {
+        type: "stop-turn"
+      }
+    });
+    expect(stop.ok).toBe(true);
+    await bobTurnStatePromise;
 
     const disconnectedStatePromise = waitForState(
       alice,

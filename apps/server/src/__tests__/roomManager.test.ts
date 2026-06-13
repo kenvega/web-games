@@ -1,6 +1,7 @@
 import {
   CHAT_MESSAGE_MAX_LENGTH,
   MAX_CHAT_MESSAGES,
+  type CardBankCardValue,
   type CommandResult,
   type RoomStateResult
 } from "@multiplayer-blueprint/shared";
@@ -11,6 +12,10 @@ import { generateRoomCode } from "../rooms/roomCodes.js";
 const aliceId = "11111111-1111-4111-8111-111111111111";
 const bobId = "22222222-2222-4222-8222-222222222222";
 const carolId = "33333333-3333-4333-8333-333333333333";
+const daveId = "44444444-4444-4444-8444-444444444444";
+const erinId = "55555555-5555-4555-8555-555555555555";
+const finnId = "66666666-6666-4666-8666-666666666666";
+const ginaId = "77777777-7777-4777-8777-777777777777";
 
 function expectOk<T>(result: CommandResult<T>): T {
   expect(result.ok).toBe(true);
@@ -30,11 +35,15 @@ function expectError<T>(result: CommandResult<T>, code: string): void {
   expect(result.error.code).toBe(code);
 }
 
-function createManager(nowValue = 1000) {
+function createManager(
+  nowValue = 1000,
+  deckFactory?: () => CardBankCardValue[]
+) {
   let now = nowValue;
   const manager = new RoomManager({
     now: () => now,
-    startDelayMs: 3000,
+    rng: () => 0,
+    ...(deckFactory === undefined ? {} : { deckFactory }),
     codeFactory: () => "23456789AB"
   });
 
@@ -64,6 +73,22 @@ function joinBob(manager: RoomManager) {
       guestId: bobId,
       displayName: "Bob",
       socketId: "socket-b"
+    })
+  );
+}
+
+function joinPlayer(
+  manager: RoomManager,
+  guestId: string,
+  displayName: string,
+  socketId: string
+) {
+  return expectOk(
+    manager.joinRoom({
+      roomCode: "23456789AB",
+      guestId,
+      displayName,
+      socketId
     })
   );
 }
@@ -156,6 +181,26 @@ describe("RoomManager", () => {
     );
   });
 
+  it("limits rooms to six players before the game starts", () => {
+    const { manager } = createManager();
+    createRoom(manager);
+    joinBob(manager);
+    joinPlayer(manager, carolId, "Carol", "socket-c");
+    joinPlayer(manager, daveId, "Dave", "socket-d");
+    joinPlayer(manager, erinId, "Erin", "socket-e");
+    joinPlayer(manager, finnId, "Finn", "socket-f");
+
+    expectError(
+      manager.joinRoom({
+        roomCode: "23456789AB",
+        guestId: ginaId,
+        displayName: "Gina",
+        socketId: "socket-g"
+      }),
+      "ROOM_FULL"
+    );
+  });
+
   it("validates chat messages and retains only the latest messages", () => {
     const { manager } = createManager();
     createRoom(manager);
@@ -239,74 +284,221 @@ describe("RoomManager", () => {
     expect(manager.getRoomCount()).toBe(0);
   });
 
-  it("awards only the first valid reaction and ends the match at target score", () => {
-    const { manager, setNow } = createManager();
+  it("starts a CardBank match with a full deck and a random first player", () => {
+    const { manager } = createManager();
     createRoom(manager);
     joinBob(manager);
 
-    let start = expectOk(
+    const start = expectOk(
       manager.startRoom({
         roomCode: "23456789AB",
         guestId: aliceId
       })
     );
-    expect(start.state.phase).toBe("playing");
 
-    expectError(
-      manager.handleGameAction({
+    expect(start.state.phase).toBe("playing");
+    expect(start.state.gameState?.status).toBe("playing");
+    expect(start.state.gameState?.turnPhase).toBe("awaiting-draw");
+    expect(start.state.gameState?.deckCount).toBe(110);
+    expect(start.state.gameState?.currentPlayerId).toBe(aliceId);
+    expect(start.state.gameState?.players).toHaveLength(2);
+  });
+
+  it("keeps stopped cards stealable and resolves optional steals", () => {
+    const { manager } = createManager(1000, () => [1, 1, 2]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
         roomCode: "23456789AB",
-        guestId: aliceId,
-        action: {
-          type: "claim-round"
-        }
-      }),
-      "ROUND_NOT_ACTIVE"
+        guestId: aliceId
+      })
     );
 
-    setNow(start.state.gameState?.startsAt ?? 0);
-    let claim: RoomStateResult = expectOk(
+    let state = expectOk(
       manager.handleGameAction({
         roomCode: "23456789AB",
         guestId: aliceId,
         action: {
-          type: "claim-round"
+          type: "draw-card"
         }
       })
     );
-    expect(claim.state.players.find((player) => player.id === aliceId)?.score).toBe(1);
+    expect(state.state.gameState?.turnPhase).toBe("awaiting-decision");
 
-    expectError(
+    state = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: {
+          type: "stop-turn"
+        }
+      })
+    );
+    expect(state.state.gameState?.currentPlayerId).toBe(bobId);
+    expect(
+      state.state.gameState?.players.find((player) => player.playerId === aliceId)
+        ?.activeCount
+    ).toBe(1);
+    expect(state.state.players.find((player) => player.id === aliceId)?.score).toBe(0);
+
+    state = expectOk(
       manager.handleGameAction({
         roomCode: "23456789AB",
         guestId: bobId,
         action: {
-          type: "claim-round"
+          type: "draw-card"
         }
-      }),
-      "ACTION_ALREADY_CLAIMED"
+      })
+    );
+    expect(state.state.gameState?.turnPhase).toBe("awaiting-steal");
+    expect(state.state.gameState?.pendingSteal?.totalCount).toBe(1);
+
+    state = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: {
+          type: "resolve-steal",
+          steal: true
+        }
+      })
+    );
+    expect(
+      state.state.gameState?.players.find((player) => player.playerId === aliceId)
+        ?.activeCount
+    ).toBe(0);
+    expect(
+      state.state.gameState?.players.find((player) => player.playerId === bobId)
+        ?.activeCount
+    ).toBe(2);
+  });
+
+  it("busts on the third active card when drawing a duplicate", () => {
+    const { manager } = createManager(1000, () => [2, 3, 2, 5]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
     );
 
-    for (let round = 2; round <= 3; round += 1) {
-      start = expectOk(
-        manager.startRoom({
-          roomCode: "23456789AB",
-          guestId: aliceId
-        })
-      );
-      setNow(start.state.gameState?.startsAt ?? 0);
-      claim = expectOk(
+    for (const action of [
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "draw-card" as const }
+    ]) {
+      expectOk(
         manager.handleGameAction({
           roomCode: "23456789AB",
           guestId: aliceId,
-          action: {
-            type: "claim-round"
-          }
+          action
         })
       );
     }
 
-    expect(claim.state.phase).toBe("finished");
-    expect(claim.state.gameState?.status).toBe("match-finished");
-    expect(claim.state.players.find((player) => player.id === aliceId)?.score).toBe(3);
+    const state = manager.getPublicState("23456789AB");
+    expect(state?.gameState?.currentPlayerId).toBe(bobId);
+    expect(state?.gameState?.discardCount).toBe(3);
+    expect(
+      state?.gameState?.players.find((player) => player.playerId === aliceId)
+        ?.activeCount
+    ).toBe(0);
+    expect(state?.players.find((player) => player.id === aliceId)?.score).toBe(0);
+  });
+
+  it("resolves the last card before final scoring and tiebreaks", () => {
+    const { manager } = createManager(1000, () => [1, 1, 2]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "stop-turn" }
+      })
+    );
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "draw-card" }
+      })
+    );
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "resolve-steal", steal: true }
+      })
+    );
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "stop-turn" }
+      })
+    );
+    const finalState: RoomStateResult = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+
+    expect(finalState.state.phase).toBe("finished");
+    expect(finalState.state.gameState?.status).toBe("finished");
+    expect(finalState.state.players.find((player) => player.id === bobId)?.score).toBe(2);
+    expect(finalState.state.players.find((player) => player.id === aliceId)?.score).toBe(2);
+    expect(finalState.state.gameState?.winnerPlayerIds).toEqual([bobId]);
+  });
+
+  it("auto-stops a disconnected active player", () => {
+    const { manager } = createManager(1000, () => [1, 2, 3]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+
+    const disconnected = manager.disconnectSocket({
+      roomCode: "23456789AB",
+      guestId: aliceId,
+      socketId: "socket-a"
+    });
+
+    expect(disconnected?.gameState?.currentPlayerId).toBe(bobId);
+    expect(
+      disconnected?.gameState?.players.find((player) => player.playerId === aliceId)
+        ?.activeCount
+    ).toBe(1);
   });
 });

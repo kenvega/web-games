@@ -56,58 +56,15 @@ export function registerSocketHandlers(
   roomManager: RoomManager,
   options: HandlerOptions = {}
 ): SocketLifecycle {
-  const roundTimers = new Map<string, NodeJS.Timeout>();
-
-  const clearRoundTimer = (roomCode: string): void => {
-    const timer = roundTimers.get(roomCode);
-    if (timer !== undefined) {
-      clearTimeout(timer);
-      roundTimers.delete(roomCode);
-    }
-  };
-
   const emitState = (result: RoomStateResult): void => {
     io.to(result.state.code).emit("room:state", result.state);
   };
 
   const closeRoom = (roomCode: string, message: string): void => {
-    clearRoundTimer(roomCode);
     io.to(roomCode).emit("room:closed", {
       roomCode,
       message
     });
-  };
-
-  const scheduleRoundActivation = (state: RoomStateResult["state"]): void => {
-    const gameState = state.gameState;
-    if (
-      gameState === null ||
-      gameState.status !== "countdown" ||
-      gameState.startsAt === null
-    ) {
-      return;
-    }
-
-    clearRoundTimer(state.code);
-    const delayMs = Math.max(0, gameState.startsAt - Date.now());
-    const timer = setTimeout(() => {
-      roundTimers.delete(state.code);
-      const activated = roomManager.activateRound(
-        state.code,
-        gameState.roundNumber
-      );
-      if (activated === null) {
-        return;
-      }
-
-      io.to(state.code).emit("room:state", activated.state);
-      io.to(state.code).emit("game:event", {
-        roomCode: state.code,
-        type: "round-activated"
-      });
-    }, delayMs);
-    timer.unref?.();
-    roundTimers.set(state.code, timer);
   };
 
   const leaveCurrentRoom = (socket: TypedSocket): void => {
@@ -268,7 +225,6 @@ export function registerSocketHandlers(
 
         ack(result);
         emitState(result.data);
-        scheduleRoundActivation(result.data.state);
       } catch (error) {
         console.error("room:start failed", error);
         ack(fail("UNEXPECTED_ERROR", "Unable to start the game."));
@@ -293,7 +249,6 @@ export function registerSocketHandlers(
           return;
         }
 
-        clearRoundTimer(result.data.state.code);
         ack(result);
         emitState(result.data);
       } catch (error) {
@@ -377,7 +332,6 @@ export function registerSocketHandlers(
           return;
         }
 
-        clearRoundTimer(result.data.state.code);
         ack(result);
         emitState(result.data);
         io.to(result.data.state.code).emit("game:event", {
@@ -385,7 +339,7 @@ export function registerSocketHandlers(
           type:
             result.data.state.phase === "finished"
               ? "match-finished"
-              : "round-claimed"
+              : "game-updated"
         });
       } catch (error) {
         console.error("game:action failed", error);
@@ -426,10 +380,6 @@ export function registerSocketHandlers(
   return {
     stop: () => {
       clearInterval(cleanupTimer);
-      for (const timer of roundTimers.values()) {
-        clearTimeout(timer);
-      }
-      roundTimers.clear();
     }
   };
 }

@@ -1,8 +1,7 @@
 import type {
   CommandErrorCode,
-  DemoGameAction,
-  DemoGameState,
-  PublicDemoGameState
+  CardBankGameAction,
+  PublicCardBankGameState
 } from "@multiplayer-blueprint/shared";
 import type { Room } from "../rooms/types.js";
 
@@ -10,7 +9,6 @@ export type GameActionResult<TState> =
   | {
       accepted: true;
       nextState: TState;
-      scoringPlayerId: string | null;
     }
   | {
       accepted: false;
@@ -35,8 +33,8 @@ export interface GameModule<TState, TAction, TPublicState> {
   dispose?(roomCode: string): void;
 }
 
-export type DemoGameModuleContract = GameModule<
-  DemoGameState,
-  DemoGameAction,
-  PublicDemoGameState
+export type CardBankGameModuleContract<TState> = GameModule<
+  TState,
+  CardBankGameAction,
+  PublicCardBankGameState
 >;

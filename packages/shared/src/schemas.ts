@@ -56,13 +56,22 @@ export const sendChatMessageInputSchema = z.object({
   text: chatMessageTextSchema
 });
 
-export const demoGameActionSchema = z.object({
-  type: z.literal("claim-round")
-});
+export const cardBankGameActionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("draw-card")
+  }),
+  z.object({
+    type: z.literal("resolve-steal"),
+    steal: z.boolean()
+  }),
+  z.object({
+    type: z.literal("stop-turn")
+  })
+]);
 
 export const gameActionInputSchema = z.object({
   roomCode: roomCodeSchema,
-  action: demoGameActionSchema
+  action: cardBankGameActionSchema
 });
 
 export type CreateRoomInputData = z.infer<typeof createRoomInputSchema>;

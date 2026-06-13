@@ -1,5 +1,6 @@
 import {
   displayNameSchema,
+  type CardBankGameAction,
   roomCodeSchema,
   type PublicRoomState
 } from "@multiplayer-blueprint/shared";
@@ -12,7 +13,7 @@ import { ConnectionBadge } from "../components/ConnectionBadge.js";
 import { PlayerList } from "../components/PlayerList.js";
 import { ShareButton } from "../components/ShareButton.js";
 import { TextInput } from "../components/TextInput.js";
-import { DemoGame } from "../game/demo/DemoGame.js";
+import { CardBankGame } from "../game/card-bank/CardBankGame.js";
 import { useSocket } from "../hooks/SocketProvider.js";
 import {
   getGuestId,
@@ -266,16 +267,16 @@ export function RoomPage() {
     return null;
   };
 
-  const handleClaim = async (): Promise<string | null> => {
+  const handleGameAction = async (
+    action: CardBankGameAction
+  ): Promise<string | null> => {
     if (roomCode === null) {
       return "Enter a valid room code.";
     }
 
     const result = await sendGameActionCommand(socket, {
       roomCode,
-      action: {
-        type: "claim-round"
-      }
+      action
     });
 
     if (!result.ok) {
@@ -420,10 +421,10 @@ export function RoomPage() {
             />
           </aside>
 
-          <DemoGame
+          <CardBankGame
             connected={connected}
             currentPlayerId={guestId}
-            onClaim={handleClaim}
+            onAction={handleGameAction}
             room={room}
           />
 
@@ -453,8 +454,6 @@ function HostControls({
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const gameStatus = room.gameState?.status ?? null;
-
   const runCommand = async (command: () => Promise<string | null>) => {
     setIsSubmitting(true);
     setMessage(null);
@@ -472,7 +471,6 @@ function HostControls({
   }
 
   const canStartWaiting = room.phase === "waiting" && connectedPlayerCount >= 2;
-  const canStartNextRound = room.phase === "playing" && gameStatus === "round-finished";
   const canRestart = room.phase === "finished";
 
   return (
@@ -486,18 +484,6 @@ function HostControls({
           variant="primary"
         >
           Start Game
-        </Button>
-      ) : null}
-
-      {canStartNextRound ? (
-        <Button
-          disabled={isSubmitting}
-          icon={<Play size={16} />}
-          onClick={() => void runCommand(onStart)}
-          type="button"
-          variant="primary"
-        >
-          Next Round
         </Button>
       ) : null}
 
