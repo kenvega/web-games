@@ -289,14 +289,14 @@ function DeckDiscard({
   shownDiscardValue: CardBankCardValue | null;
 }) {
   return (
-    <div className="grid grid-cols-2 justify-center gap-3">
+    <div className="grid grid-cols-2 justify-center gap-2 sm:gap-3">
       <PileFrame label="Deck" value={deckCount}>
         <CardBack />
       </PileFrame>
       <PileFrame label="Discard" value={discardCount}>
         {shownDiscardValue === null ? (
-          <div className="grid h-24 w-16 place-items-center rounded-md border-2 border-dashed border-cyan-200/25 bg-slate-900/75 text-center text-xs font-semibold uppercase text-slate-500 sm:h-28 sm:w-20">
-            <Layers size={22} />
+          <div className="grid h-16 w-11 place-items-center rounded-md border-2 border-dashed border-cyan-200/25 bg-slate-900/75 text-center text-xs font-semibold uppercase text-slate-500 sm:h-28 sm:w-20">
+            <Layers size={18} />
           </div>
         ) : (
           <CardTile highlighted size="pile" value={shownDiscardValue} />
@@ -316,11 +316,11 @@ function PileFrame({
   value: number;
 }) {
   return (
-    <div className="grid justify-items-center gap-2 rounded-md border border-cyan-200/15 bg-slate-950/45 px-3 py-3 text-center">
+    <div className="grid justify-items-center gap-1 rounded-md border border-cyan-200/15 bg-slate-950/45 px-2 py-2 text-center sm:gap-2 sm:px-3 sm:py-3">
       {children}
       <div>
-        <p className="text-sm font-medium text-slate-300">{label}</p>
-        <p className="text-2xl font-extrabold leading-7 text-slate-100">
+        <p className="text-xs font-medium text-slate-300 sm:text-sm">{label}</p>
+        <p className="text-xl font-extrabold leading-6 text-slate-100 sm:text-2xl sm:leading-7">
           {value}
         </p>
       </div>
@@ -330,11 +330,11 @@ function PileFrame({
 
 function CardBack() {
   return (
-    <div className="relative h-24 w-16 sm:h-28 sm:w-20">
+    <div className="relative h-16 w-11 sm:h-28 sm:w-20">
       <div className="absolute left-1 top-1 h-full w-full rounded-md border border-cyan-200/20 bg-slate-900" />
-      <div className="absolute inset-0 rounded-md border-2 border-slate-300/80 bg-[#102742] p-2 shadow-[0_8px_18px_rgba(0,0,0,0.3)]">
+      <div className="absolute inset-0 rounded-md border-2 border-slate-300/80 bg-[#102742] p-1.5 shadow-[0_8px_18px_rgba(0,0,0,0.3)] sm:p-2">
         <div className="grid h-full place-items-center rounded border border-cyan-100/20">
-          <Layers className="text-cyan-100/45" size={28} />
+          <Layers className="text-cyan-100/45" size={20} />
         </div>
       </div>
     </div>
@@ -620,7 +620,7 @@ function CardTile({
   const isLarge = size === "large";
   const isPile = size === "pile";
   const tileSizeClass = isPile
-    ? "h-24 w-16 sm:h-28 sm:w-20"
+    ? "h-16 w-11 sm:h-28 sm:w-20"
     : isLarge
       ? "aspect-[5/7] w-full max-w-20"
       : "aspect-[5/7] w-12 sm:w-14 lg:w-[3.25rem] xl:w-14";
