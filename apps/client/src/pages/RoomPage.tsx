@@ -4,8 +4,16 @@ import {
   roomCodeSchema,
   type PublicRoomState
 } from "@multiplayer-blueprint/shared";
-import { LogOut, Play, RotateCcw } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LogOut, Menu, MessageCircle, Play, RotateCcw, X } from "lucide-react";
+import {
+  FormEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChatPanel } from "../chat/ChatPanel.js";
 import { Button } from "../components/Button.js";
@@ -47,6 +55,8 @@ export function RoomPage() {
   const [room, setRoom] = useState<PublicRoomState | null>(null);
   const [pageStatus, setPageStatus] = useState<RoomPageStatus>("joining");
   const [pageMessage, setPageMessage] = useState<string | null>(null);
+  const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const joinedRef = useRef(false);
   const guestId = useMemo(() => getGuestId(), []);
   const parsedRoomCode = useMemo(
@@ -298,13 +308,13 @@ export function RoomPage() {
 
   if (needsDisplayNameConfirmation && !joinedRef.current) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-8">
-        <section className="mx-auto grid max-w-md gap-5 rounded-md border border-slate-200 bg-white p-5 shadow-panel">
+      <main className="min-h-screen bg-[#041520] px-4 py-8 text-slate-100">
+        <section className="mx-auto grid max-w-md gap-5 rounded-md border border-cyan-200/15 bg-slate-950/55 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.25)]">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
+            <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
               Room {roomCode}
             </p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-950">
+            <h1 className="mt-2 text-2xl font-bold text-slate-100">
               Choose a display name
             </h1>
           </div>
@@ -316,6 +326,7 @@ export function RoomPage() {
               maxLength={24}
               onChange={(event) => setDisplayName(event.target.value)}
               placeholder="Ada"
+              tone="dark"
               value={displayName}
             />
             <Button icon={<Play size={16} />} type="submit" variant="primary">
@@ -338,11 +349,11 @@ export function RoomPage() {
 
   if (room === null) {
     return (
-      <main className="grid min-h-screen place-items-center bg-slate-50 px-4">
-        <section className="grid max-w-md gap-4 rounded-md border border-slate-200 bg-white p-5 text-center shadow-panel">
-          <ConnectionBadge status={connectionStatus} />
-          <h1 className="text-2xl font-bold text-slate-950">Joining room</h1>
-          <p className="text-sm leading-6 text-slate-600">
+      <main className="grid min-h-screen place-items-center bg-[#041520] px-4 text-slate-100">
+        <section className="grid max-w-md gap-4 rounded-md border border-cyan-200/15 bg-slate-950/55 p-5 text-center shadow-[0_20px_70px_rgba(0,0,0,0.25)]">
+          <ConnectionBadge status={connectionStatus} tone="dark" />
+          <h1 className="text-2xl font-bold text-slate-100">Joining room</h1>
+          <p className="text-sm leading-6 text-slate-400">
             {pageMessage ?? "Waiting for the server to return the room state."}
           </p>
         </section>
@@ -358,65 +369,85 @@ export function RoomPage() {
   const hostDisconnected = hostPlayer !== undefined && !hostPlayer.connected;
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-5 sm:px-6">
-        <header className="grid gap-4 rounded-md border border-slate-200 bg-white p-4 shadow-panel lg:grid-cols-[1fr_auto] lg:items-center">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
-              Room
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-3">
-              <h1 className="break-all text-2xl font-bold text-slate-950 sm:text-3xl">
-                {room.code}
-              </h1>
-              <span className="rounded-md bg-slate-100 px-3 py-1 text-sm font-semibold capitalize text-slate-800">
-                {room.phase}
-              </span>
+    <main className="min-h-screen overflow-x-hidden bg-[#041520] text-slate-100">
+      <div className="min-h-screen bg-[linear-gradient(180deg,#051723_0%,#062535_54%,#041520_100%)]">
+        <header className="sticky top-0 z-30 border-b border-cyan-200/15 bg-[#061824]/95 shadow-[0_14px_40px_rgba(0,0,0,0.25)] backdrop-blur">
+          <div className="mx-auto grid max-w-[104rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 sm:px-5 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)_minmax(20rem,25rem)]">
+            <div className="lg:hidden">
+              <IconButton
+                label="Open room menu"
+                onClick={() => setIsRoomMenuOpen(true)}
+              >
+                <Menu size={22} />
+              </IconButton>
             </div>
-            {hostDisconnected ? (
-              <p className="mt-2 text-sm font-medium text-amber-800">
-                Host disconnected.
-              </p>
-            ) : null}
-            {pageMessage !== null ? (
-              <p className="mt-2 text-sm font-medium text-rose-700">
-                {pageMessage}
-              </p>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <ConnectionBadge status={connectionStatus} />
-            <ShareButton roomCode={room.code} />
-            <Button
-              icon={<LogOut size={16} />}
-              onClick={handleLeave}
-              type="button"
-              variant="ghost"
-            >
-              Leave
-            </Button>
+
+            <RoomCodeCard room={room} />
+
+            <BrandTitle />
+
+            <div className="flex min-w-0 items-center justify-end gap-2">
+              <ConnectionBadge
+                className="hidden sm:inline-flex"
+                status={connectionStatus}
+                tone="dark"
+              />
+              <ShareButton
+                className="hidden lg:flex"
+                roomCode={room.code}
+                tone="dark"
+              />
+              <IconButton
+                className="xl:hidden"
+                label="Open chat"
+                onClick={() => setIsChatOpen(true)}
+              >
+                <MessageCircle size={21} />
+              </IconButton>
+              <Button
+                icon={<LogOut size={16} />}
+                onClick={handleLeave}
+                type="button"
+                variant="ghost"
+                className="hidden !border-cyan-300/20 !bg-slate-950/45 !text-slate-100 hover:!bg-cyan-950/60 sm:inline-flex"
+              >
+                Leave
+              </Button>
+              <IconButton
+                className="sm:hidden"
+                label="Leave room"
+                onClick={handleLeave}
+              >
+                <LogOut size={21} />
+              </IconButton>
+            </div>
           </div>
         </header>
 
-        {connectionStatus !== "connected" ? (
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-            Socket reconnecting. The latest room state will be requested after
-            the connection returns.
-          </div>
-        ) : null}
+        <div className="mx-auto grid w-full max-w-[104rem] gap-4 px-3 py-4 sm:px-5 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)_minmax(20rem,25rem)]">
+          {connectionStatus !== "connected" ? (
+            <div className="rounded-md border border-amber-300/35 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-100 lg:col-span-2 xl:col-span-3">
+              Socket reconnecting. The latest room state will be requested after
+              the connection returns.
+            </div>
+          ) : null}
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(17rem,22rem)_1fr_minmax(19rem,24rem)]">
-          <aside className="grid content-start gap-5 rounded-md border border-slate-200 bg-white p-4 shadow-panel">
-            <PlayerList
+          {(hostDisconnected || pageMessage !== null) ? (
+            <div className="rounded-md border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-100 lg:col-span-2 xl:col-span-3">
+              {hostDisconnected ? "Host disconnected. " : null}
+              {pageMessage}
+            </div>
+          ) : null}
+
+          <aside className="hidden content-start gap-5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] lg:grid">
+            <RoomSidebar
+              connectedPlayerCount={connectedPlayerCount}
               currentPlayerId={guestId}
               hostPlayerId={room.hostPlayerId}
-              players={room.players}
-            />
-            <HostControls
-              connectedPlayerCount={connectedPlayerCount}
               isHost={isHost}
               onRestart={handleRestart}
               onStart={handleStart}
+              players={room.players}
               room={room}
             />
           </aside>
@@ -428,14 +459,173 @@ export function RoomPage() {
             room={room}
           />
 
+          <aside className="hidden min-h-[calc(100vh-8rem)] rounded-md border border-cyan-200/15 bg-slate-950/35 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] xl:block">
+            <ChatPanel
+              disabled={connectionStatus !== "connected"}
+              fill
+              messages={room.chatMessages}
+              onSend={handleChatSend}
+            />
+          </aside>
+        </div>
+      </div>
+
+      {isRoomMenuOpen ? (
+        <MobileModal
+          title={`Room ${room.code}`}
+          onClose={() => setIsRoomMenuOpen(false)}
+        >
+          <div className="grid gap-4">
+            <div className="grid gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-3">
+              <ConnectionBadge status={connectionStatus} tone="dark" />
+              <ShareButton roomCode={room.code} tone="dark" />
+            </div>
+            <RoomSidebar
+              connectedPlayerCount={connectedPlayerCount}
+              currentPlayerId={guestId}
+              hostPlayerId={room.hostPlayerId}
+              isHost={isHost}
+              onRestart={handleRestart}
+              onStart={handleStart}
+              players={room.players}
+              room={room}
+            />
+          </div>
+        </MobileModal>
+      ) : null}
+
+      {isChatOpen ? (
+        <MobileModal title="Room Chat" onClose={() => setIsChatOpen(false)}>
           <ChatPanel
             disabled={connectionStatus !== "connected"}
+            fill
             messages={room.chatMessages}
             onSend={handleChatSend}
           />
-        </div>
-      </div>
+        </MobileModal>
+      ) : null}
     </main>
+  );
+}
+
+function IconButton({
+  children,
+  className = "",
+  label,
+  onClick
+}: {
+  children: ReactNode;
+  className?: string;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      className={`inline-grid h-11 w-11 place-items-center rounded-md border border-cyan-300/20 bg-slate-950/55 text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition hover:bg-cyan-950/60 ${className}`}
+      onClick={onClick}
+      type="button"
+    >
+      {children}
+    </button>
+  );
+}
+
+function BrandTitle() {
+  return (
+    <div className="flex min-w-0 items-center justify-center gap-2 lg:gap-3">
+      <div className="relative h-8 w-9 shrink-0 lg:h-11 lg:w-12">
+        <div className="absolute left-0 top-1 h-7 w-5 rotate-[-10deg] rounded border-2 border-white bg-emerald-500 shadow-[0_8px_18px_rgba(0,0,0,0.28)] lg:h-9 lg:w-7" />
+        <div className="absolute right-0 top-0 h-8 w-6 rotate-[8deg] rounded border-2 border-white bg-cyan-500 shadow-[0_8px_18px_rgba(0,0,0,0.28)] lg:h-11 lg:w-8" />
+      </div>
+      <span className="whitespace-nowrap text-xs font-black uppercase tracking-[0.08em] text-white drop-shadow min-[380px]:text-sm sm:text-2xl lg:text-4xl">
+        Card Banking
+      </span>
+    </div>
+  );
+}
+
+function RoomCodeCard({ room }: { room: PublicRoomState }) {
+  return (
+    <div className="hidden min-w-0 rounded-md border border-cyan-200/20 bg-slate-950/50 px-4 py-3 lg:block">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        Room Code
+      </p>
+      <div className="mt-1 flex items-center gap-3">
+        <p className="truncate text-2xl font-black tracking-wide text-white">
+          {room.code}
+        </p>
+        <span className="rounded-md border border-cyan-300/20 bg-slate-900/80 px-2 py-1 text-xs font-semibold capitalize text-sky-300">
+          {room.phase}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function RoomSidebar({
+  players,
+  hostPlayerId,
+  currentPlayerId,
+  room,
+  isHost,
+  connectedPlayerCount,
+  onStart,
+  onRestart
+}: {
+  players: PublicRoomState["players"];
+  hostPlayerId: string;
+  currentPlayerId: string;
+  room: PublicRoomState;
+  isHost: boolean;
+  connectedPlayerCount: number;
+  onStart: () => Promise<string | null>;
+  onRestart: () => Promise<string | null>;
+}) {
+  return (
+    <div className="grid content-start gap-5">
+      <PlayerList
+        currentPlayerId={currentPlayerId}
+        hostPlayerId={hostPlayerId}
+        players={players}
+      />
+      <HostControls
+        connectedPlayerCount={connectedPlayerCount}
+        isHost={isHost}
+        onRestart={onRestart}
+        onStart={onStart}
+        room={room}
+      />
+      <p className="rounded-md border border-cyan-200/10 bg-slate-950/35 px-3 py-2 text-xs leading-5 text-slate-500">
+        Scores update when cards are secured.
+      </p>
+    </div>
+  );
+}
+
+function MobileModal({
+  children,
+  onClose,
+  title
+}: {
+  children: ReactNode;
+  onClose: () => void;
+  title: string;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/65 p-3 backdrop-blur-sm">
+      <section className="mx-auto grid h-full max-w-lg grid-rows-[auto_minmax(0,1fr)] rounded-md border border-cyan-200/20 bg-[#061824] shadow-[0_24px_90px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center justify-between gap-3 border-b border-cyan-200/15 px-4 py-3">
+          <h2 className="min-w-0 truncate text-base font-extrabold text-slate-100">
+            {title}
+          </h2>
+          <IconButton label="Close modal" onClick={onClose}>
+            <X size={20} />
+          </IconButton>
+        </div>
+        <div className="min-h-0 overflow-y-auto p-4">{children}</div>
+      </section>
+    </div>
   );
 }
 
@@ -464,7 +654,7 @@ function HostControls({
 
   if (!isHost) {
     return (
-      <section className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+      <section className="rounded-md border border-cyan-200/15 bg-slate-950/40 p-3 text-sm text-slate-400">
         Waiting for the host.
       </section>
     );
@@ -482,6 +672,7 @@ function HostControls({
           onClick={() => void runCommand(onStart)}
           type="button"
           variant="primary"
+          className="!border-emerald-300/50 !bg-emerald-600 !text-white shadow-[0_0_24px_rgba(16,185,129,0.2)] hover:!bg-emerald-500 disabled:!border-slate-700 disabled:!bg-slate-800 disabled:!text-slate-500"
         >
           Start Game
         </Button>
@@ -494,19 +685,20 @@ function HostControls({
           onClick={() => void runCommand(onRestart)}
           type="button"
           variant="primary"
+          className="!border-emerald-300/50 !bg-emerald-600 !text-white shadow-[0_0_24px_rgba(16,185,129,0.2)] hover:!bg-emerald-500 disabled:!border-slate-700 disabled:!bg-slate-800 disabled:!text-slate-500"
         >
           Play Again
         </Button>
       ) : null}
 
       {room.phase === "waiting" && connectedPlayerCount < 2 ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-400">
           At least two connected players are required.
         </p>
       ) : null}
 
       {message !== null ? (
-        <p className="text-sm font-medium text-rose-700">{message}</p>
+        <p className="text-sm font-medium text-rose-300">{message}</p>
       ) : null}
     </section>
   );
@@ -520,10 +712,10 @@ function MissingRoom({
   onCreate: () => void;
 }) {
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-50 px-4">
-      <section className="grid max-w-md gap-4 rounded-md border border-slate-200 bg-white p-5 text-center shadow-panel">
-        <h1 className="text-2xl font-bold text-slate-950">Room unavailable</h1>
-        <p className="text-sm leading-6 text-slate-600">{message}</p>
+    <main className="grid min-h-screen place-items-center bg-[#041520] px-4 text-slate-100">
+      <section className="grid max-w-md gap-4 rounded-md border border-cyan-200/15 bg-slate-950/55 p-5 text-center shadow-[0_20px_70px_rgba(0,0,0,0.25)]">
+        <h1 className="text-2xl font-bold text-slate-100">Room unavailable</h1>
+        <p className="text-sm leading-6 text-slate-400">{message}</p>
         <Button onClick={onCreate} type="button" variant="primary">
           Create a New Room
         </Button>
