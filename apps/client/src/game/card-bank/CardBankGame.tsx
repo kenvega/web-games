@@ -375,7 +375,7 @@ function PendingStealPrompt({
           Steal all matching {formatStealTarget(pendingSteal.drawnValue)}?
         </p>
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 grid-cols-2">
         <GameButton
           disabled={!canResolveSteal || submittingAction !== null}
           onClick={() => onResolve(true)}
@@ -425,9 +425,6 @@ function TurnActionPanel({
   return (
     <div className="grid content-center gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4">
       <div>
-        <p className="text-sm font-semibold uppercase text-slate-400">
-          Current Move
-        </p>
         <p className="mt-1 text-xl font-extrabold text-slate-100">
           {isPlayable
             ? isCurrentTurn
