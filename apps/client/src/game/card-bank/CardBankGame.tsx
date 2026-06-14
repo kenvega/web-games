@@ -144,7 +144,7 @@ export function CardBankGame({
     gameState.pendingSteal?.drawnValue ?? gameState.pendingBust?.cardValue ?? null;
 
   return (
-    <section className="grid min-w-0 gap-4">
+    <section className="grid min-w-0 gap-2">
       <TurnBadge
         detail={getPhaseDetail(gameState, currentTurnPlayerName)}
         isCurrentTurn={isCurrentTurn}
@@ -259,20 +259,20 @@ function TurnBadge({
   isCurrentTurn: boolean;
 }) {
   return (
-    <div className="grid justify-items-center gap-1">
+    <div className="grid justify-items-center gap-1 lg:gap-0">
       <div
-        className={`inline-flex items-center gap-3 rounded-full border px-5 py-2 text-sm font-extrabold uppercase tracking-wide ${
+        className={`inline-flex items-center gap-3 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-extrabold uppercase leading-none tracking-wide lg:h-8 lg:gap-2 lg:px-4 lg:py-0 lg:text-xs ${
           isCurrentTurn
             ? "border-emerald-400/55 bg-emerald-500/10 text-emerald-300 shadow-[0_0_32px_rgba(16,185,129,0.24)]"
             : "border-cyan-300/25 bg-slate-950/50 text-cyan-200"
         }`}
       >
         <span
-          className={`h-3 w-3 rounded-full ${
+          className={`h-3 w-3 rounded-full lg:h-2.5 lg:w-2.5 ${
             isCurrentTurn ? "bg-emerald-400" : "bg-cyan-300"
           }`}
         />
-        {label}
+        <span className="leading-none">{label}</span>
       </div>
       <p className="text-center text-xs text-slate-400">{detail}</p>
     </div>
