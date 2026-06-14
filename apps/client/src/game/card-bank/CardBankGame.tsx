@@ -556,18 +556,9 @@ function PlayerArea({
           >
             {isCurrentPlayer ? "You" : name}
           </h3>
-          <p className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-400">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                isTurn ? "bg-emerald-400" : "bg-slate-500"
-              }`}
-            />
-            {isCurrentArea ? "Active Area" : isTurn ? "Current turn" : "Waiting"}
-          </p>
         </div>
-        <div className="shrink-0 rounded-md border border-cyan-300/20 bg-slate-950/65 px-3 py-1 text-right">
-          <p className="text-[0.65rem] uppercase text-slate-400">Secured</p>
-          <p className="text-xl font-extrabold leading-6 text-sky-300">
+        <div className="shrink-0 rounded-md border border-cyan-300/20 bg-slate-950/65 px-3 text-right">
+          <p className="text-xs font-extrabold leading-6 text-sky-300">
             {player.securedScore}
           </p>
         </div>
