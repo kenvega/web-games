@@ -599,8 +599,8 @@ function CardGrid({
     <div
       className={
         size === "large"
-          ? "grid grid-cols-5 gap-2 2xl:grid-cols-10"
-          : "grid grid-cols-4 gap-2"
+          ? "grid grid-cols-5 justify-items-center gap-2 2xl:grid-cols-10"
+          : "grid grid-cols-5 justify-items-center gap-1.5"
       }
     >
       {expandCards(cards).map((value, index) => (
@@ -626,11 +626,16 @@ function CardTile({
 }) {
   const isLarge = size === "large";
   const isPile = size === "pile";
+  const tileSizeClass = isPile
+    ? "h-24 w-16 sm:h-28 sm:w-20"
+    : isLarge
+      ? "aspect-[5/7] w-full max-w-20"
+      : "aspect-[5/7] w-12 sm:w-14 lg:w-[3.25rem] xl:w-14";
   const centerSize =
     size === "small"
       ? value === 10
-        ? "text-2xl"
-        : "text-3xl"
+        ? "text-xl"
+        : "text-2xl"
       : value === 10
         ? "text-4xl"
         : "text-5xl";
@@ -638,7 +643,7 @@ function CardTile({
   return (
     <div
       className={`relative grid place-items-center overflow-hidden rounded-md border-2 border-white/80 shadow-[0_8px_18px_rgba(0,0,0,0.25)] ${
-        isPile ? "h-24 w-16 sm:h-28 sm:w-20" : "aspect-[5/7] w-full"
+        tileSizeClass
       } ${highlighted ? "ring-2 ring-emerald-300" : ""}`}
       style={{
         backgroundColor: CARD_BANK_CARD_COLORS[value],
