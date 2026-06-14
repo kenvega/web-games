@@ -144,7 +144,7 @@ export function CardBankGame({
     gameState.pendingSteal?.drawnValue ?? gameState.pendingBust?.cardValue ?? null;
 
   return (
-    <section className="grid min-w-0 gap-2">
+    <section className="grid min-w-0 content-start gap-2">
       <TurnBadge
         detail={getPhaseDetail(gameState, currentTurnPlayerName)}
         isCurrentTurn={isCurrentTurn}
@@ -259,7 +259,7 @@ function TurnBadge({
   isCurrentTurn: boolean;
 }) {
   return (
-    <div className="grid justify-items-center gap-1 lg:gap-0">
+    <div className="grid content-start justify-items-center gap-1 self-start">
       <div
         className={`inline-flex items-center gap-3 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-extrabold uppercase leading-none tracking-wide lg:h-8 lg:gap-2 lg:px-4 lg:py-0 lg:text-xs ${
           isCurrentTurn
