@@ -457,10 +457,6 @@ function TurnActionPanel({
           </GameButton>
         </div>
       ) : null}
-
-      <p className="text-xs leading-5 text-slate-400">
-        Draw from the deck to build your active area. Stop to secure your cards.
-      </p>
     </div>
   );
 }
@@ -600,7 +596,7 @@ function CardGrid({
       className={
         size === "large"
           ? "grid grid-cols-5 justify-items-center gap-2 2xl:grid-cols-10"
-          : "grid grid-cols-5 justify-items-center gap-1.5"
+          : "grid grid-cols-5 justify-items-center gap-1"
       }
     >
       {expandCards(cards).map((value, index) => (
