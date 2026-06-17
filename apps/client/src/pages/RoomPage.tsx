@@ -424,7 +424,7 @@ export function RoomPage() {
           </div>
         </header>
 
-        <div className="mx-auto grid w-full max-w-[104rem] gap-4 px-3 py-4 sm:px-5 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)_minmax(20rem,25rem)]">
+        <div className="mx-auto grid w-full max-w-[104rem] gap-4 px-3 py-2 lg:py-4 sm:px-5 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)_minmax(20rem,25rem)]">
           {connectionStatus !== "connected" ? (
             <div className="rounded-md border border-amber-300/35 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-100 lg:col-span-2 xl:col-span-3">
               Socket reconnecting. The latest room state will be requested after
