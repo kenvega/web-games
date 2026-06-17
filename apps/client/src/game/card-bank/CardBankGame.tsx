@@ -289,19 +289,96 @@ function DeckDiscard({
   shownDiscardValue: CardBankCardValue | null;
 }) {
   return (
-    <div className="grid grid-cols-2 justify-center gap-2 sm:gap-3">
-      <PileFrame label="Deck" value={deckCount}>
-        <CardBack />
-      </PileFrame>
-      <PileFrame label="Discard" value={discardCount}>
-        {shownDiscardValue === null ? (
-          <div className="grid h-16 w-11 place-items-center rounded-md border-2 border-dashed border-cyan-200/25 bg-slate-900/75 text-center text-xs font-semibold uppercase text-slate-500 sm:h-28 sm:w-20">
-            <Layers size={18} />
-          </div>
-        ) : (
-          <CardTile highlighted size="pile" value={shownDiscardValue} />
-        )}
-      </PileFrame>
+    <>
+      <div className="grid grid-cols-2 items-center gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 px-3 py-2 sm:hidden">
+        <CompactPileStat
+          count={deckCount}
+          icon={<CompactDeckIcon />}
+          label="Deck"
+        />
+        <CompactPileStat
+          count={discardCount}
+          icon={
+            shownDiscardValue === null ? (
+              <CompactEmptyDiscardIcon />
+            ) : (
+              <CompactDiscardCard value={shownDiscardValue} />
+            )
+          }
+          label="Discard"
+        />
+      </div>
+
+      <div className="hidden grid-cols-2 justify-center gap-3 sm:grid">
+        <PileFrame label="Deck" value={deckCount}>
+          <CardBack />
+        </PileFrame>
+        <PileFrame label="Discard" value={discardCount}>
+          {shownDiscardValue === null ? (
+            <div className="grid h-16 w-11 place-items-center rounded-md border-2 border-dashed border-cyan-200/25 bg-slate-900/75 text-center text-xs font-semibold uppercase text-slate-500 sm:h-28 sm:w-20">
+              <Layers size={18} />
+            </div>
+          ) : (
+            <CardTile highlighted size="pile" value={shownDiscardValue} />
+          )}
+        </PileFrame>
+      </div>
+    </>
+  );
+}
+
+function CompactPileStat({
+  count,
+  icon,
+  label
+}: {
+  count: number;
+  icon: ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      {icon}
+      <span className="truncate text-xs font-semibold text-slate-300">
+        {label}
+      </span>
+      <span className="ml-auto text-lg font-extrabold leading-none text-slate-100">
+        {count}
+      </span>
+    </div>
+  );
+}
+
+function CompactDeckIcon() {
+  return (
+    <div className="relative h-7 w-5 shrink-0">
+      <div className="absolute left-0.5 top-0.5 h-full w-full rounded border border-cyan-200/20 bg-slate-900" />
+      <div className="absolute inset-0 grid place-items-center rounded border border-slate-300/80 bg-[#102742]">
+        <Layers className="text-cyan-100/45" size={13} />
+      </div>
+    </div>
+  );
+}
+
+function CompactEmptyDiscardIcon() {
+  return (
+    <div className="grid h-7 w-5 shrink-0 place-items-center rounded border border-dashed border-cyan-200/30 bg-slate-900/75">
+      <Layers className="text-cyan-100/45" size={13} />
+    </div>
+  );
+}
+
+function CompactDiscardCard({ value }: { value: CardBankCardValue }) {
+  return (
+    <div
+      className="relative grid h-7 w-5 shrink-0 place-items-center rounded border border-white/80 text-[0.65rem] font-black leading-none shadow-[0_4px_10px_rgba(0,0,0,0.22)]"
+      style={{
+        backgroundColor: CARD_BANK_CARD_COLORS[value],
+        color: "#ffffff",
+        textShadow: "0 1px 0 rgba(0,0,0,0.24)"
+      }}
+    >
+      {value}
     </div>
   );
 }
