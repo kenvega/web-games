@@ -192,7 +192,7 @@ export function CardBankGame({
         </div>
       ) : null}
 
-      <section className="grid gap-4 lg:grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)] lg:items-stretch">
+      <section className="grid gap-2 lg:grid-cols-[minmax(13rem,17rem)_minmax(0,1fr)] lg:items-stretch">
         <DeckDiscard
           deckCount={gameState.deckCount}
           discardCount={gameState.discardCount}
@@ -337,12 +337,12 @@ function CompactPileStat({
   label: string;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-2">
+    <div className="flex min-w-0 items-center justify-center gap-2">
       {icon}
-      <span className="truncate text-xs font-semibold text-slate-300">
+      <span className="ml-1 truncate font-semibold text-slate-300">
         {label}
       </span>
-      <span className="ml-auto text-lg font-extrabold leading-none text-slate-100">
+      <span className="font-bold leading-none text-slate-100">
         {count}
       </span>
     </div>
