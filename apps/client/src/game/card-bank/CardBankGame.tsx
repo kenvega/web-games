@@ -439,7 +439,7 @@ function PendingStealPrompt({
     .join(", ");
 
   return (
-    <div className="relative grid content-center gap-3 rounded-md border border-emerald-400/45 bg-emerald-950/35 p-4 text-center shadow-[0_0_34px_rgba(16,185,129,0.16)]">
+    <div className="relative grid content-center gap-3 rounded-md border border-emerald-400/45 bg-emerald-950/35 p-2 text-center shadow-[0_0_34px_rgba(16,185,129,0.16)]">
       <div className="absolute left-1/2 top-0 grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-emerald-300/60 bg-slate-950 text-emerald-300">
         <Sparkles size={18} />
       </div>
@@ -500,9 +500,9 @@ function TurnActionPanel({
   const isPlayable = gameState.status === "playing";
 
   return (
-    <div className="grid content-center gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4">
+    <div className="grid content-center gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:p-4">
       <div>
-        <p className="mt-1 text-xl font-extrabold text-slate-100">
+        <p className="text-lg font-bold text-slate-100">
           {isPlayable
             ? isCurrentTurn
               ? "Choose your move"
@@ -611,7 +611,7 @@ function PlayerArea({
 
   return (
     <article
-      className={`grid gap-3 rounded-md border p-3 shadow-[0_20px_70px_rgba(0,0,0,0.18)] ${
+      className={`grid gap-1 rounded-md border p-2 shadow-[0_20px_70px_rgba(0,0,0,0.18)] ${
         isTurn
           ? "border-emerald-400/55 bg-emerald-950/25"
           : "border-cyan-200/15 bg-slate-950/45"
