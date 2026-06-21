@@ -633,7 +633,7 @@ export class RoomManager {
           id: player.id,
           displayName: player.displayName,
           connected: player.connected,
-          score: player.score,
+          score: room.phase === "finished" ? player.score : 0,
           joinedAt: player.joinedAt
         })),
       chatMessages: room.chatMessages,

@@ -374,6 +374,40 @@ describe("RoomManager", () => {
     ).toBe(2);
   });
 
+  it("hides secured point totals until the game finishes", () => {
+    const { manager } = createManager(1000, () => [1, 2, 3, 4]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    for (const [guestId, action] of [
+      [aliceId, { type: "draw-card" as const }],
+      [aliceId, { type: "stop-turn" as const }],
+      [bobId, { type: "draw-card" as const }],
+      [bobId, { type: "stop-turn" as const }]
+    ] as const) {
+      expectOk(
+        manager.handleGameAction({
+          roomCode: "23456789AB",
+          guestId,
+          action
+        })
+      );
+    }
+
+    const state = manager.getPublicState("23456789AB");
+    expect(
+      state?.gameState?.players.find((player) => player.playerId === aliceId)
+        ?.securedCardCount
+    ).toBe(1);
+    expect(state?.players.find((player) => player.id === aliceId)?.score).toBe(0);
+  });
+
   it("does not bust when a steal creates duplicates", () => {
     const { manager } = createManager(1000, () => [1, 1, 1, 5]);
     createRoom(manager);
@@ -582,6 +616,16 @@ describe("RoomManager", () => {
     expect(finalState.state.gameState?.status).toBe("finished");
     expect(finalState.state.players.find((player) => player.id === bobId)?.score).toBe(2);
     expect(finalState.state.players.find((player) => player.id === aliceId)?.score).toBe(2);
+    expect(
+      finalState.state.gameState?.players.find(
+        (player) => player.playerId === bobId
+      )?.securedCardCount
+    ).toBe(2);
+    expect(
+      finalState.state.gameState?.players.find(
+        (player) => player.playerId === aliceId
+      )?.securedCardCount
+    ).toBe(1);
     expect(finalState.state.gameState?.winnerPlayerIds).toEqual([bobId]);
   });
 

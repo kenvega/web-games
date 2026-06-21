@@ -309,7 +309,7 @@ export class CardBankGameModule
           playerId,
           activeCards: cloneCounts(player.activeCards),
           activeCount: getCardCount(player.activeCards),
-          securedScore: getScore(player.bankedCards)
+          securedCardCount: getCardCount(player.bankedCards)
         };
       }),
       pendingSteal:

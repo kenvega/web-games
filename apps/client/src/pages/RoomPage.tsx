@@ -367,6 +367,12 @@ export function RoomPage() {
   const connected = currentPlayer?.connected ?? false;
   const connectedPlayerCount = room.players.filter((player) => player.connected).length;
   const hostDisconnected = hostPlayer !== undefined && !hostPlayer.connected;
+  const securedCardCountByPlayerId = Object.fromEntries(
+    (room.gameState?.players ?? []).map((player) => [
+      player.playerId,
+      player.securedCardCount
+    ])
+  );
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#041520] text-slate-100">
@@ -449,6 +455,7 @@ export function RoomPage() {
               onStart={handleStart}
               players={room.players}
               room={room}
+              securedCardCountByPlayerId={securedCardCountByPlayerId}
             />
           </aside>
 
@@ -489,6 +496,7 @@ export function RoomPage() {
               onStart={handleStart}
               players={room.players}
               room={room}
+              securedCardCountByPlayerId={securedCardCountByPlayerId}
             />
           </div>
         </MobileModal>
@@ -571,7 +579,8 @@ function RoomSidebar({
   isHost,
   connectedPlayerCount,
   onStart,
-  onRestart
+  onRestart,
+  securedCardCountByPlayerId
 }: {
   players: PublicRoomState["players"];
   hostPlayerId: string;
@@ -581,6 +590,7 @@ function RoomSidebar({
   connectedPlayerCount: number;
   onStart: () => Promise<string | null>;
   onRestart: () => Promise<string | null>;
+  securedCardCountByPlayerId: Readonly<Record<string, number>>;
 }) {
   return (
     <div className="grid content-start gap-5">
@@ -588,6 +598,7 @@ function RoomSidebar({
         currentPlayerId={currentPlayerId}
         hostPlayerId={hostPlayerId}
         players={players}
+        securedCardCountByPlayerId={securedCardCountByPlayerId}
       />
       <HostControls
         connectedPlayerCount={connectedPlayerCount}
@@ -597,7 +608,7 @@ function RoomSidebar({
         room={room}
       />
       <p className="rounded-md border border-cyan-200/10 bg-slate-950/35 px-3 py-2 text-xs leading-5 text-slate-500">
-        Scores update when cards are secured.
+        Counts update when cards are secured.
       </p>
     </div>
   );

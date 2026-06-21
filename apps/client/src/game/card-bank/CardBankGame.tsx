@@ -629,7 +629,7 @@ function PlayerArea({
         </div>
         <div className="shrink-0 rounded-md border border-cyan-300/20 bg-slate-950/65 px-3 text-right">
           <p className="text-xs font-extrabold leading-6 text-sky-300">
-            {player.securedScore}
+            {player.securedCardCount}
           </p>
         </div>
       </div>

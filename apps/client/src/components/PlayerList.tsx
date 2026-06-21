@@ -4,11 +4,13 @@ import { Crown, Users } from "lucide-react";
 export function PlayerList({
   players,
   hostPlayerId,
-  currentPlayerId
+  currentPlayerId,
+  securedCardCountByPlayerId
 }: {
   players: PublicPlayer[];
   hostPlayerId: string;
   currentPlayerId: string;
+  securedCardCountByPlayerId: Readonly<Record<string, number>>;
 }) {
   const connectedCount = players.filter((player) => player.connected).length;
 
@@ -66,11 +68,11 @@ export function PlayerList({
                 </span>
               </div>
               <div className="shrink-0 rounded-md border border-cyan-300/20 bg-slate-950/60 px-3 py-1 text-right">
-                <p className="text-[0.65rem] uppercase text-slate-400">
-                  Secured
-                </p>
+                {/* <p className="text-[0.65rem] uppercase text-slate-400">
+                  Cards Secured
+                </p> */}
                 <p className="text-lg font-bold leading-5 text-sky-300">
-                  {player.score}
+                  {securedCardCountByPlayerId[player.id] ?? 0}
                 </p>
               </div>
             </li>

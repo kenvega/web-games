@@ -55,7 +55,7 @@ export type PublicCardBankPlayerState = {
   playerId: string;
   activeCards: CardBankCardCounts;
   activeCount: number;
-  securedScore: number;
+  securedCardCount: number;
 };
 
 export type PublicCardBankStealCandidate = {

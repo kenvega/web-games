@@ -4,6 +4,7 @@
 
 Get the highest total score by the end of the game. Your score is the sum of
 the values on the cards you successfully bank into your personal score pile.
+Point totals remain hidden during play and are revealed when the game ends.
 
 ## Components
 
@@ -54,13 +55,13 @@ Each player has two card zones:
 During play, everyone can see:
 
 * each player's face-up active cards, grouped by value
-* each player's secured point total
+* each player's total number of secured cards
 * the remaining deck count
 * the discard count
 
-During play, players do not see exact value counts in another player's
-face-down score pile. Exact banked counts are revealed at the end of the game
-for tiebreaking.
+During play, players do not see another player's secured point total or exact
+value counts in their face-down score pile. Final point totals and exact banked
+counts are revealed at the end of the game for ranking and tiebreaking.
 
 ## Turn structure
 
@@ -143,6 +144,7 @@ At game end:
 
 * all players immediately move remaining active cards into their score piles
 * everyone totals the values in their score pile
+* reveal every player's final point total and ranking
 * highest total score wins
 
 ## Tiebreaker
@@ -195,7 +197,7 @@ the game consistently:
 * remaining deck count
 * discard count
 * each player's active cards grouped by value
-* each player's secured score total
+* each player's secured card count during play
 * pending steal information when a steal decision is available, including the
   drawn value and the matching cards that can be stolen
 * pending bust information during the 2-second reveal, including the busted
@@ -207,6 +209,7 @@ Server-only state must include:
 * shuffled deck order
 * discarded cards
 * each player's banked card counts by value
+* each player's in-progress secured point total
 * the seated turn order
 * the drawn value awaiting a steal or continue/stop decision
 
@@ -234,6 +237,8 @@ These are the parts that must be covered by tests:
 * A duplicate only causes a bust when the player already had at least 3 active
   cards before drawing.
 * The last drawn card is fully resolved before final scoring.
+* During play, show secured card counts instead of secured point totals; reveal
+  point totals only after the game finishes.
 * Final scoring sums banked card values and applies the 1-through-10
   tiebreaker.
 * Disconnecting during the active player's turn auto-stops that turn.
@@ -254,6 +259,8 @@ all other players. Stealing never causes a bust. If the player does not bust
 from drawing, they may draw again or stop. If they stop, their active cards
 remain face up and can be stolen; they become safe only at the start of that
 player's next turn. When the last deck card is drawn, fully resolve that draw,
-then bank all remaining active cards and score the game. Highest total wins.
+then bank all remaining active cards and score the game. During play, show only
+the number of cards each player has secured; keep secured point totals hidden.
+At game end, reveal the final point totals and rankings. Highest total wins.
 Ties are broken by most 1s in the score pile, then most 2s, then most 3s,
 continuing upward through 10s.
