@@ -55,7 +55,7 @@ export function ChatPanel({
 
   return (
     <section
-      className={`grid gap-3 text-slate-100 ${
+      className={`grid grid-rows-[auto_minmax(0,1fr)] gap-3 text-slate-100 ${
         fill ? "h-full min-h-0" : "min-h-[22rem]"
       } ${className}`}
     >
