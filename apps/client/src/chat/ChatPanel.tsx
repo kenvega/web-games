@@ -3,7 +3,7 @@ import {
   type PublicChatMessage
 } from "@multiplayer-blueprint/shared";
 import { Send } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { Button } from "../components/Button.js";
 
 const timeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -27,6 +27,7 @@ export function ChatPanel({
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const remainingCharacters = CHAT_MESSAGE_MAX_LENGTH - text.length;
   const renderedMessages = useMemo(() => messages.slice(-100), [messages]);
 
@@ -45,10 +46,11 @@ export function ChatPanel({
 
     if (result === null) {
       setText("");
-      return;
+    } else {
+      setError(result);
     }
 
-    setError(result);
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   return (
@@ -101,6 +103,7 @@ export function ChatPanel({
               maxLength={CHAT_MESSAGE_MAX_LENGTH + 20}
               onChange={(event) => setText(event.target.value)}
               placeholder="Type a message..."
+              ref={inputRef}
               value={text}
             />
             <Button
