@@ -375,9 +375,9 @@ export function RoomPage() {
   );
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#041520] text-slate-100">
-      <div className="min-h-screen bg-[linear-gradient(180deg,#051723_0%,#062535_54%,#041520_100%)]">
-        <header className="sticky top-0 z-30 border-b border-cyan-200/15 bg-[#061824]/95 shadow-[0_14px_40px_rgba(0,0,0,0.25)] backdrop-blur">
+    <main className="flex h-screen flex-col overflow-hidden bg-[#041520] text-slate-100">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#051723_0%,#062535_54%,#041520_100%)]">
+        <header className="shrink-0 border-b border-cyan-200/15 bg-[#061824]/95 shadow-[0_14px_40px_rgba(0,0,0,0.25)] backdrop-blur">
           <div className="mx-auto grid max-w-[104rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3 sm:px-5 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)_minmax(20rem,25rem)]">
             <div className="lg:hidden">
               <IconButton
@@ -430,7 +430,7 @@ export function RoomPage() {
           </div>
         </header>
 
-        <div className="mx-auto grid w-full max-w-[104rem] gap-4 px-3 py-2 lg:py-4 sm:px-5 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)_minmax(20rem,25rem)]">
+        <div className="themed-scrollbar mx-auto grid w-full max-w-[104rem] min-h-0 flex-1 gap-4 overflow-y-auto px-3 py-2 lg:py-4 sm:px-5 lg:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(17rem,22rem)_minmax(0,1fr)_minmax(20rem,25rem)]">
           {connectionStatus !== "connected" ? (
             <div className="rounded-md border border-amber-300/35 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-100 lg:col-span-2 xl:col-span-3">
               Socket reconnecting. The latest room state will be requested after
@@ -466,7 +466,7 @@ export function RoomPage() {
             room={room}
           />
 
-          <aside className="hidden h-[calc(100vh-8rem)] overflow-hidden rounded-md border border-cyan-200/15 bg-slate-950/35 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] xl:block">
+          <aside className="hidden h-full overflow-hidden rounded-md border border-cyan-200/15 bg-slate-950/35 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] xl:block">
             <ChatPanel
               disabled={connectionStatus !== "connected"}
               fill
