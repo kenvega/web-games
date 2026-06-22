@@ -72,7 +72,7 @@ export function ChatPanel({
         </span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-3 rounded-md border border-cyan-200/15 bg-slate-950/55 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-        <div className="min-h-48 flex-1 overflow-y-auto pr-1">
+        <div className="themed-scrollbar min-h-48 flex-1 overflow-y-auto pr-1">
           {renderedMessages.length === 0 ? (
             <p className="text-sm text-slate-400">No messages yet.</p>
           ) : (
