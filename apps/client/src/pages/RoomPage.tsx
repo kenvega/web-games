@@ -466,7 +466,7 @@ export function RoomPage() {
             room={room}
           />
 
-          <aside className="hidden min-h-[calc(100vh-8rem)] rounded-md border border-cyan-200/15 bg-slate-950/35 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] xl:block">
+          <aside className="hidden h-[calc(100vh-8rem)] overflow-hidden rounded-md border border-cyan-200/15 bg-slate-950/35 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] xl:block">
             <ChatPanel
               disabled={connectionStatus !== "connected"}
               fill
