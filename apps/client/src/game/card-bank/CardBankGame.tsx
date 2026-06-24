@@ -166,8 +166,6 @@ export function CardBankGame({
       : isCurrentTurn
         ? "Your Turn"
         : `${currentTurnPlayerName}'s Turn`;
-  const shownDiscardValue =
-    gameState.pendingSteal?.drawnValue ?? gameState.pendingBust?.cardValue ?? null;
 
   return (
     <section className="grid min-w-0 content-start gap-2">
@@ -225,7 +223,6 @@ export function CardBankGame({
         <DeckDiscard
           deckCount={gameState.deckCount}
           discardCount={gameState.discardCount}
-          shownDiscardValue={shownDiscardValue}
         />
 
         {gameState.pendingSteal !== null ? (
@@ -313,12 +310,10 @@ function TurnBadge({
 
 function DeckDiscard({
   deckCount,
-  discardCount,
-  shownDiscardValue
+  discardCount
 }: {
   deckCount: number;
   discardCount: number;
-  shownDiscardValue: CardBankCardValue | null;
 }) {
   return (
     <>
@@ -330,13 +325,7 @@ function DeckDiscard({
         />
         <CompactPileStat
           count={discardCount}
-          icon={
-            shownDiscardValue === null ? (
-              <CompactEmptyDiscardIcon />
-            ) : (
-              <CompactDiscardCard value={shownDiscardValue} />
-            )
-          }
+          icon={<CompactEmptyDiscardIcon />}
           label="Discard"
         />
       </div>
@@ -346,13 +335,9 @@ function DeckDiscard({
           <CardBack />
         </PileFrame>
         <PileFrame label="Discard" value={discardCount}>
-          {shownDiscardValue === null ? (
-            <div className="grid h-16 w-11 place-items-center rounded-md border-2 border-dashed border-cyan-200/25 bg-slate-900/75 text-center text-xs font-semibold uppercase text-slate-500 sm:h-28 sm:w-20">
-              <Layers size={18} />
-            </div>
-          ) : (
-            <CardTile highlighted size="pile" value={shownDiscardValue} />
-          )}
+          <div className="grid h-16 w-11 place-items-center rounded-md border-2 border-dashed border-cyan-200/25 bg-slate-900/75 text-center text-xs font-semibold uppercase text-slate-500 sm:h-28 sm:w-20">
+            <Layers size={18} />
+          </div>
         </PileFrame>
       </div>
     </>
@@ -396,21 +381,6 @@ function CompactEmptyDiscardIcon() {
   return (
     <div className="grid h-7 w-5 shrink-0 place-items-center rounded border border-dashed border-cyan-200/30 bg-slate-900/75">
       <Layers className="text-cyan-100/45" size={13} />
-    </div>
-  );
-}
-
-function CompactDiscardCard({ value }: { value: CardBankCardValue }) {
-  return (
-    <div
-      className="relative grid h-7 w-5 shrink-0 place-items-center rounded border border-white/80 text-[0.65rem] font-black leading-none shadow-[0_4px_10px_rgba(0,0,0,0.22)]"
-      style={{
-        backgroundColor: CARD_BANK_CARD_COLORS[value],
-        color: "#ffffff",
-        textShadow: "0 1px 0 rgba(0,0,0,0.24)"
-      }}
-    >
-      {value}
     </div>
   );
 }
