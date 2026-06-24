@@ -175,13 +175,6 @@ export function CardBankGame({
         label={turnLabel}
       />
 
-      {gameState.pendingBust !== null ? (
-        <BustReveal
-          name={getPlayerName(playerLookup, gameState.pendingBust.playerId)}
-          value={gameState.pendingBust.cardValue}
-        />
-      ) : null}
-
       {gameState.finalStandings !== null ? (
         <FinalStandings
           playerLookup={playerLookup}
@@ -237,6 +230,17 @@ export function CardBankGame({
           />
         ) : (
           <TurnActionPanel
+            bustReveal={
+              gameState.pendingBust === null
+                ? null
+                : {
+                    name: getPlayerName(
+                      playerLookup,
+                      gameState.pendingBust.playerId
+                    ),
+                    value: gameState.pendingBust.cardValue
+                  }
+            }
             canDraw={canDraw}
             canStop={canStop}
             currentTurnPlayerName={currentTurnPlayerName}
@@ -486,6 +490,7 @@ function TurnActionPanel({
   canDraw,
   canStop,
   submittingAction,
+  bustReveal,
   onDraw,
   onStop
 }: {
@@ -496,10 +501,21 @@ function TurnActionPanel({
   canDraw: boolean;
   canStop: boolean;
   submittingAction: CardBankGameAction["type"] | null;
+  bustReveal: { name: string; value: CardBankCardValue } | null;
   onDraw: () => void;
   onStop: () => void;
 }) {
   const isPlayable = gameState.status === "playing";
+
+  // While a bust is being revealed, take over the action panel with the bust
+  // message so it reads in place instead of pushing the rest of the board down.
+  if (bustReveal !== null) {
+    return (
+      <div className="grid content-center gap-3 rounded-md border border-rose-300/40 bg-rose-500/10 p-2 lg:p-4">
+        <BustNotice name={bustReveal.name} value={bustReveal.value} />
+      </div>
+    );
+  }
 
   return (
     <div className="grid content-center gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:p-4">
@@ -567,7 +583,7 @@ function GameButton({
   );
 }
 
-function BustReveal({
+function BustNotice({
   name,
   value
 }: {
@@ -575,18 +591,18 @@ function BustReveal({
   value: CardBankCardValue;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-rose-300/40 bg-rose-500/10 p-3">
+    <div className="flex items-center justify-center gap-3">
+      <div className="w-12 shrink-0">
+        <CardTile highlighted size="small" value={value} />
+      </div>
       <div className="min-w-0">
         <p className="flex items-center gap-2 text-sm font-extrabold text-rose-100">
           <AlertTriangle size={16} />
           {name} busted
         </p>
         <p className="mt-1 text-xs leading-5 text-rose-200/80">
-          Card {value} caused the bust. Cards discard in a moment.
+          Card {value} caused the bust. Discarding in a moment.
         </p>
-      </div>
-      <div className="w-14 shrink-0">
-        <CardTile highlighted size="small" value={value} />
       </div>
     </div>
   );
