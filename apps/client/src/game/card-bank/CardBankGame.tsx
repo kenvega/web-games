@@ -17,7 +17,14 @@ import {
   Trophy,
   X
 } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode
+} from "react";
 
 type PlayerLookup = Map<string, PublicPlayer>;
 type PlayerState = PublicCardBankGameState["players"][number];
@@ -28,12 +35,6 @@ function getPlayerName(players: PlayerLookup, playerId: string): string {
 
 function getCardTotal(cards: CardBankCardCounts): number {
   return CARD_BANK_CARD_VALUES.reduce((total, value) => total + cards[value], 0);
-}
-
-function expandCards(cards: CardBankCardCounts): CardBankCardValue[] {
-  return CARD_BANK_CARD_VALUES.flatMap((value) =>
-    Array.from({ length: cards[value] }, () => value)
-  );
 }
 
 function getPhaseDetail(
@@ -82,6 +83,23 @@ export function CardBankGame({
     () => new Map(room.players.map((player) => [player.id, player])),
     [room.players]
   );
+
+  // Track the previous active-card counts per player so we can flash a border
+  // on cards that were just drawn or stolen. The extra-lives badge tracks its
+  // own changes inside LivesBadge.
+  const previousCardsRef = useRef<Map<string, CardBankCardCounts>>(new Map());
+
+  useEffect(() => {
+    if (gameState === null) {
+      return;
+    }
+
+    const nextCards = new Map<string, CardBankCardCounts>();
+    for (const player of gameState.players) {
+      nextCards.set(player.playerId, player.activeCards);
+    }
+    previousCardsRef.current = nextCards;
+  }, [room.version, gameState]);
 
   const runAction = async (action: CardBankGameAction) => {
     setSubmittingAction(action.type);
@@ -194,6 +212,9 @@ export function CardBankGame({
                   : null
               }
               player={playerState}
+              previousCards={
+                previousCardsRef.current.get(playerState.playerId) ?? null
+              }
               variant="opponent"
             />
           ))}
@@ -250,6 +271,9 @@ export function CardBankGame({
           }
           pendingStealValue={null}
           player={currentPlayerState}
+          previousCards={
+            previousCardsRef.current.get(currentPlayerState.playerId) ?? null
+          }
           variant="current"
         />
       ) : null}
@@ -598,6 +622,85 @@ function BustReveal({
   );
 }
 
+// Renders the extra-lives badge and owns its own animations: a border flash
+// whenever the count changes, and a pop-and-fade when the last life is spent
+// (kept mounted briefly so the exit can play before it is removed).
+function LivesBadge({ extraLives }: { extraLives: number }) {
+  const previousRef = useRef(extraLives);
+  const [enterToken, setEnterToken] = useState(0);
+  const [leaving, setLeaving] = useState<{ value: number; token: number } | null>(
+    null
+  );
+
+  useLayoutEffect(() => {
+    const previous = previousRef.current;
+    if (previous === extraLives) {
+      return;
+    }
+    previousRef.current = extraLives;
+
+    if (extraLives > 0) {
+      setEnterToken((token) => token + 1);
+      setLeaving(null);
+    } else if (previous > 0) {
+      setLeaving((current) => ({
+        value: previous,
+        token: (current?.token ?? 0) + 1
+      }));
+    }
+  }, [extraLives]);
+
+  useEffect(() => {
+    if (leaving === null) {
+      return;
+    }
+    const timer = window.setTimeout(() => setLeaving(null), 520);
+    return () => window.clearTimeout(timer);
+  }, [leaving]);
+
+  if (extraLives > 0) {
+    return (
+      <LivesPill
+        animationClass={enterToken === 0 ? "" : "cb-lives-flash"}
+        key={`flash-${enterToken}`}
+        value={extraLives}
+      />
+    );
+  }
+
+  if (leaving !== null) {
+    return (
+      <LivesPill
+        animationClass="cb-lives-leave"
+        key={`leave-${leaving.token}`}
+        value={leaving.value}
+      />
+    );
+  }
+
+  return null;
+}
+
+function LivesPill({
+  value,
+  animationClass
+}: {
+  value: number;
+  animationClass: string;
+}) {
+  return (
+    <div
+      className={`flex items-center gap-1 rounded-md border border-rose-300/30 bg-rose-950/40 px-2 ${animationClass}`}
+      title={`${value} extra ${value === 1 ? "life" : "lives"}`}
+    >
+      <Heart aria-hidden className="h-3 w-3 fill-rose-400 text-rose-400" />
+      <span className="text-xs font-extrabold leading-6 text-rose-200">
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function PlayerArea({
   player,
   name,
@@ -605,6 +708,7 @@ function PlayerArea({
   isTurn,
   pendingStealValue,
   pendingBustValue,
+  previousCards,
   variant
 }: {
   player: PlayerState;
@@ -613,6 +717,7 @@ function PlayerArea({
   isTurn: boolean;
   pendingStealValue: CardBankCardValue | null;
   pendingBustValue: CardBankCardValue | null;
+  previousCards: CardBankCardCounts | null;
   variant: "opponent" | "current";
 }) {
   const isCurrentArea = variant === "current";
@@ -636,22 +741,7 @@ function PlayerArea({
           </h3>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          {player.extraLives > 0 ? (
-            <div
-              className="flex items-center gap-1 rounded-md border border-rose-300/30 bg-rose-950/40 px-2"
-              title={`${player.extraLives} extra ${
-                player.extraLives === 1 ? "life" : "lives"
-              }`}
-            >
-              <Heart
-                aria-hidden
-                className="h-3 w-3 fill-rose-400 text-rose-400"
-              />
-              <span className="text-xs font-extrabold leading-6 text-rose-200">
-                {player.extraLives}
-              </span>
-            </div>
-          ) : null}
+          <LivesBadge extraLives={player.extraLives} />
           <div className="rounded-md border border-cyan-300/20 bg-slate-950/65 px-3 text-right">
             <p className="text-xs font-extrabold leading-6 text-sky-300">
               {player.securedCardCount}
@@ -662,6 +752,7 @@ function PlayerArea({
 
       <CardGrid
         cards={player.activeCards}
+        previousCards={previousCards}
         pendingBustValue={pendingBustValue}
         pendingStealValue={pendingStealValue}
         size={isCurrentArea ? "large" : "small"}
@@ -672,11 +763,13 @@ function PlayerArea({
 
 function CardGrid({
   cards,
+  previousCards,
   pendingBustValue,
   pendingStealValue,
   size
 }: {
   cards: CardBankCardCounts;
+  previousCards: CardBankCardCounts | null;
   pendingBustValue: CardBankCardValue | null;
   pendingStealValue: CardBankCardValue | null;
   size: "small" | "large";
@@ -699,14 +792,23 @@ function CardGrid({
           : "grid grid-cols-5 justify-items-center gap-1"
       }
     >
-      {expandCards(cards).map((value, index) => (
-        <CardTile
-          highlighted={pendingBustValue === value || pendingStealValue === value}
-          key={`${value}-${index}`}
-          size={size}
-          value={value}
-        />
-      ))}
+      {CARD_BANK_CARD_VALUES.flatMap((value) => {
+        const count = cards[value];
+        // Without a prior snapshot (first render) treat every card as old so
+        // the board does not flash on initial load.
+        const previousCount = previousCards === null ? count : previousCards[value];
+        return Array.from({ length: count }, (_, occurrence) => (
+          <CardTile
+            flash={occurrence >= previousCount}
+            highlighted={
+              pendingBustValue === value || pendingStealValue === value
+            }
+            key={`${value}-${occurrence}`}
+            size={size}
+            value={value}
+          />
+        ));
+      })}
     </div>
   );
 }
@@ -714,10 +816,12 @@ function CardGrid({
 function CardTile({
   value,
   highlighted = false,
+  flash = false,
   size
 }: {
   value: CardBankCardValue;
   highlighted?: boolean;
+  flash?: boolean;
   size: "small" | "large" | "pile";
 }) {
   const isLarge = size === "large";
@@ -740,7 +844,9 @@ function CardTile({
     <div
       className={`relative grid place-items-center overflow-hidden rounded-md border-2 border-white/80 shadow-[0_8px_18px_rgba(0,0,0,0.25)] ${
         tileSizeClass
-      } ${highlighted ? "ring-2 ring-emerald-300" : ""}`}
+      } ${highlighted ? "ring-2 ring-emerald-300" : ""} ${
+        flash ? "cb-card-flash" : ""
+      }`}
       style={{
         backgroundColor: CARD_BANK_CARD_COLORS[value],
         color: "#ffffff",

@@ -46,3 +46,79 @@ input {
 .themed-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(103, 232, 249, 0.55);
 }
+
+/* Flash an animated border on a card the moment it is drawn or stolen. */
+@keyframes cb-card-flash {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(110, 231, 183, 0),
+      0 8px 18px rgba(0, 0, 0, 0.25);
+  }
+  15% {
+    box-shadow:
+      0 0 0 3px rgba(110, 231, 183, 0.95),
+      0 0 16px 3px rgba(110, 231, 183, 0.55),
+      0 8px 18px rgba(0, 0, 0, 0.25);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(110, 231, 183, 0),
+      0 8px 18px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.cb-card-flash {
+  animation: cb-card-flash 1.1s ease-out;
+}
+
+/* Flash the extra-lives badge border whenever the count changes. */
+@keyframes cb-lives-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+  20% {
+    box-shadow:
+      0 0 0 3px rgba(251, 113, 133, 0.85),
+      0 0 14px 2px rgba(251, 113, 133, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+}
+
+.cb-lives-flash {
+  animation: cb-lives-flash 1.1s ease-out;
+}
+
+/* Pop and fade the extra-lives badge out when the last life is spent. */
+@keyframes cb-lives-leave {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.12);
+    box-shadow:
+      0 0 0 3px rgba(251, 113, 133, 0.8),
+      0 0 14px 2px rgba(251, 113, 133, 0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+}
+
+.cb-lives-leave {
+  animation: cb-lives-leave 0.5s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-card-flash,
+  .cb-lives-flash,
+  .cb-lives-leave {
+    animation: none;
+  }
+}
