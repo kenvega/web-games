@@ -501,7 +501,7 @@ describe("RoomManager", () => {
   });
 
   it("busts when drawing a duplicate after already having three active cards", () => {
-    const { manager } = createManager(1000, () => [2, 3, 4, 2, 5]);
+    const { manager } = createManager(1000, () => [2, 4, 6, 2, 5]);
     createRoom(manager);
     joinBob(manager);
     expectOk(
@@ -556,6 +556,155 @@ describe("RoomManager", () => {
       )?.activeCount
     ).toBe(0);
     expect(resolved?.state.players.find((player) => player.id === aliceId)?.score).toBe(0);
+  });
+
+  it("grants extra lives for each new run of three consecutive cards", () => {
+    const { manager } = createManager(1000, () => [3, 4, 6, 7, 5, 10, 10, 10]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    for (const action of [
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "draw-card" as const }
+    ]) {
+      expectOk(
+        manager.handleGameAction({
+          roomCode: "23456789AB",
+          guestId: aliceId,
+          action
+        })
+      );
+    }
+
+    // After 3, 4, 6, 7 no run of three consecutive values exists yet.
+    let alice = manager
+      .getPublicState("23456789AB")
+      ?.gameState?.players.find((player) => player.playerId === aliceId);
+    expect(alice?.extraLives).toBe(0);
+
+    // Drawing the 5 completes 3-4-5, 4-5-6 and 5-6-7 at once: three lives.
+    const drewFive = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+    expect(drewFive.state.gameState?.turnPhase).toBe("awaiting-decision");
+    alice = drewFive.state.gameState?.players.find(
+      (player) => player.playerId === aliceId
+    );
+    expect(alice?.extraLives).toBe(3);
+  });
+
+  it("spends an extra life to survive a bust instead of busting", () => {
+    const { manager } = createManager(1000, () => [3, 4, 5, 3, 9, 9]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    for (const action of [
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "draw-card" as const }
+    ]) {
+      expectOk(
+        manager.handleGameAction({
+          roomCode: "23456789AB",
+          guestId: aliceId,
+          action
+        })
+      );
+    }
+
+    let alice = manager
+      .getPublicState("23456789AB")
+      ?.gameState?.players.find((player) => player.playerId === aliceId);
+    expect(alice?.extraLives).toBe(1);
+
+    // Drawing a duplicate 3 with three active cards would normally bust, but the
+    // extra life shields the player: the card is kept like a normal draw and one
+    // life is spent.
+    const survived = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+    expect(survived.state.gameState?.turnPhase).toBe("awaiting-decision");
+    expect(survived.state.gameState?.pendingBust).toBeNull();
+    expect(survived.state.gameState?.discardCount).toBe(0);
+    alice = survived.state.gameState?.players.find(
+      (player) => player.playerId === aliceId
+    );
+    expect(alice?.extraLives).toBe(0);
+    expect(alice?.activeCount).toBe(4);
+  });
+
+  it("resets extra lives once the active area is banked", () => {
+    const { manager } = createManager(1000, () => [3, 4, 5, 8, 8]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    for (const action of [
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "stop-turn" as const }
+    ]) {
+      expectOk(
+        manager.handleGameAction({
+          roomCode: "23456789AB",
+          guestId: aliceId,
+          action
+        })
+      );
+    }
+
+    // Alice earned a life, then stopped. Bob plays and stops, returning the turn
+    // to Alice, which banks her active cards and clears the earned life.
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "draw-card" }
+      })
+    );
+    const backToAlice = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "stop-turn" }
+      })
+    );
+
+    const alice = backToAlice.state.gameState?.players.find(
+      (player) => player.playerId === aliceId
+    );
+    expect(backToAlice.state.gameState?.currentPlayerId).toBe(aliceId);
+    expect(alice?.extraLives).toBe(0);
+    expect(alice?.activeCount).toBe(0);
+    expect(alice?.securedCardCount).toBe(3);
   });
 
   it("resolves the last card before final scoring and tiebreaks", () => {

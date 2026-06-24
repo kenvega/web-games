@@ -19,6 +19,7 @@ type CardBankPlayerState = {
   playerId: string;
   activeCards: CardBankCardCounts;
   bankedCards: CardBankCardCounts;
+  extraLives: number;
 };
 
 type CardBankPendingSteal = {
@@ -150,6 +151,23 @@ function hasBustForDraw(input: {
   return input.hadValueBeforeDraw && input.activeCountBeforeDraw >= 3;
 }
 
+// Counts how many runs of three consecutive values (e.g. 3-4-5) are present in
+// an active area. A value counts as present when at least one copy is held.
+function countConsecutiveTriples(counts: CardBankCardCounts): number {
+  let triples = 0;
+  for (let value = 1; value <= 8; value += 1) {
+    if (
+      counts[value as CardBankCardValue] > 0 &&
+      counts[(value + 1) as CardBankCardValue] > 0 &&
+      counts[(value + 2) as CardBankCardValue] > 0
+    ) {
+      triples += 1;
+    }
+  }
+
+  return triples;
+}
+
 function compareStandings(
   left: PublicCardBankStanding,
   right: PublicCardBankStanding
@@ -193,7 +211,8 @@ export class CardBankGameModule
         {
           playerId,
           activeCards: createEmptyCounts(),
-          bankedCards: createEmptyCounts()
+          bankedCards: createEmptyCounts(),
+          extraLives: 0
         }
       ])
     );
@@ -309,7 +328,8 @@ export class CardBankGameModule
           playerId,
           activeCards: cloneCounts(player.activeCards),
           activeCount: getCardCount(player.activeCards),
-          securedCardCount: getCardCount(player.bankedCards)
+          securedCardCount: getCardCount(player.bankedCards),
+          extraLives: player.extraLives
         };
       }),
       pendingSteal:
@@ -375,6 +395,7 @@ export class CardBankGameModule
     const drawnValue = state.deck[0] as CardBankCardValue;
     const remainingDeck = state.deck.slice(1);
     const currentPlayer = state.players[currentPlayerId] as CardBankPlayerState;
+    const triplesBeforeDraw = countConsecutiveTriples(currentPlayer.activeCards);
     const nextPlayer = {
       ...currentPlayer,
       activeCards: cloneCounts(currentPlayer.activeCards)
@@ -395,10 +416,24 @@ export class CardBankGameModule
     };
 
     if (hasBustForDraw({ hadValueBeforeDraw, activeCountBeforeDraw })) {
-      return {
-        accepted: true,
-        nextState: this.revealBust(nextState, currentPlayerId, drawnValue)
-      };
+      if (currentPlayer.extraLives === 0) {
+        return {
+          accepted: true,
+          nextState: this.revealBust(nextState, currentPlayerId, drawnValue)
+        };
+      }
+
+      // An extra life shields the player from the bust. The drawn card is kept
+      // exactly like a normal draw; the player only spends one extra life and
+      // the turn continues through the usual steal and continue/stop flow.
+      nextPlayer.extraLives -= 1;
+    }
+
+    // A safe draw can complete one or more new runs of three consecutive
+    // values; each newly formed run grants an extra life.
+    const triplesAfterDraw = countConsecutiveTriples(nextPlayer.activeCards);
+    if (triplesAfterDraw > triplesBeforeDraw) {
+      nextPlayer.extraLives += triplesAfterDraw - triplesBeforeDraw;
     }
 
     const candidates = this.getStealCandidates(nextState, drawnValue);
@@ -454,6 +489,10 @@ export class CardBankGameModule
       };
     }
 
+    const triplesBeforeSteal = countConsecutiveTriples(
+      (state.players[currentPlayerId] as CardBankPlayerState).activeCards
+    );
+
     const nextState: CardBankGameState = {
       ...state,
       players: { ...state.players },
@@ -499,6 +538,23 @@ export class CardBankGameModule
       }
 
       nextState.players[currentPlayerId] = nextCurrentPlayer;
+    }
+
+    // Award extra lives for any runs of three consecutive values completed by
+    // the steal.
+    const currentPlayerAfterSteal = nextState.players[
+      currentPlayerId
+    ] as CardBankPlayerState;
+    const triplesAfterSteal = countConsecutiveTriples(
+      currentPlayerAfterSteal.activeCards
+    );
+    if (triplesAfterSteal > triplesBeforeSteal) {
+      nextState.players[currentPlayerId] = {
+        ...currentPlayerAfterSteal,
+        extraLives:
+          currentPlayerAfterSteal.extraLives +
+          (triplesAfterSteal - triplesBeforeSteal)
+      };
     }
 
     if (nextState.deck.length === 0) {
@@ -560,7 +616,8 @@ export class CardBankGameModule
     const discardedCards = cardsFromCounts(player.activeCards);
     const nextPlayer = {
       ...player,
-      activeCards: createEmptyCounts()
+      activeCards: createEmptyCounts(),
+      extraLives: 0
     };
     const nextState = {
       ...state,
@@ -639,7 +696,8 @@ export class CardBankGameModule
         [currentPlayerId]: {
           ...player,
           activeCards: createEmptyCounts(),
-          bankedCards: nextBankedCards
+          bankedCards: nextBankedCards,
+          extraLives: 0
         }
       }
     };
@@ -657,7 +715,8 @@ export class CardBankGameModule
       players[playerId] = {
         ...player,
         activeCards: createEmptyCounts(),
-        bankedCards: nextBankedCards
+        bankedCards: nextBankedCards,
+        extraLives: 0
       };
     }
 

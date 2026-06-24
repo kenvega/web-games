@@ -56,6 +56,7 @@ During play, everyone can see:
 
 * each player's face-up active cards, grouped by value
 * each player's total number of secured cards
+* each player's current number of extra lives
 * the remaining deck count
 * the discard count
 
@@ -85,7 +86,9 @@ Keep your active cards grouped by value.
 
 If you already had at least 3 face-up cards in your active area before drawing,
 and the drawn card matches a value you already had face up before the draw, you
-bust after a short reveal:
+would bust. If you hold one or more extra lives, the bust is prevented instead
+(see "Extra lives from consecutive runs" below). Otherwise you bust after a
+short reveal:
 
 * the game shows the busting card and player for 2 seconds
 * player actions are disabled during the reveal
@@ -100,6 +103,32 @@ safe.
 
 When the drawn card causes a bust, the game does not offer a steal prompt
 first.
+
+### Extra lives from consecutive runs
+
+Whenever your active area gains a card — from drawing or from stealing — the
+game checks for newly completed runs of three consecutive values (for example
+3-4-5). Each newly completed run grants you one extra life.
+
+* A value counts toward a run if you hold at least one copy of it.
+* Several runs can be completed by a single card. For example, holding 3, 4, 6,
+  7 and then drawing a 5 completes 3-4-5, 4-5-6, and 5-6-7 at once, granting
+  three extra lives.
+* Extending an existing run grants another life. Holding 3-4-5 and then drawing
+  a 6 completes the new run 4-5-6, granting one more life.
+* Only runs that become newly complete count. A card that does not complete any
+  new run grants nothing.
+
+An extra life shields you from one bust. If a draw would bust you and you hold
+at least one extra life, you do not bust: you keep the drawn card and the rest
+of your active area exactly as in a normal draw — including any steal the drawn
+value enables — and you simply spend one extra life. You can hold several extra
+lives and spend them across several would-be busts in the same turn.
+
+Extra lives belong to your current active area. They are cleared whenever that
+active area leaves the table — when it is banked at the start of your next turn,
+or discarded by a bust you could not shield. You therefore start every fresh
+turn with zero extra lives.
 
 ### 4. Optional steal after a safe draw
 
@@ -119,6 +148,10 @@ piles.
 Stealing cannot cause a bust. Only drawing a card from the central deck can
 cause a bust, even if the steal gives you duplicates or at least 3 total active
 cards.
+
+After the steal resolves, the game re-checks your active area for newly
+completed runs of three consecutive values and grants extra lives for any it
+finds, exactly as it does after a draw.
 
 ### 5. Continue or stop
 
@@ -198,6 +231,7 @@ the game consistently:
 * discard count
 * each player's active cards grouped by value
 * each player's secured card count during play
+* each player's current extra life count
 * pending steal information when a steal decision is available, including the
   drawn value and the matching cards that can be stolen
 * pending bust information during the 2-second reveal, including the busted
@@ -236,6 +270,11 @@ These are the parts that must be covered by tests:
 * A bust discards only the current active area, not the banked score pile.
 * A duplicate only causes a bust when the player already had at least 3 active
   cards before drawing.
+* Completing a run of three consecutive values grants one extra life, and a
+  single card completing several runs grants several extra lives.
+* An extra life prevents a would-be bust: the drawn card is kept like a normal
+  draw (it may still trigger a steal) and one extra life is spent.
+* Extra lives reset to zero when the active area is banked or busted.
 * The last drawn card is fully resolved before final scoring.
 * During play, show secured card counts instead of secured point totals; reveal
   point totals only after the game finishes.
@@ -252,11 +291,18 @@ Each player has a face-up active area and a face-down score pile. On a player's
 turn, first move all cards from their active area into their score pile. Then
 the player repeatedly draws the top card of the deck into their active area. If
 the player already had at least 3 active cards before drawing and the drawn card
-duplicates an active value, show the busting card for 2 seconds, then discard
-the active area and end the turn without offering a steal. Otherwise, after each
-draw, the player may optionally steal all face-up cards of that same value from
-all other players. Stealing never causes a bust. If the player does not bust
-from drawing, they may draw again or stop. If they stop, their active cards
+duplicates an active value, the player would bust. Whenever a card enters the
+active area by drawing or stealing, grant one extra life for each newly
+completed run of three consecutive values (for example 3-4-5); one card can
+complete several runs and grant several lives at once. A would-be bust is
+prevented if the player holds an extra life: keep the drawn card as in a normal
+draw (it may still trigger a steal), spend one extra life, and continue the turn.
+If the player has no extra life, show the busting card for 2 seconds, then
+discard the active area and end the turn without offering a steal. Extra lives
+reset to zero whenever the active area is banked or busted. Otherwise, after
+each draw, the player may optionally steal all face-up cards of that same value
+from all other players. Stealing never causes a bust. If the player does not
+bust from drawing, they may draw again or stop. If they stop, their active cards
 remain face up and can be stolen; they become safe only at the start of that
 player's next turn. When the last deck card is drawn, fully resolve that draw,
 then bank all remaining active cards and score the game. During play, show only

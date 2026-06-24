@@ -8,7 +8,15 @@ import {
   type PublicPlayer,
   type PublicRoomState
 } from "@multiplayer-blueprint/shared";
-import { AlertTriangle, Layers, Play, Sparkles, Trophy, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Heart,
+  Layers,
+  Play,
+  Sparkles,
+  Trophy,
+  X
+} from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 
 type PlayerLookup = Map<string, PublicPlayer>;
@@ -627,10 +635,28 @@ function PlayerArea({
             {isCurrentPlayer ? "You" : name}
           </h3>
         </div>
-        <div className="shrink-0 rounded-md border border-cyan-300/20 bg-slate-950/65 px-3 text-right">
-          <p className="text-xs font-extrabold leading-6 text-sky-300">
-            {player.securedCardCount}
-          </p>
+        <div className="flex shrink-0 items-center gap-1.5">
+          {player.extraLives > 0 ? (
+            <div
+              className="flex items-center gap-1 rounded-md border border-rose-300/30 bg-rose-950/40 px-2"
+              title={`${player.extraLives} extra ${
+                player.extraLives === 1 ? "life" : "lives"
+              }`}
+            >
+              <Heart
+                aria-hidden
+                className="h-3 w-3 fill-rose-400 text-rose-400"
+              />
+              <span className="text-xs font-extrabold leading-6 text-rose-200">
+                {player.extraLives}
+              </span>
+            </div>
+          ) : null}
+          <div className="rounded-md border border-cyan-300/20 bg-slate-950/65 px-3 text-right">
+            <p className="text-xs font-extrabold leading-6 text-sky-300">
+              {player.securedCardCount}
+            </p>
+          </div>
         </div>
       </div>
 
