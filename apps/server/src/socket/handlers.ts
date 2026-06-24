@@ -161,7 +161,8 @@ export function registerSocketHandlers(
         const result = roomManager.createRoom({
           guestId: input.guestId,
           displayName: input.displayName,
-          socketId: socket.id
+          socketId: socket.id,
+          extraLivesEnabled: input.extraLivesEnabled
         });
 
         if (!result.ok) {
@@ -299,6 +300,33 @@ export function registerSocketHandlers(
       } catch (error) {
         console.error("room:restart failed", error);
         ack(fail("UNEXPECTED_ERROR", "Unable to restart the room."));
+      }
+    });
+
+    socket.on("room:update-settings", (input, ack) => {
+      try {
+        const guestId = socket.data.guestId;
+        if (guestId === undefined) {
+          ack(fail("NOT_IN_ROOM", "You are not in this room."));
+          return;
+        }
+
+        const result = roomManager.updateRoomSettings({
+          roomCode: input.roomCode,
+          guestId,
+          extraLivesEnabled: input.extraLivesEnabled
+        });
+
+        if (!result.ok) {
+          ack(result);
+          return;
+        }
+
+        ack(result);
+        emitState(result.data);
+      } catch (error) {
+        console.error("room:update-settings failed", error);
+        ack(fail("UNEXPECTED_ERROR", "Unable to update the room settings."));
       }
     });
 

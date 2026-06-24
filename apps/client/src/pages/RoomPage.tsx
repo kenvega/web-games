@@ -35,7 +35,8 @@ import {
   restartRoomCommand,
   sendChatMessageCommand,
   sendGameActionCommand,
-  startRoomCommand
+  startRoomCommand,
+  updateRoomSettingsCommand
 } from "../lib/socketCommands.js";
 
 type RoomPageStatus = "joining" | "joined" | "not-found" | "error";
@@ -260,6 +261,25 @@ export function RoomPage() {
     return null;
   };
 
+  const handleUpdateSettings = async (
+    nextExtraLivesEnabled: boolean
+  ): Promise<string | null> => {
+    if (roomCode === null) {
+      return "Enter a valid room code.";
+    }
+
+    const result = await updateRoomSettingsCommand(socket, {
+      roomCode,
+      extraLivesEnabled: nextExtraLivesEnabled
+    });
+    if (!result.ok) {
+      return result.error.message;
+    }
+
+    applyRoomState(result.data.state);
+    return null;
+  };
+
   const handleChatSend = async (text: string): Promise<string | null> => {
     if (roomCode === null) {
       return "Enter a valid room code.";
@@ -452,6 +472,7 @@ export function RoomPage() {
               hostPlayerId={room.hostPlayerId}
               isHost={isHost}
               onRestart={handleRestart}
+              onUpdateSettings={handleUpdateSettings}
               onStart={handleStart}
               players={room.players}
               room={room}
@@ -493,6 +514,7 @@ export function RoomPage() {
               hostPlayerId={room.hostPlayerId}
               isHost={isHost}
               onRestart={handleRestart}
+              onUpdateSettings={handleUpdateSettings}
               onStart={handleStart}
               players={room.players}
               room={room}
@@ -580,6 +602,7 @@ function RoomSidebar({
   connectedPlayerCount,
   onStart,
   onRestart,
+  onUpdateSettings,
   securedCardCountByPlayerId
 }: {
   players: PublicRoomState["players"];
@@ -590,6 +613,7 @@ function RoomSidebar({
   connectedPlayerCount: number;
   onStart: () => Promise<string | null>;
   onRestart: () => Promise<string | null>;
+  onUpdateSettings: (extraLivesEnabled: boolean) => Promise<string | null>;
   securedCardCountByPlayerId: Readonly<Record<string, number>>;
 }) {
   return (
@@ -599,6 +623,11 @@ function RoomSidebar({
         hostPlayerId={hostPlayerId}
         players={players}
         securedCardCountByPlayerId={securedCardCountByPlayerId}
+      />
+      <RuleToggle
+        isHost={isHost}
+        onUpdateSettings={onUpdateSettings}
+        room={room}
       />
       <HostControls
         connectedPlayerCount={connectedPlayerCount}
@@ -637,6 +666,67 @@ function MobileModal({
         <div className="min-h-0 overflow-y-auto p-4">{children}</div>
       </section>
     </div>
+  );
+}
+
+function RuleToggle({
+  room,
+  isHost,
+  onUpdateSettings
+}: {
+  room: PublicRoomState;
+  isHost: boolean;
+  onUpdateSettings: (extraLivesEnabled: boolean) => Promise<string | null>;
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const editable = isHost && room.phase !== "playing";
+
+  const handleToggle = async (nextEnabled: boolean) => {
+    setIsSubmitting(true);
+    setMessage(null);
+    const result = await onUpdateSettings(nextEnabled);
+    setIsSubmitting(false);
+    setMessage(result);
+  };
+
+  return (
+    <section className="grid gap-2 rounded-md border border-cyan-200/15 bg-slate-950/40 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        Room rules
+      </p>
+      <label
+        className={`flex items-start gap-3 ${
+          editable ? "cursor-pointer" : "cursor-default"
+        }`}
+      >
+        <input
+          checked={room.extraLivesEnabled}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+          disabled={!editable || isSubmitting}
+          onChange={(event) => void handleToggle(event.target.checked)}
+          type="checkbox"
+        />
+        <span className="grid gap-0.5">
+          <span className="text-sm font-semibold text-slate-100">
+            Extra lives
+          </span>
+          <span className="text-xs leading-5 text-slate-400">
+            3 consecutive cards grant a life that blocks a bust.
+          </span>
+        </span>
+      </label>
+      {!isHost ? (
+        <p className="text-xs text-slate-500">Only the host can change rules.</p>
+      ) : room.phase === "playing" ? (
+        <p className="text-xs text-slate-500">
+          Rules are locked while a game is in progress.
+        </p>
+      ) : null}
+      {message !== null ? (
+        <p className="text-xs font-medium text-rose-300">{message}</p>
+      ) : null}
+    </section>
   );
 }
 

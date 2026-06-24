@@ -16,6 +16,7 @@ export type Room = {
   players: Record<string, Player>;
   chatMessages: PublicChatMessage[];
   gameState: CardBankGameState | null;
+  extraLivesEnabled: boolean;
   version: number;
   createdAt: number;
   updatedAt: number;

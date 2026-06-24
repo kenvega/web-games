@@ -93,6 +93,7 @@ export class RoomManager {
     guestId: string;
     displayName: string;
     socketId: string;
+    extraLivesEnabled?: boolean;
   }): CommandResult<{ roomCode: string; state: PublicRoomState }> {
     const guestIdResult = guestIdSchema.safeParse(input.guestId);
     const displayNameResult = displayNameSchema.safeParse(input.displayName);
@@ -120,6 +121,7 @@ export class RoomManager {
       },
       chatMessages: [],
       gameState: null,
+      extraLivesEnabled: input.extraLivesEnabled === true,
       version: 0,
       createdAt: now,
       updatedAt: now
@@ -321,6 +323,46 @@ export class RoomManager {
     }
     room.phase = "waiting";
     room.gameState = null;
+
+    return ok({
+      state: this.commit(room)
+    });
+  }
+
+  updateRoomSettings(input: {
+    roomCode: string;
+    guestId: string;
+    extraLivesEnabled: boolean;
+  }): CommandResult<RoomStateResult> {
+    const parsedInput = roomCommandInputSchema.safeParse({
+      roomCode: input.roomCode
+    });
+    const guestIdResult = guestIdSchema.safeParse(input.guestId);
+    if (!parsedInput.success || !guestIdResult.success) {
+      return fail("INVALID_INPUT", "The settings request is invalid.");
+    }
+
+    const room = this.rooms.get(parsedInput.data.roomCode);
+    if (room === undefined) {
+      return fail(
+        "ROOM_NOT_FOUND",
+        "This room no longer exists. Create a new room to continue."
+      );
+    }
+
+    const membershipError = this.validateHost(room, guestIdResult.data);
+    if (membershipError !== null) {
+      return fail(membershipError.code, membershipError.message);
+    }
+
+    if (room.phase === "playing") {
+      return fail(
+        "GAME_ALREADY_STARTED",
+        "You cannot change the rules during a game."
+      );
+    }
+
+    room.extraLivesEnabled = input.extraLivesEnabled === true;
 
     return ok({
       state: this.commit(room)
@@ -641,6 +683,7 @@ export class RoomManager {
         room.gameState === null
           ? null
           : this.gameModule.toPublicState(room.gameState),
+      extraLivesEnabled: room.extraLivesEnabled,
       version: room.version
     };
   }

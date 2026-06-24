@@ -56,12 +56,13 @@ function createManager(
   };
 }
 
-function createRoom(manager: RoomManager) {
+function createRoom(manager: RoomManager, extraLivesEnabled = false) {
   return expectOk(
     manager.createRoom({
       guestId: aliceId,
       displayName: "Alice",
-      socketId: "socket-a"
+      socketId: "socket-a",
+      extraLivesEnabled
     })
   );
 }
@@ -560,7 +561,7 @@ describe("RoomManager", () => {
 
   it("grants extra lives for each new run of three consecutive cards", () => {
     const { manager } = createManager(1000, () => [3, 4, 6, 7, 5, 10, 10, 10]);
-    createRoom(manager);
+    createRoom(manager, true);
     joinBob(manager);
     expectOk(
       manager.startRoom({
@@ -607,7 +608,7 @@ describe("RoomManager", () => {
 
   it("spends an extra life to survive a bust instead of busting", () => {
     const { manager } = createManager(1000, () => [3, 4, 5, 3, 9, 9]);
-    createRoom(manager);
+    createRoom(manager, true);
     joinBob(manager);
     expectOk(
       manager.startRoom({
@@ -657,7 +658,7 @@ describe("RoomManager", () => {
 
   it("resets extra lives once the active area is banked", () => {
     const { manager } = createManager(1000, () => [3, 4, 5, 8, 8]);
-    createRoom(manager);
+    createRoom(manager, true);
     joinBob(manager);
     expectOk(
       manager.startRoom({
@@ -705,6 +706,94 @@ describe("RoomManager", () => {
     expect(alice?.extraLives).toBe(0);
     expect(alice?.activeCount).toBe(0);
     expect(alice?.securedCardCount).toBe(3);
+  });
+
+  it("does not grant extra lives when the rule is disabled", () => {
+    const { manager } = createManager(1000, () => [3, 4, 5, 3, 9, 9]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    for (const action of [
+      { type: "draw-card" as const },
+      { type: "draw-card" as const },
+      { type: "draw-card" as const }
+    ]) {
+      expectOk(
+        manager.handleGameAction({
+          roomCode: "23456789AB",
+          guestId: aliceId,
+          action
+        })
+      );
+    }
+
+    // 3-4-5 would grant a life if the rule were on; with it off there is none.
+    let alice = manager
+      .getPublicState("23456789AB")
+      ?.gameState?.players.find((player) => player.playerId === aliceId);
+    expect(alice?.extraLives).toBe(0);
+
+    // Drawing the duplicate 3 busts because there is no life to shield it.
+    const busted = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+    expect(busted.state.gameState?.turnPhase).toBe("revealing-bust");
+    alice = busted.state.gameState?.players.find(
+      (player) => player.playerId === aliceId
+    );
+    expect(alice?.extraLives).toBe(0);
+  });
+
+  it("lets the host toggle the extra-lives rule before a game starts", () => {
+    const { manager } = createManager();
+    const created = createRoom(manager);
+    expect(created.state.extraLivesEnabled).toBe(false);
+    joinBob(manager);
+
+    const enabled = expectOk(
+      manager.updateRoomSettings({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        extraLivesEnabled: true
+      })
+    );
+    expect(enabled.state.extraLivesEnabled).toBe(true);
+
+    // Non-host cannot change it.
+    expectError(
+      manager.updateRoomSettings({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        extraLivesEnabled: false
+      }),
+      "NOT_ROOM_HOST"
+    );
+
+    // It cannot be changed once a game is in progress.
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+    expectError(
+      manager.updateRoomSettings({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        extraLivesEnabled: false
+      }),
+      "GAME_ALREADY_STARTED"
+    );
   });
 
   it("resolves the last card before final scoring and tiebreaks", () => {

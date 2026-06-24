@@ -13,6 +13,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const { socket, status, ensureConnected } = useSocket();
   const [displayName, setDisplayName] = useState(getStoredDisplayName);
+  const [extraLivesEnabled, setExtraLivesEnabled] = useState(false);
   const [roomCode, setRoomCode] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [roomCodeError, setRoomCodeError] = useState<string | null>(null);
@@ -43,7 +44,8 @@ export function HomePage() {
       await ensureConnected();
       const result = await createRoomCommand(socket, {
         guestId: getGuestId(),
-        displayName: storedName
+        displayName: storedName,
+        extraLivesEnabled
       });
 
       if (!result.ok) {
@@ -137,6 +139,25 @@ export function HomePage() {
             </form>
 
             <div className="grid gap-3 border-t border-cyan-200/15 pt-5">
+              <label className="flex cursor-pointer items-start gap-3 rounded-md border border-cyan-200/15 bg-slate-950/40 p-3">
+                <input
+                  checked={extraLivesEnabled}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+                  onChange={(event) =>
+                    setExtraLivesEnabled(event.target.checked)
+                  }
+                  type="checkbox"
+                />
+                <span className="grid gap-0.5">
+                  <span className="text-sm font-semibold text-slate-100">
+                    Extra lives rule
+                  </span>
+                  <span className="text-xs leading-5 text-slate-400">
+                    Collecting 3 consecutive cards (like 3-4-5) grants an extra
+                    life that saves you from one bust.
+                  </span>
+                </span>
+              </label>
               <Button
                 disabled={isSubmitting}
                 icon={<Plus size={16} />}

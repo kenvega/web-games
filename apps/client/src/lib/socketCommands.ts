@@ -7,7 +7,8 @@ import {
   type RoomCommandInput,
   type RoomStateResult,
   type SendChatMessageInput,
-  type SendChatMessageResult
+  type SendChatMessageResult,
+  type UpdateRoomSettingsInput
 } from "@multiplayer-blueprint/shared";
 import type { ClientSocket } from "./socket.js";
 
@@ -86,6 +87,16 @@ export function restartRoomCommand(
   return withTimeout(
     (resolve) => socket.emit("room:restart", input, resolve),
     "The server did not respond while restarting the room."
+  );
+}
+
+export function updateRoomSettingsCommand(
+  socket: ClientSocket,
+  input: UpdateRoomSettingsInput
+): Promise<CommandResult<RoomStateResult>> {
+  return withTimeout(
+    (resolve) => socket.emit("room:update-settings", input, resolve),
+    "The server did not respond while updating the room settings."
   );
 }
 

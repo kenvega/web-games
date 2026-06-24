@@ -106,9 +106,16 @@ first.
 
 ### Extra lives from consecutive runs
 
-Whenever your active area gains a card — from drawing or from stealing — the
-game checks for newly completed runs of three consecutive values (for example
-3-4-5). Each newly completed run grants you one extra life.
+This is an optional rule that is turned off by default. It is chosen per room:
+the creator can enable it on the create-room screen, and the host can toggle it
+in the room while no game is running (in the lobby or after a game finishes,
+before starting again). It is locked once a game is in progress, and the value
+in effect when the game starts applies for that whole game. When the rule is
+off, the game plays without extra lives as described elsewhere.
+
+When the rule is on: whenever your active area gains a card — from drawing or
+from stealing — the game checks for newly completed runs of three consecutive
+values (for example 3-4-5). Each newly completed run grants you one extra life.
 
 * A value counts toward a run if you hold at least one copy of it.
 * Several runs can be completed by a single card. For example, holding 3, 4, 6,

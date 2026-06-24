@@ -38,7 +38,13 @@ export const chatMessageTextSchema = z
 
 export const createRoomInputSchema = z.object({
   guestId: guestIdSchema,
-  displayName: displayNameSchema
+  displayName: displayNameSchema,
+  extraLivesEnabled: z.boolean()
+});
+
+export const updateRoomSettingsInputSchema = z.object({
+  roomCode: roomCodeSchema,
+  extraLivesEnabled: z.boolean()
 });
 
 export const joinRoomInputSchema = z.object({
@@ -75,6 +81,9 @@ export const gameActionInputSchema = z.object({
 });
 
 export type CreateRoomInputData = z.infer<typeof createRoomInputSchema>;
+export type UpdateRoomSettingsInputData = z.infer<
+  typeof updateRoomSettingsInputSchema
+>;
 export type JoinRoomInputData = z.infer<typeof joinRoomInputSchema>;
 export type RoomCommandInputData = z.infer<typeof roomCommandInputSchema>;
 export type SendChatMessageInputData = z.infer<

@@ -118,6 +118,7 @@ export type PublicRoomState = {
   players: PublicPlayer[];
   chatMessages: PublicChatMessage[];
   gameState: PublicCardBankGameState | null;
+  extraLivesEnabled: boolean;
   version: number;
 };
 
@@ -156,6 +157,12 @@ export type CommandResult<T = null> =
 export type CreateRoomInput = {
   guestId: string;
   displayName: string;
+  extraLivesEnabled: boolean;
+};
+
+export type UpdateRoomSettingsInput = {
+  roomCode: string;
+  extraLivesEnabled: boolean;
 };
 
 export type JoinRoomInput = {

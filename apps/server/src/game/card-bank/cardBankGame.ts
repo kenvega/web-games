@@ -37,6 +37,7 @@ type CardBankPendingBust = {
 
 export type CardBankGameState = {
   status: "playing" | "finished";
+  extraLivesEnabled: boolean;
   turnPhase:
     | "awaiting-draw"
     | "awaiting-steal"
@@ -225,6 +226,7 @@ export class CardBankGameModule
 
     return {
       status: "playing",
+      extraLivesEnabled: room.extraLivesEnabled,
       turnPhase: "awaiting-draw",
       deck,
       discard: [],
@@ -430,10 +432,12 @@ export class CardBankGameModule
     }
 
     // A safe draw can complete one or more new runs of three consecutive
-    // values; each newly formed run grants an extra life.
-    const triplesAfterDraw = countConsecutiveTriples(nextPlayer.activeCards);
-    if (triplesAfterDraw > triplesBeforeDraw) {
-      nextPlayer.extraLives += triplesAfterDraw - triplesBeforeDraw;
+    // values; each newly formed run grants an extra life (when the rule is on).
+    if (state.extraLivesEnabled) {
+      const triplesAfterDraw = countConsecutiveTriples(nextPlayer.activeCards);
+      if (triplesAfterDraw > triplesBeforeDraw) {
+        nextPlayer.extraLives += triplesAfterDraw - triplesBeforeDraw;
+      }
     }
 
     const candidates = this.getStealCandidates(nextState, drawnValue);
@@ -541,20 +545,22 @@ export class CardBankGameModule
     }
 
     // Award extra lives for any runs of three consecutive values completed by
-    // the steal.
-    const currentPlayerAfterSteal = nextState.players[
-      currentPlayerId
-    ] as CardBankPlayerState;
-    const triplesAfterSteal = countConsecutiveTriples(
-      currentPlayerAfterSteal.activeCards
-    );
-    if (triplesAfterSteal > triplesBeforeSteal) {
-      nextState.players[currentPlayerId] = {
-        ...currentPlayerAfterSteal,
-        extraLives:
-          currentPlayerAfterSteal.extraLives +
-          (triplesAfterSteal - triplesBeforeSteal)
-      };
+    // the steal (when the rule is on).
+    if (state.extraLivesEnabled) {
+      const currentPlayerAfterSteal = nextState.players[
+        currentPlayerId
+      ] as CardBankPlayerState;
+      const triplesAfterSteal = countConsecutiveTriples(
+        currentPlayerAfterSteal.activeCards
+      );
+      if (triplesAfterSteal > triplesBeforeSteal) {
+        nextState.players[currentPlayerId] = {
+          ...currentPlayerAfterSteal,
+          extraLives:
+            currentPlayerAfterSteal.extraLives +
+            (triplesAfterSteal - triplesBeforeSteal)
+        };
+      }
     }
 
     if (nextState.deck.length === 0) {

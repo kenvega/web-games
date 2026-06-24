@@ -170,7 +170,8 @@ describe("Socket.IO multiplayer flow", () => {
 
     const created = await createRoom(alice, {
       guestId: aliceId,
-      displayName: "Alice"
+      displayName: "Alice",
+      extraLivesEnabled: false
     });
     expect(created.ok).toBe(true);
     if (!created.ok) {
@@ -299,7 +300,8 @@ describe("Socket.IO multiplayer flow", () => {
 
     const created = await createRoom(alice, {
       guestId: aliceId,
-      displayName: "Alice"
+      displayName: "Alice",
+      extraLivesEnabled: false
     });
     expect(created.ok).toBe(true);
     if (!created.ok) {

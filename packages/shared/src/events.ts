@@ -12,7 +12,8 @@ import type {
   RoomStateResult,
   SendChatMessageInput,
   SendChatMessageResult,
-  SocketErrorPayload
+  SocketErrorPayload,
+  UpdateRoomSettingsInput
 } from "./types.js";
 
 export type Ack<T = null> = (result: CommandResult<T>) => void;
@@ -23,6 +24,10 @@ export interface ClientToServerEvents {
   "room:leave": (input: RoomCommandInput, ack: Ack) => void;
   "room:start": (input: RoomCommandInput, ack: Ack<RoomStateResult>) => void;
   "room:restart": (input: RoomCommandInput, ack: Ack<RoomStateResult>) => void;
+  "room:update-settings": (
+    input: UpdateRoomSettingsInput,
+    ack: Ack<RoomStateResult>
+  ) => void;
   "room:request-state": (
     input: RoomCommandInput,
     ack: Ack<RoomStateResult>
