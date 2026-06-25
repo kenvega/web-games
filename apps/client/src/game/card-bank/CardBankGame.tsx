@@ -22,11 +22,25 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode
 } from "react";
 
 type PlayerLookup = Map<string, PublicPlayer>;
 type PlayerState = PublicCardBankGameState["players"][number];
+
+// A short-lived animation for cards leaving a player's active area: "secure"
+// flies them toward the score counter, "bust" drops them and fades out.
+type CardDeparture = {
+  kind: "secure" | "bust";
+  cards: CardBankCardCounts;
+  token: number;
+};
+
+// Per-card stagger and the base single-card animation length. The overlay
+// stays mounted for base + (cards * stagger) so the cascade finishes cleanly.
+const CARD_DEPARTURE_STAGGER_MS = 45;
+const CARD_DEPARTURE_BASE_MS = 600;
 
 function getPlayerName(players: PlayerLookup, playerId: string): string {
   return players.get(playerId)?.displayName ?? "Unknown player";
@@ -87,17 +101,93 @@ export function CardBankGame({
   // on cards that were just drawn or stolen. The extra-lives badge tracks its
   // own changes inside LivesBadge.
   const previousCardsRef = useRef<Map<string, CardBankCardCounts>>(new Map());
+  // Track secured counts and the discard total so we can tell why a player's
+  // active area emptied: banked (secured grew), busted (discard grew), or
+  // stolen (neither — no animation).
+  const previousSecuredRef = useRef<Map<string, number>>(new Map());
+  const previousDiscardRef = useRef<number | null>(null);
+  const [departures, setDepartures] = useState<Map<string, CardDeparture>>(
+    new Map()
+  );
 
   useEffect(() => {
     if (gameState === null) {
       return;
     }
 
+    const previousCards = previousCardsRef.current;
+    const previousSecured = previousSecuredRef.current;
+    const previousDiscard = previousDiscardRef.current;
+
+    const newDepartures: { playerId: string; departure: CardDeparture }[] = [];
     const nextCards = new Map<string, CardBankCardCounts>();
+    const nextSecured = new Map<string, number>();
+
     for (const player of gameState.players) {
+      const prevCards = previousCards.get(player.playerId);
+      const prevActiveCount =
+        prevCards === undefined ? 0 : getCardTotal(prevCards);
+      const prevSecured = previousSecured.get(player.playerId);
+
+      if (
+        prevCards !== undefined &&
+        prevActiveCount > 0 &&
+        player.activeCount === 0
+      ) {
+        if (prevSecured !== undefined && player.securedCardCount > prevSecured) {
+          newDepartures.push({
+            playerId: player.playerId,
+            departure: { kind: "secure", cards: prevCards, token: room.version }
+          });
+        } else if (
+          previousDiscard !== null &&
+          gameState.discardCount > previousDiscard
+        ) {
+          newDepartures.push({
+            playerId: player.playerId,
+            departure: { kind: "bust", cards: prevCards, token: room.version }
+          });
+        }
+      }
+
       nextCards.set(player.playerId, player.activeCards);
+      nextSecured.set(player.playerId, player.securedCardCount);
     }
+
     previousCardsRef.current = nextCards;
+    previousSecuredRef.current = nextSecured;
+    previousDiscardRef.current = gameState.discardCount;
+
+    if (newDepartures.length === 0) {
+      return;
+    }
+
+    setDepartures((current) => {
+      const next = new Map(current);
+      for (const item of newDepartures) {
+        next.set(item.playerId, item.departure);
+      }
+      return next;
+    });
+
+    const tokensById = new Map(
+      newDepartures.map((item) => [item.playerId, item.departure.token])
+    );
+    const maxCards = newDepartures.reduce(
+      (most, item) => Math.max(most, getCardTotal(item.departure.cards)),
+      0
+    );
+    window.setTimeout(() => {
+      setDepartures((current) => {
+        const next = new Map(current);
+        for (const [playerId, token] of tokensById) {
+          if (next.get(playerId)?.token === token) {
+            next.delete(playerId);
+          }
+        }
+        return next;
+      });
+    }, CARD_DEPARTURE_BASE_MS + maxCards * CARD_DEPARTURE_STAGGER_MS);
   }, [room.version, gameState]);
 
   const runAction = async (action: CardBankGameAction) => {
@@ -201,6 +291,7 @@ export function CardBankGame({
                   ? gameState.pendingSteal.drawnValue
                   : null
               }
+              departure={departures.get(playerState.playerId) ?? null}
               player={playerState}
               previousCards={
                 previousCardsRef.current.get(playerState.playerId) ?? null
@@ -270,6 +361,7 @@ export function CardBankGame({
               : null
           }
           pendingStealValue={null}
+          departure={departures.get(currentPlayerState.playerId) ?? null}
           player={currentPlayerState}
           previousCards={
             previousCardsRef.current.get(currentPlayerState.playerId) ?? null
@@ -694,6 +786,7 @@ function PlayerArea({
   pendingStealValue,
   pendingBustValue,
   previousCards,
+  departure,
   variant
 }: {
   player: PlayerState;
@@ -703,9 +796,11 @@ function PlayerArea({
   pendingStealValue: CardBankCardValue | null;
   pendingBustValue: CardBankCardValue | null;
   previousCards: CardBankCardCounts | null;
+  departure: CardDeparture | null;
   variant: "opponent" | "current";
 }) {
   const isCurrentArea = variant === "current";
+  const cardSize = isCurrentArea ? "large" : "small";
 
   return (
     <article
@@ -735,14 +830,76 @@ function PlayerArea({
         </div>
       </div>
 
-      <CardGrid
-        cards={player.activeCards}
-        previousCards={previousCards}
-        pendingBustValue={pendingBustValue}
-        pendingStealValue={pendingStealValue}
-        size={isCurrentArea ? "large" : "small"}
-      />
+      <div className="relative">
+        <CardGrid
+          cards={player.activeCards}
+          previousCards={previousCards}
+          pendingBustValue={pendingBustValue}
+          pendingStealValue={pendingStealValue}
+          size={cardSize}
+        />
+        {departure !== null ? (
+          <CardDepartureOverlay
+            cards={departure.cards}
+            key={departure.token}
+            kind={departure.kind}
+            size={cardSize}
+          />
+        ) : null}
+      </div>
     </article>
+  );
+}
+
+function CardDepartureOverlay({
+  cards,
+  kind,
+  size
+}: {
+  cards: CardBankCardCounts;
+  kind: CardDeparture["kind"];
+  size: "small" | "large";
+}) {
+  const animationClass = kind === "secure" ? "cb-secure-fly" : "cb-bust-fall";
+  let cardIndex = 0;
+
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div
+        className={
+          size === "large"
+            ? "grid grid-cols-5 justify-items-center gap-2 2xl:grid-cols-10"
+            : "grid grid-cols-5 justify-items-center gap-1"
+        }
+      >
+        {CARD_BANK_CARD_VALUES.flatMap((value) =>
+          Array.from({ length: cards[value] }, (_, occurrence) => {
+            const index = cardIndex;
+            cardIndex += 1;
+            const style: CSSProperties = {
+              animationDelay: `${index * CARD_DEPARTURE_STAGGER_MS}ms`
+            };
+            if (kind === "bust") {
+              const direction = index % 2 === 0 ? 1 : -1;
+              (style as Record<string, string>)["--cb-rot"] =
+                `${direction * (10 + (index % 3) * 7)}deg`;
+              (style as Record<string, string>)["--cb-drift"] =
+                `${direction * (12 + (index % 4) * 8)}%`;
+            }
+
+            return (
+              <CardTile
+                className={animationClass}
+                key={`${value}-${occurrence}`}
+                size={size}
+                style={style}
+                value={value}
+              />
+            );
+          })
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -802,12 +959,16 @@ function CardTile({
   value,
   highlighted = false,
   flash = false,
-  size
+  size,
+  className = "",
+  style
 }: {
   value: CardBankCardValue;
   highlighted?: boolean;
   flash?: boolean;
   size: "small" | "large" | "pile";
+  className?: string;
+  style?: CSSProperties;
 }) {
   const isLarge = size === "large";
   const isPile = size === "pile";
@@ -831,11 +992,12 @@ function CardTile({
         tileSizeClass
       } ${highlighted ? "ring-2 ring-emerald-300" : ""} ${
         flash ? "cb-card-flash" : ""
-      }`}
+      } ${className}`}
       style={{
         backgroundColor: CARD_BANK_CARD_COLORS[value],
         color: "#ffffff",
-        textShadow: "0 2px 0 rgba(0,0,0,0.24)"
+        textShadow: "0 2px 0 rgba(0,0,0,0.24)",
+        ...style
       }}
     >
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.18),transparent_45%,rgba(0,0,0,0.12))]" />
