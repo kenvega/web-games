@@ -682,7 +682,7 @@ function BustNotice({
   value: CardBankCardValue;
 }) {
   return (
-    <div className="flex items-center justify-center gap-3">
+    <div className="flex items-center justify-around">
       <div className="w-12 shrink-0">
         <CardTile highlighted size="small" value={value} />
       </div>
