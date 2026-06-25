@@ -13,7 +13,6 @@ import {
   Heart,
   Layers,
   Play,
-  Sparkles,
   Trophy,
   X
 } from "lucide-react";
@@ -445,12 +444,9 @@ function PendingStealPrompt({
     .join(", ");
 
   return (
-    <div className="relative grid content-center gap-3 rounded-md border border-emerald-400/45 bg-emerald-950/35 p-2 text-center shadow-[0_0_34px_rgba(16,185,129,0.16)]">
-      <div className="absolute left-1/2 top-0 grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-emerald-300/60 bg-slate-950 text-emerald-300">
-        <Sparkles size={18} />
-      </div>
-      <div className="pt-2">
-        <p className="text-lg font-extrabold text-slate-100">
+    <div className="grid content-center gap-3 rounded-md border border-sky-400/45 bg-sky-950/35 p-2 text-center shadow-[0_0_34px_rgba(56,189,248,0.16)]">
+      <div>
+        <p className="hidden text-lg font-extrabold text-slate-100 sm:block">
           You drew a{" "}
           <span className="text-amber-200">{pendingSteal.drawnValue}</span>.
         </p>
@@ -462,7 +458,7 @@ function PendingStealPrompt({
         <GameButton
           disabled={!canResolveSteal || submittingAction !== null}
           onClick={() => onResolve(true)}
-          tone="primary"
+          tone="info"
         >
           Steal {pendingSteal.totalCount}{" "}
           {pendingSteal.totalCount === 1 ? "Card" : "Cards"}
@@ -475,7 +471,7 @@ function PendingStealPrompt({
           Decline
         </GameButton>
       </div>
-      <p className="text-xs leading-5 text-slate-400">
+      <p className="hidden text-xs leading-5 text-slate-400 sm:block">
         Matching cards available: {candidateText}
       </p>
     </div>
@@ -564,15 +560,18 @@ function GameButton({
   disabled: boolean;
   icon?: React.ReactNode;
   onClick: () => void;
-  tone: "primary" | "secondary";
+  tone: "primary" | "secondary" | "info";
 }) {
+  const toneClass =
+    tone === "primary"
+      ? "border-emerald-300/50 bg-emerald-600 text-white shadow-[0_0_24px_rgba(16,185,129,0.2)] hover:bg-emerald-500"
+      : tone === "info"
+        ? "border-sky-300/50 bg-sky-600 text-white shadow-[0_0_24px_rgba(56,189,248,0.2)] hover:bg-sky-500"
+        : "border-cyan-200/20 bg-slate-900/85 text-slate-100 hover:bg-slate-800";
+
   return (
     <button
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-2 py-2 text-sm font-extrabold transition disabled:cursor-not-allowed disabled:opacity-45 sm:px-4 ${
-        tone === "primary"
-          ? "border-emerald-300/50 bg-emerald-600 text-white shadow-[0_0_24px_rgba(16,185,129,0.2)] hover:bg-emerald-500"
-          : "border-cyan-200/20 bg-slate-900/85 text-slate-100 hover:bg-slate-800"
-      } whitespace-nowrap`}
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-2 py-2 text-sm font-extrabold transition disabled:cursor-not-allowed disabled:opacity-45 sm:px-4 ${toneClass} whitespace-nowrap`}
       disabled={disabled}
       onClick={onClick}
       type="button"
