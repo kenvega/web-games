@@ -34,7 +34,7 @@ type HandlerOptions = {
 };
 
 const DEFAULT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
-const DEFAULT_BUST_REVEAL_MS = 4000;
+const DEFAULT_BUST_REVEAL_MS = 3000;
 
 function ok<T>(data: T): CommandResult<T> {
   return {
