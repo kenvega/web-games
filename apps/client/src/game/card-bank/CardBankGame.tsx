@@ -943,23 +943,36 @@ function CardGrid({
   size: "small" | "large";
 }) {
   const total = getCardTotal(cards);
+  const gridClass =
+    size === "large"
+      ? "grid grid-cols-5 justify-items-center gap-2 2xl:grid-cols-10"
+      : "grid grid-cols-5 justify-items-center gap-1";
 
   if (total === 0) {
+    // The invisible spacer shares a real CardTile's aspect ratio/width class so
+    // the grid reserves the same row height as a hand with cards in it, while
+    // the dashed box is absolutely positioned over that reserved space so it
+    // still spans the full container like before.
+    const spacerSizeClass =
+      size === "large"
+        ? "aspect-[5/7] w-full max-w-20"
+        : "aspect-[5/7] w-12 sm:w-14 lg:w-[3.25rem] xl:w-14";
+
     return (
-      <div className="grid min-h-24 place-items-center rounded-md border border-dashed border-cyan-200/20 px-3 py-4 text-center text-sm text-slate-500">
-        No active cards
+      <div className="relative">
+        <div className={gridClass}>
+          <div className={`invisible ${spacerSizeClass}`} />
+        </div>
+        <div className="absolute inset-0 grid place-items-center rounded-md border border-dashed border-cyan-200/20 text-center text-sm text-slate-500">
+          No active cards
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className={
-        size === "large"
-          ? "grid grid-cols-5 justify-items-center gap-2 2xl:grid-cols-10"
-          : "grid grid-cols-5 justify-items-center gap-1"
-      }
-    >
+    <div className={gridClass}>
+
       {CARD_BANK_CARD_VALUES.flatMap((value) => {
         const count = cards[value];
         // Without a prior snapshot (first render) treat every card as old so
