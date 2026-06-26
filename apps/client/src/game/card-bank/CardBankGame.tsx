@@ -40,7 +40,7 @@ type CardDeparture = {
 // Per-card stagger and the base single-card animation length. The overlay
 // stays mounted for base + (cards * stagger) so the cascade finishes cleanly.
 const CARD_DEPARTURE_STAGGER_MS = 45;
-const CARD_DEPARTURE_BASE_MS = 600;
+const CARD_DEPARTURE_BASE_MS = 650;
 
 function getPlayerName(players: PlayerLookup, playerId: string): string {
   return players.get(playerId)?.displayName ?? "Unknown player";
@@ -822,7 +822,21 @@ function PlayerArea({
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <LivesBadge extraLives={player.extraLives} />
-          <div className="rounded-md border border-cyan-300/20 bg-slate-950/65 px-3 text-right">
+          <div
+            key={departure?.kind === "secure" ? departure.token : "idle"}
+            className={`rounded-md border border-cyan-300/20 bg-slate-950/65 px-3 text-right ${
+              departure?.kind === "secure" ? "cb-secure-receive" : ""
+            }`}
+            style={
+              departure?.kind === "secure"
+                ? {
+                    animationDelay: `${
+                      (getCardTotal(departure.cards) - 1) * CARD_DEPARTURE_STAGGER_MS + 580
+                    }ms`
+                  }
+                : undefined
+            }
+          >
             <p className="text-xs font-extrabold leading-6 text-sky-300">
               {player.securedCardCount}
             </p>
@@ -861,6 +875,10 @@ function CardDepartureOverlay({
   size: "small" | "large";
 }) {
   const animationClass = kind === "secure" ? "cb-secure-fly" : "cb-bust-fall";
+  const cols = 5;
+  const totalCount = getCardTotal(cards);
+  const centerCol = (cols - 1) / 2;
+  const centerRow = (Math.ceil(totalCount / cols) - 1) / 2;
   let cardIndex = 0;
 
   return (
@@ -885,6 +903,14 @@ function CardDepartureOverlay({
                 `${direction * (10 + (index % 3) * 7)}deg`;
               (style as Record<string, string>)["--cb-drift"] =
                 `${direction * (12 + (index % 4) * 8)}%`;
+            }
+            if (kind === "secure") {
+              const col = index % cols;
+              const row = Math.floor(index / cols);
+              (style as Record<string, string>)["--cb-converge-x"] =
+                `${(centerCol - col) * 80}%`;
+              (style as Record<string, string>)["--cb-converge-y"] =
+                `${(centerRow - row) * 80}%`;
             }
 
             return (

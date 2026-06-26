@@ -115,24 +115,60 @@ input {
   animation: cb-lives-leave 0.5s ease-in forwards;
 }
 
-/* Fly a secured card up toward the score counter (top-right) and shrink it in.
-   Applied per card with a staggered delay so a pile leaves in a cascade. */
+/* Gather secured cards into a pile in the middle of the active area, then
+   launch the pile as one toward the score counter (top-right). --cb-converge-x/y
+   are set per card so the scattered grid positions pull into a single point
+   before the launch. Applied per card with a staggered delay so the gather
+   and the launch both read as a cascade rather than a single snap. */
 @keyframes cb-secure-fly {
   0% {
     opacity: 1;
     transform: translate(0, 0) scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0));
   }
-  70% {
+  35% {
     opacity: 1;
+    transform: translate(var(--cb-converge-x, 0%), var(--cb-converge-y, 0%)) scale(0.8)
+      rotate(0deg);
+    filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0));
+  }
+  55% {
+    opacity: 1;
+    transform: translate(var(--cb-converge-x, 0%), var(--cb-converge-y, 0%)) scale(0.95)
+      rotate(-3deg);
+    filter: drop-shadow(0 0 12px rgba(250, 204, 21, 0.85));
   }
   100% {
     opacity: 0;
-    transform: translate(60%, -85%) scale(0.3) rotate(8deg);
+    transform: translate(
+        calc(var(--cb-converge-x, 0%) + 55%),
+        calc(var(--cb-converge-y, 0%) - 80%)
+      )
+      scale(0.2) rotate(8deg);
+    filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0));
   }
 }
 
 .cb-secure-fly {
-  animation: cb-secure-fly 0.5s ease-in forwards;
+  animation: cb-secure-fly 0.65s cubic-bezier(0.3, 0, 0.4, 1) forwards;
+}
+
+/* Pulse the score counter as the secured cards land, so the badge itself
+   reacts instead of just incrementing silently. */
+@keyframes cb-secure-receive {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0);
+  }
+  45% {
+    transform: scale(1.3);
+    box-shadow: 0 0 14px 2px rgba(250, 204, 21, 0.65);
+  }
+}
+
+.cb-secure-receive {
+  animation: cb-secure-receive 0.4s ease-out;
 }
 
 /* Drop a busted card, letting it drift sideways and tumble as it falls.
@@ -160,6 +196,7 @@ input {
   .cb-lives-flash,
   .cb-lives-leave,
   .cb-secure-fly,
+  .cb-secure-receive,
   .cb-bust-fall {
     animation: none;
   }
