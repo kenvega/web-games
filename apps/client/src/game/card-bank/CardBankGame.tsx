@@ -993,19 +993,26 @@ function CardTile({
   value: CardBankCardValue;
   highlighted?: boolean;
   flash?: boolean;
-  size: "small" | "large" | "pile";
+  size: "small" | "large" | "pile" | "summary";
   className?: string;
   style?: CSSProperties;
 }) {
   const isLarge = size === "large";
   const isPile = size === "pile";
-  const tileSizeClass = isPile
-    ? "h-16 w-11 sm:h-28 sm:w-20"
-    : isLarge
-      ? "aspect-[5/7] w-full max-w-20"
-      : "aspect-[5/7] w-12 sm:w-14 lg:w-[3.25rem] xl:w-14";
+  const isSummary = size === "summary";
+  const tileSizeClass = isSummary
+    ? "h-12 w-9 sm:h-14 sm:w-10"
+    : isPile
+      ? "h-16 w-11 sm:h-28 sm:w-20"
+      : isLarge
+        ? "aspect-[5/7] w-full max-w-20"
+        : "aspect-[5/7] w-12 sm:w-14 lg:w-[3.25rem] xl:w-14";
   const centerSize =
-    size === "small"
+    isSummary
+      ? value === 10
+        ? "text-lg"
+        : "text-xl"
+      : size === "small"
       ? value === 10
         ? "text-xl"
         : "text-2xl"
@@ -1028,24 +1035,54 @@ function CardTile({
       }}
     >
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.18),transparent_45%,rgba(0,0,0,0.12))]" />
-      <span
-        className={`absolute left-1.5 top-1 font-bold leading-none ${
-          isLarge || isPile ? "text-sm" : "text-xs"
-        }`}
-      >
-        {value}
-      </span>
+      {!isSummary ? (
+        <span
+          className={`absolute left-1.5 top-1 font-bold leading-none ${
+            isLarge || isPile ? "text-sm" : "text-xs"
+          }`}
+        >
+          {value}
+        </span>
+      ) : null}
       <span className={`relative font-serif font-black leading-none ${centerSize}`}>
         {value}
       </span>
-      <span
-        className={`absolute bottom-1 right-1.5 font-bold leading-none ${
-          isLarge || isPile ? "text-sm" : "text-xs"
-        }`}
-      >
-        {value}
-      </span>
+      {!isSummary ? (
+        <span
+          className={`absolute bottom-1 right-1.5 font-bold leading-none ${
+            isLarge || isPile ? "text-sm" : "text-xs"
+          }`}
+        >
+          {value}
+        </span>
+      ) : null}
     </div>
+  );
+}
+
+function FinalCardGroup({
+  value,
+  count
+}: {
+  value: CardBankCardValue;
+  count: number;
+}) {
+  const label = `${count} scoring ${count === 1 ? "card" : "cards"} worth ${value} ${
+    value === 1 ? "point" : "points"
+  } each`;
+
+  return (
+    <li title={label}>
+      <div aria-label={label} className="relative" role="img">
+        <CardTile size="summary" value={value} />
+        <span
+          aria-hidden="true"
+          className="absolute -bottom-1 -right-1.5 min-w-6 rounded-full border border-cyan-100/30 bg-slate-950 px-1 py-0.5 text-center text-[0.65rem] font-black leading-none text-cyan-100 shadow-md"
+        >
+          ×{count}
+        </span>
+      </div>
+    </li>
   );
 }
 
@@ -1082,17 +1119,51 @@ function FinalStandings({
         Final Standings
       </h3>
       <ol className="grid gap-2">
-        {standings.map((standing) => (
-          <li
-            className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-cyan-200/10 bg-slate-950/50 px-3 py-2 text-sm"
-            key={standing.playerId}
-          >
-            <span className="font-semibold text-slate-100">
-              #{standing.rank} {getPlayerName(playerLookup, standing.playerId)}
-            </span>
-            <span className="text-sky-300">{standing.score} points</span>
-          </li>
-        ))}
+        {standings.map((standing) => {
+          const playerName = getPlayerName(playerLookup, standing.playerId);
+          const scoringCardCount = getCardTotal(standing.bankedCards);
+
+          return (
+            <li
+              className="rounded-md border border-cyan-200/10 bg-slate-950/50 p-3 text-sm"
+              key={standing.playerId}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-100">
+                    #{standing.rank} {playerName}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {scoringCardCount} scoring {scoringCardCount === 1 ? "card" : "cards"}
+                  </p>
+                </div>
+                <span className="shrink-0 font-semibold text-sky-300">
+                  {standing.score} points
+                </span>
+              </div>
+              {scoringCardCount > 0 ? (
+                <ul
+                  aria-label={`${playerName}'s scoring cards grouped by value`}
+                  className="mt-3 flex flex-wrap gap-2.5"
+                >
+                  {CARD_BANK_CARD_VALUES.filter(
+                    (value) => standing.bankedCards[value] > 0
+                  ).map((value) => (
+                    <FinalCardGroup
+                      count={standing.bankedCards[value]}
+                      key={value}
+                      value={value}
+                    />
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-xs italic text-slate-500">
+                  No scoring cards
+                </p>
+              )}
+            </li>
+          );
+        })}
       </ol>
       {isHost ? (
         <button

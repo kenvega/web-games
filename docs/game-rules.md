@@ -185,7 +185,8 @@ At game end:
 
 * all players immediately move remaining active cards into their score piles
 * everyone totals the values in their score pile
-* reveal every player's final point total and ranking
+* reveal every player's final point total, ranking, total scoring-card count,
+  and scoring cards grouped by value
 * highest total score wins
 
 ## Tiebreaker

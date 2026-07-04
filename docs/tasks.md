@@ -6,15 +6,14 @@ todo
     you drew a 7
       should say that other player drew a 7
 
-  show how many cards each player has at the end of the game
-    like 10x5, 4x6, etc
-
   the badge showing whose turn it is should go away on mobile
     probably we should show the phase in the controls when you are not playing
 
   when you click on invite the message of copied to clipboard should appear in another way
 
 done
+
+  show each player's final scoring cards grouped by value
 
   reset extra lives when you end your turn instead of when your next turn starts
 
