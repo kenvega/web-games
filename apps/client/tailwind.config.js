@@ -5,6 +5,15 @@ export default {
     extend: {
       boxShadow: {
         panel: "0 18px 50px rgba(15, 23, 42, 0.08)"
+      },
+      keyframes: {
+        slideDown: {
+          from: { opacity: "0", transform: "translateY(-0.5rem)" },
+          to: { opacity: "1", transform: "translateY(0)" }
+        }
+      },
+      animation: {
+        slideDown: "slideDown 0.2s ease-out"
       }
     }
   },

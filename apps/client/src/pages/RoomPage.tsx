@@ -16,6 +16,7 @@ import {
 } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChatPanel } from "../chat/ChatPanel.js";
+import { ChatToast } from "../chat/ChatToast.js";
 import { Button } from "../components/Button.js";
 import { ConnectionBadge } from "../components/ConnectionBadge.js";
 import { PlayerList } from "../components/PlayerList.js";
@@ -534,6 +535,13 @@ export function RoomPage() {
           />
         </MobileModal>
       ) : null}
+
+      <ChatToast
+        messages={room.chatMessages}
+        currentPlayerId={guestId}
+        isChatOpen={isChatOpen}
+        onTap={() => setIsChatOpen(true)}
+      />
     </main>
   );
 }

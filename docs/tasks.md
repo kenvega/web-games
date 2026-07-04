@@ -22,8 +22,6 @@ todo
       like 10x5, 4x6, etc
       so players can check if they want
 
-  when someone talks, in mobile show a notification of the message floating for a moment
-
   the badge showing whose turn it is should go away on mobile
 
   for mobile, the host should have the options right there in the center instead of in the sidebar, so they can click right away
@@ -46,3 +44,5 @@ done
 
   the room page, or the page before room when it's no longer valid
     that view should also be in dark theme
+
+  when someone talks, in mobile show a notification of the message floating for a moment
