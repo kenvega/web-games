@@ -68,6 +68,8 @@ function getPhaseDetail(
       return `${currentPlayerName} can draw again or stop.`;
     case "revealing-bust":
       return `${currentPlayerName} busted.`;
+    case "ending":
+      return "Securing final cards…";
     case "finished":
       return "Round complete";
   }

@@ -31,10 +31,12 @@ type SocketLifecycle = {
 type HandlerOptions = {
   cleanupIntervalMs?: number;
   bustRevealMs?: number;
+  endingDelayMs?: number;
 };
 
 const DEFAULT_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
-const DEFAULT_BUST_REVEAL_MS = 3000;
+const DEFAULT_BUST_REVEAL_MS = 2500;
+const DEFAULT_ENDING_DELAY_MS = 1500;
 
 function ok<T>(data: T): CommandResult<T> {
   return {
@@ -59,6 +61,7 @@ export function registerSocketHandlers(
   options: HandlerOptions = {}
 ): SocketLifecycle {
   const bustRevealTimers = new Map<string, NodeJS.Timeout>();
+  const endingTimers = new Map<string, NodeJS.Timeout>();
 
   const clearBustRevealTimer = (roomCode: string): void => {
     const timer = bustRevealTimers.get(roomCode);
@@ -68,12 +71,21 @@ export function registerSocketHandlers(
     }
   };
 
+  const clearEndingTimer = (roomCode: string): void => {
+    const timer = endingTimers.get(roomCode);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      endingTimers.delete(roomCode);
+    }
+  };
+
   const emitState = (result: RoomStateResult): void => {
     io.to(result.state.code).emit("room:state", result.state);
   };
 
   const closeRoom = (roomCode: string, message: string): void => {
     clearBustRevealTimer(roomCode);
+    clearEndingTimer(roomCode);
     io.to(roomCode).emit("room:closed", {
       roomCode,
       message
@@ -108,6 +120,29 @@ export function registerSocketHandlers(
     }, options.bustRevealMs ?? DEFAULT_BUST_REVEAL_MS);
     timer.unref?.();
     bustRevealTimers.set(state.code, timer);
+  };
+
+  const scheduleEndingResolution = (state: RoomStateResult["state"]): void => {
+    if (state.gameState?.turnPhase !== "ending") {
+      return;
+    }
+
+    if (endingTimers.has(state.code)) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      endingTimers.delete(state.code);
+      const resolved = roomManager.resolveEnding(state.code);
+      if (resolved === null) {
+        return;
+      }
+
+      emitState(resolved);
+      emitGameEvent(resolved.state);
+    }, options.endingDelayMs ?? DEFAULT_ENDING_DELAY_MS);
+    timer.unref?.();
+    endingTimers.set(state.code, timer);
   };
 
   const leaveCurrentRoom = (socket: TypedSocket): void => {
@@ -409,6 +444,7 @@ export function registerSocketHandlers(
         emitState(result.data);
         emitGameEvent(result.data.state);
         scheduleBustResolution(result.data.state);
+        scheduleEndingResolution(result.data.state);
       } catch (error) {
         console.error("game:action failed", error);
         ack(fail("UNEXPECTED_ERROR", "Unable to process the game action."));
@@ -453,6 +489,10 @@ export function registerSocketHandlers(
         clearTimeout(timer);
       }
       bustRevealTimers.clear();
+      for (const timer of endingTimers.values()) {
+        clearTimeout(timer);
+      }
+      endingTimers.clear();
     }
   };
 }

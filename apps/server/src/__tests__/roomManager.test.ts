@@ -911,8 +911,9 @@ describe("RoomManager", () => {
     expect(drawResult.state.gameState?.turnPhase).toBe("awaiting-steal");
     expect(drawResult.state.phase).toBe("playing");
 
-    // Bob steals Alice's 3 — game should finish after resolving
-    const finalState = expectOk(
+    // Bob steals Alice's 3 — enters "ending" phase so the steal is
+    // visible to clients before the game finishes.
+    const stealResult = expectOk(
       manager.handleGameAction({
         roomCode: "23456789AB",
         guestId: bobId,
@@ -920,22 +921,41 @@ describe("RoomManager", () => {
       })
     );
 
-    expect(finalState.state.phase).toBe("finished");
-    expect(finalState.state.gameState?.status).toBe("finished");
+    expect(stealResult.state.phase).toBe("playing");
+    expect(stealResult.state.gameState?.turnPhase).toBe("ending");
+    expect(stealResult.state.gameState?.status).toBe("playing");
+
+    // Bob's active area should show the stolen cards (his 3 + Alice's 3)
+    const bobActive = stealResult.state.gameState?.players.find(
+      (player) => player.playerId === bobId
+    );
+    expect(bobActive?.activeCount).toBe(2);
+
+    // Alice's active area should be empty (her 3 was stolen)
+    const aliceActive = stealResult.state.gameState?.players.find(
+      (player) => player.playerId === aliceId
+    );
+    expect(aliceActive?.activeCount).toBe(0);
+
+    // Server resolves the ending — game finishes, cards are banked
+    const finalState = manager.resolveEnding("23456789AB");
+
+    expect(finalState?.state.phase).toBe("finished");
+    expect(finalState?.state.gameState?.status).toBe("finished");
 
     // Bob has both cards (two 3s = 6 points)
-    const bobScore = finalState.state.players.find(
+    const bobScore = finalState?.state.players.find(
       (player) => player.id === bobId
     )?.score;
     expect(bobScore).toBe(6);
 
     // Alice has 0 (her 3 was stolen)
-    const aliceScore = finalState.state.players.find(
+    const aliceScore = finalState?.state.players.find(
       (player) => player.id === aliceId
     )?.score;
     expect(aliceScore).toBe(0);
 
-    expect(finalState.state.gameState?.winnerPlayerIds).toEqual([bobId]);
+    expect(finalState?.state.gameState?.winnerPlayerIds).toEqual([bobId]);
   });
 
   it("auto-stops a disconnected active player", () => {

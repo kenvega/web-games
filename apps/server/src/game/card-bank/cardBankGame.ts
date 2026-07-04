@@ -43,6 +43,7 @@ export type CardBankGameState = {
     | "awaiting-steal"
     | "awaiting-decision"
     | "revealing-bust"
+    | "ending"
     | "finished";
   deck: CardBankCardValue[];
   discard: CardBankCardValue[];
@@ -295,7 +296,11 @@ export class CardBankGameModule
       return null;
     }
 
-    if (state.turnPhase === "finished" || state.turnPhase === "revealing-bust") {
+    if (
+      state.turnPhase === "finished" ||
+      state.turnPhase === "revealing-bust" ||
+      state.turnPhase === "ending"
+    ) {
       return state;
     }
 
@@ -357,6 +362,19 @@ export class CardBankGameModule
     }
 
     return this.resolveBust(room, state, state.pendingBust.playerId);
+  }
+
+  resolveEnding(room: Room): CardBankGameState | null {
+    const state = room.gameState;
+    if (
+      state === null ||
+      state.status === "finished" ||
+      state.turnPhase !== "ending"
+    ) {
+      return null;
+    }
+
+    return this.finishGame(state);
   }
 
   dispose(): void {
@@ -564,6 +582,16 @@ export class CardBankGameModule
     }
 
     if (nextState.deck.length === 0) {
+      if (steal) {
+        return {
+          accepted: true,
+          nextState: {
+            ...nextState,
+            turnPhase: "ending"
+          }
+        };
+      }
+
       return {
         accepted: true,
         nextState: this.finishGame(nextState)

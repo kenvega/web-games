@@ -49,6 +49,7 @@ export type CardBankTurnPhase =
   | "awaiting-steal"
   | "awaiting-decision"
   | "revealing-bust"
+  | "ending"
   | "finished";
 
 export type PublicCardBankPlayerState = {

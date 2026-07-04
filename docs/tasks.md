@@ -6,11 +6,6 @@ todo
     you drew a 7
       should say that other player drew a 7
 
-  when the last card lets you steal from the others
-    the way it's handled seems like it's not taking those points away at the end
-      because the cards stay there on the player's side
-        and right away it switches to showing the final scores
-
   it would be good to have some kind of debug view to see how many secured cards each player has
     something like 10x5, 9x3 etc between the turns
     and also how many they drew on their last turn
@@ -23,6 +18,7 @@ todo
       so players can check if they want
 
   the badge showing whose turn it is should go away on mobile
+    probably we should show the phase in the controls when you are not playing
 
   when you click on invite the message of copied to clipboard should appear in another way
 
@@ -50,3 +46,8 @@ done
   when someone talks, in mobile show a notification of the message floating for a moment
 
   sidebar should show the instructions and the controls should go in the main content
+
+  when the last card lets you steal from the others
+    the way it's handled seems like it's not taking those points away at the end
+      because the cards stay there on the player's side
+        and right away it switches to showing the final scores
