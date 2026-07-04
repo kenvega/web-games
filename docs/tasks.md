@@ -26,7 +26,9 @@ todo
 
   when you click on invite the message of copied to clipboard should appear in another way
 
-  it should reset your extra lifes if you end your turn before
+  it should reset your extra lifes if you end your turn instead of when your next turn starts
+
+  remove the points from the list of players because not needed in the list
 
 done
 
