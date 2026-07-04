@@ -6,16 +6,8 @@ todo
     you drew a 7
       should say that other player drew a 7
 
-  it would be good to have some kind of debug view to see how many secured cards each player has
-    something like 10x5, 9x3 etc between the turns
-    and also how many they drew on their last turn
-    or also how many they had before securing more cards
-    maybe these should actually be tests
-
-  either way it would be good to show
-    how many cards each player has at the end of the game
-      like 10x5, 4x6, etc
-      so players can check if they want
+  show how many cards each player has at the end of the game
+    like 10x5, 4x6, etc
 
   the badge showing whose turn it is should go away on mobile
     probably we should show the phase in the controls when you are not playing
@@ -51,3 +43,5 @@ done
     the way it's handled seems like it's not taking those points away at the end
       because the cards stay there on the player's side
         and right away it switches to showing the final scores
+
+  add a history of cards banked

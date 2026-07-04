@@ -24,9 +24,16 @@ export function useBankingHistory(
   const previousSecuredRef = useRef<Map<string, number>>(new Map());
   const previousStatusRef = useRef<string | null>(null);
   const nextIdRef = useRef(1);
+  const gameStateRef = useRef(gameState);
+  const playersRef = useRef(players);
+  gameStateRef.current = gameState;
+  playersRef.current = players;
 
   useEffect(() => {
-    if (gameState === null) {
+    const gs = gameStateRef.current;
+    const pl = playersRef.current;
+
+    if (gs === null) {
       previousCardsRef.current = new Map();
       previousSecuredRef.current = new Map();
       previousStatusRef.current = null;
@@ -36,21 +43,21 @@ export function useBankingHistory(
 
     if (
       previousStatusRef.current === "finished" &&
-      gameState.status === "playing"
+      gs.status === "playing"
     ) {
       previousCardsRef.current = new Map();
       previousSecuredRef.current = new Map();
       setEvents([]);
     }
 
-    previousStatusRef.current = gameState.status;
+    previousStatusRef.current = gs.status;
 
     const previousCards = previousCardsRef.current;
     const previousSecured = previousSecuredRef.current;
     const newEvents: BankingEvent[] = [];
-    const playerLookup = new Map(players.map((p) => [p.id, p]));
+    const playerLookup = new Map(pl.map((p) => [p.id, p]));
 
-    for (const player of gameState.players) {
+    for (const player of gs.players) {
       const prevCards = previousCards.get(player.playerId);
       const prevSecured = previousSecured.get(player.playerId);
       const prevActiveCount =
@@ -86,7 +93,7 @@ export function useBankingHistory(
 
     const nextCards = new Map<string, CardBankCardCounts>();
     const nextSecured = new Map<string, number>();
-    for (const player of gameState.players) {
+    for (const player of gs.players) {
       nextCards.set(player.playerId, player.activeCards);
       nextSecured.set(player.playerId, player.securedCardCount);
     }
@@ -96,7 +103,7 @@ export function useBankingHistory(
     if (newEvents.length > 0) {
       setEvents((prev) => [...prev, ...newEvents]);
     }
-  }, [roomVersion, gameState, players]);
+  }, [roomVersion]);
 
   return events;
 }
