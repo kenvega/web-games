@@ -28,8 +28,6 @@ todo
 
   it should reset your extra lifes if you end your turn instead of when your next turn starts
 
-  remove the points from the list of players because not needed in the list
-
 done
 
   add the rule that gives you an extra life if you have 3 cards in a row

@@ -4,13 +4,11 @@ import { Crown, Users } from "lucide-react";
 export function PlayerList({
   players,
   hostPlayerId,
-  currentPlayerId,
-  securedCardCountByPlayerId
+  currentPlayerId
 }: {
   players: PublicPlayer[];
   hostPlayerId: string;
   currentPlayerId: string;
-  securedCardCountByPlayerId: Readonly<Record<string, number>>;
 }) {
   const connectedCount = players.filter((player) => player.connected).length;
 
@@ -33,7 +31,7 @@ export function PlayerList({
           return (
             <li
               key={player.id}
-              className={`flex items-center justify-between gap-3 rounded-md border px-3 py-3 ${
+              className={`flex items-center rounded-md border px-3 py-3 ${
                 isCurrentPlayer
                   ? "border-emerald-400/70 bg-emerald-500/10 shadow-[0_0_28px_rgba(16,185,129,0.2)]"
                   : "border-cyan-200/15 bg-slate-950/45"
@@ -66,14 +64,6 @@ export function PlayerList({
                     {player.connected ? "Connected" : "Disconnected"}
                   </span>
                 </span>
-              </div>
-              <div className="shrink-0 rounded-md border border-cyan-300/20 bg-slate-950/60 px-3 py-1 text-right">
-                {/* <p className="text-[0.65rem] uppercase text-slate-400">
-                  Cards Secured
-                </p> */}
-                <p className="text-lg font-bold leading-5 text-sky-300">
-                  {securedCardCountByPlayerId[player.id] ?? 0}
-                </p>
               </div>
             </li>
           );

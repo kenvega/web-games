@@ -389,12 +389,6 @@ export function RoomPage() {
   const connected = currentPlayer?.connected ?? false;
   const connectedPlayerCount = room.players.filter((player) => player.connected).length;
   const hostDisconnected = hostPlayer !== undefined && !hostPlayer.connected;
-  const securedCardCountByPlayerId = Object.fromEntries(
-    (room.gameState?.players ?? []).map((player) => [
-      player.playerId,
-      player.securedCardCount
-    ])
-  );
 
   return (
     <main className="flex h-screen flex-col overflow-hidden bg-[#041520] text-slate-100">
@@ -483,7 +477,6 @@ export function RoomPage() {
               onUpdateSettings={handleUpdateSettings}
               players={room.players}
               room={room}
-              securedCardCountByPlayerId={securedCardCountByPlayerId}
             />
           ) : (
             <CardBankGame
@@ -783,8 +776,7 @@ function LobbyContent({
   connectionStatus,
   onStart,
   onRestart,
-  onUpdateSettings,
-  securedCardCountByPlayerId
+  onUpdateSettings
 }: {
   players: PublicRoomState["players"];
   hostPlayerId: string;
@@ -796,7 +788,6 @@ function LobbyContent({
   onStart: () => Promise<string | null>;
   onRestart: () => Promise<string | null>;
   onUpdateSettings: (extraLivesEnabled: boolean) => Promise<string | null>;
-  securedCardCountByPlayerId: Readonly<Record<string, number>>;
 }) {
   return (
     <section className="grid content-start gap-5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
@@ -811,7 +802,6 @@ function LobbyContent({
         currentPlayerId={currentPlayerId}
         hostPlayerId={hostPlayerId}
         players={players}
-        securedCardCountByPlayerId={securedCardCountByPlayerId}
       />
       <RuleToggle
         isHost={isHost}
