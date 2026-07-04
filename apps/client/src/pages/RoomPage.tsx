@@ -467,26 +467,32 @@ export function RoomPage() {
           ) : null}
 
           <aside className="hidden content-start gap-5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] lg:grid">
-            <RoomSidebar
+            <GameInstructions />
+          </aside>
+
+          {room.phase === "waiting" ? (
+            <LobbyContent
               connectedPlayerCount={connectedPlayerCount}
+              connectionStatus={connectionStatus}
               currentPlayerId={guestId}
               hostPlayerId={room.hostPlayerId}
               isHost={isHost}
               onRestart={handleRestart}
-              onUpdateSettings={handleUpdateSettings}
               onStart={handleStart}
+              onUpdateSettings={handleUpdateSettings}
               players={room.players}
               room={room}
               securedCardCountByPlayerId={securedCardCountByPlayerId}
             />
-          </aside>
-
-          <CardBankGame
-            connected={connected}
-            currentPlayerId={guestId}
-            onAction={handleGameAction}
-            room={room}
-          />
+          ) : (
+            <CardBankGame
+              connected={connected}
+              currentPlayerId={guestId}
+              onAction={handleGameAction}
+              onRestart={handleRestart}
+              room={room}
+            />
+          )}
 
           <aside className="hidden h-full overflow-hidden rounded-md border border-cyan-200/15 bg-slate-950/35 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] xl:block">
             <ChatPanel
@@ -501,27 +507,10 @@ export function RoomPage() {
 
       {isRoomMenuOpen ? (
         <MobileModal
-          title={`Room ${room.code}`}
+          title="How to Play"
           onClose={() => setIsRoomMenuOpen(false)}
         >
-          <div className="grid gap-4">
-            <div className="grid gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-3">
-              <ConnectionBadge status={connectionStatus} tone="dark" />
-              <ShareButton roomCode={room.code} tone="dark" />
-            </div>
-            <RoomSidebar
-              connectedPlayerCount={connectedPlayerCount}
-              currentPlayerId={guestId}
-              hostPlayerId={room.hostPlayerId}
-              isHost={isHost}
-              onRestart={handleRestart}
-              onUpdateSettings={handleUpdateSettings}
-              onStart={handleStart}
-              players={room.players}
-              room={room}
-              securedCardCountByPlayerId={securedCardCountByPlayerId}
-            />
-          </div>
+          <GameInstructions />
         </MobileModal>
       ) : null}
 
@@ -597,56 +586,6 @@ function RoomCodeCard({ room }: { room: PublicRoomState }) {
           {room.phase}
         </span>
       </div>
-    </div>
-  );
-}
-
-function RoomSidebar({
-  players,
-  hostPlayerId,
-  currentPlayerId,
-  room,
-  isHost,
-  connectedPlayerCount,
-  onStart,
-  onRestart,
-  onUpdateSettings,
-  securedCardCountByPlayerId
-}: {
-  players: PublicRoomState["players"];
-  hostPlayerId: string;
-  currentPlayerId: string;
-  room: PublicRoomState;
-  isHost: boolean;
-  connectedPlayerCount: number;
-  onStart: () => Promise<string | null>;
-  onRestart: () => Promise<string | null>;
-  onUpdateSettings: (extraLivesEnabled: boolean) => Promise<string | null>;
-  securedCardCountByPlayerId: Readonly<Record<string, number>>;
-}) {
-  return (
-    <div className="grid content-start gap-5">
-      <PlayerList
-        currentPlayerId={currentPlayerId}
-        hostPlayerId={hostPlayerId}
-        players={players}
-        securedCardCountByPlayerId={securedCardCountByPlayerId}
-      />
-      <RuleToggle
-        isHost={isHost}
-        onUpdateSettings={onUpdateSettings}
-        room={room}
-      />
-      <HostControls
-        connectedPlayerCount={connectedPlayerCount}
-        isHost={isHost}
-        onRestart={onRestart}
-        onStart={onStart}
-        room={room}
-      />
-      <p className="rounded-md border border-cyan-200/10 bg-slate-950/35 px-3 py-2 text-xs leading-5 text-slate-500">
-        Counts update when cards are secured.
-      </p>
     </div>
   );
 }
@@ -830,5 +769,106 @@ function MissingRoom({
         </Button>
       </section>
     </main>
+  );
+}
+
+function LobbyContent({
+  players,
+  hostPlayerId,
+  currentPlayerId,
+  room,
+  isHost,
+  connectedPlayerCount,
+  connectionStatus,
+  onStart,
+  onRestart,
+  onUpdateSettings,
+  securedCardCountByPlayerId
+}: {
+  players: PublicRoomState["players"];
+  hostPlayerId: string;
+  currentPlayerId: string;
+  room: PublicRoomState;
+  isHost: boolean;
+  connectedPlayerCount: number;
+  connectionStatus: string;
+  onStart: () => Promise<string | null>;
+  onRestart: () => Promise<string | null>;
+  onUpdateSettings: (extraLivesEnabled: boolean) => Promise<string | null>;
+  securedCardCountByPlayerId: Readonly<Record<string, number>>;
+}) {
+  return (
+    <section className="grid content-start gap-5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
+      <div className="flex flex-wrap items-center gap-3">
+        <ConnectionBadge
+          status={connectionStatus as "connected" | "connecting" | "reconnecting" | "disconnected"}
+          tone="dark"
+        />
+        <ShareButton roomCode={room.code} tone="dark" />
+      </div>
+      <PlayerList
+        currentPlayerId={currentPlayerId}
+        hostPlayerId={hostPlayerId}
+        players={players}
+        securedCardCountByPlayerId={securedCardCountByPlayerId}
+      />
+      <RuleToggle
+        isHost={isHost}
+        onUpdateSettings={onUpdateSettings}
+        room={room}
+      />
+      <HostControls
+        connectedPlayerCount={connectedPlayerCount}
+        isHost={isHost}
+        onRestart={onRestart}
+        onStart={onStart}
+        room={room}
+      />
+    </section>
+  );
+}
+
+function GameInstructions() {
+  return (
+    <div className="grid content-start gap-4">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+        How to Play
+      </h3>
+      <div className="grid gap-3 text-sm leading-6 text-slate-300">
+        <p>
+          Draw cards to collect points. The higher the value, the more you score
+          — but push too far and you'll bust.
+        </p>
+        <div>
+          <p className="font-semibold text-slate-100">On your turn:</p>
+          <ul className="mt-1 grid gap-1 pl-4 list-disc text-slate-400">
+            <li>Draw a card from the deck into your active area.</li>
+            <li>Keep drawing or stop to protect your cards.</li>
+            <li>Cards are banked safely at the start of your next turn.</li>
+          </ul>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-100">Busting:</p>
+          <p className="mt-1 text-slate-400">
+            If you have 3+ active cards and draw a duplicate value, you bust —
+            all your active cards are discarded.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-100">Stealing:</p>
+          <p className="mt-1 text-slate-400">
+            When you draw a card that matches another player's active cards, you
+            can steal all their copies of that value.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-slate-100">Winning:</p>
+          <p className="mt-1 text-slate-400">
+            The game ends when the deck runs out. Highest total from banked cards
+            wins.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

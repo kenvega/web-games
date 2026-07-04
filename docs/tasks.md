@@ -24,8 +24,6 @@ todo
 
   the badge showing whose turn it is should go away on mobile
 
-  for mobile, the host should have the options right there in the center instead of in the sidebar, so they can click right away
-
 done
 
   add the rule that gives you an extra life if you have 3 cards in a row
@@ -46,3 +44,5 @@ done
     that view should also be in dark theme
 
   when someone talks, in mobile show a notification of the message floating for a moment
+
+  sidebar should show the instructions and the controls should go in the main content

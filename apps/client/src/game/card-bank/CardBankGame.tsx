@@ -13,6 +13,7 @@ import {
   Heart,
   Layers,
   Play,
+  RotateCcw,
   Trophy,
   X
 } from "lucide-react";
@@ -80,12 +81,14 @@ export function CardBankGame({
   room,
   currentPlayerId,
   connected,
-  onAction
+  onAction,
+  onRestart
 }: {
   room: PublicRoomState;
   currentPlayerId: string;
   connected: boolean;
   onAction: (action: CardBankGameAction) => Promise<string | null>;
+  onRestart: () => Promise<string | null>;
 }) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [submittingAction, setSubmittingAction] = useState<
@@ -198,25 +201,6 @@ export function CardBankGame({
     setFeedback(result);
   };
 
-  if (room.phase === "waiting") {
-    return (
-      <section className="grid min-h-[24rem] place-items-center rounded-md border border-cyan-200/15 bg-slate-950/45 p-5 text-center shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
-        <div className="grid max-w-md gap-3">
-          <p className="text-sm font-semibold uppercase text-emerald-300">
-            Card Banking
-          </p>
-          <h2 className="text-2xl font-bold text-slate-100">
-            Waiting for the host to start
-          </h2>
-          <p className="text-sm leading-6 text-slate-400">
-            Players can join, chat, and get ready while the host starts the
-            room.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
   if (gameState === null) {
     return (
       <section className="rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 text-sm text-slate-300 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
@@ -266,6 +250,8 @@ export function CardBankGame({
 
       {gameState.finalStandings !== null ? (
         <FinalStandings
+          isHost={room.hostPlayerId === currentPlayerId}
+          onRestart={onRestart}
           playerLookup={playerLookup}
           standings={gameState.finalStandings}
         />
@@ -1063,14 +1049,29 @@ function CardTile({
 
 function FinalStandings({
   standings,
-  playerLookup
+  playerLookup,
+  isHost,
+  onRestart
 }: {
   standings: PublicCardBankGameState["finalStandings"];
   playerLookup: PlayerLookup;
+  isHost: boolean;
+  onRestart: () => Promise<string | null>;
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
   if (standings === null) {
     return null;
   }
+
+  const handleRestart = async () => {
+    setIsSubmitting(true);
+    setMessage(null);
+    const result = await onRestart();
+    setIsSubmitting(false);
+    setMessage(result);
+  };
 
   return (
     <section className="rounded-md border border-emerald-300/35 bg-emerald-950/25 p-4">
@@ -1091,6 +1092,24 @@ function FinalStandings({
           </li>
         ))}
       </ol>
+      {isHost ? (
+        <button
+          className="mt-3 inline-flex items-center gap-2 rounded-md border border-emerald-300/50 bg-emerald-600 px-4 py-2 text-sm font-extrabold text-white shadow-[0_0_24px_rgba(16,185,129,0.2)] transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-45"
+          disabled={isSubmitting}
+          onClick={() => void handleRestart()}
+          type="button"
+        >
+          <RotateCcw size={16} />
+          Play Again
+        </button>
+      ) : (
+        <p className="mt-3 text-sm text-slate-400">
+          Waiting for the host to start a new game.
+        </p>
+      )}
+      {message !== null ? (
+        <p className="mt-2 text-sm font-medium text-rose-300">{message}</p>
+      ) : null}
     </section>
   );
 }
