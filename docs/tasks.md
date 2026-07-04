@@ -14,9 +14,9 @@ todo
 
   when you click on invite the message of copied to clipboard should appear in another way
 
-  it should reset your extra lifes if you end your turn instead of when your next turn starts
-
 done
+
+  reset extra lives when you end your turn instead of when your next turn starts
 
   add the rule that gives you an extra life if you have 3 cards in a row
 

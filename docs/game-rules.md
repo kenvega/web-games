@@ -132,10 +132,11 @@ of your active area exactly as in a normal draw — including any steal the draw
 value enables — and you simply spend one extra life. You can hold several extra
 lives and spend them across several would-be busts in the same turn.
 
-Extra lives belong to your current active area. They are cleared whenever that
-active area leaves the table — when it is banked at the start of your next turn,
-or discarded by a bust you could not shield. You therefore start every fresh
-turn with zero extra lives.
+Extra lives protect only the turn in which they are earned. They are cleared as
+soon as that turn ends, whether you stop, suffer a bust you could not shield, or
+are auto-stopped after disconnecting. Your stopped active cards remain on the
+table and can still be stolen, but their extra lives do not remain with them.
+You therefore start every fresh turn with zero extra lives.
 
 ### 4. Optional steal after a safe draw
 
@@ -281,7 +282,7 @@ These are the parts that must be covered by tests:
   single card completing several runs grants several extra lives.
 * An extra life prevents a would-be bust: the drawn card is kept like a normal
   draw (it may still trigger a steal) and one extra life is spent.
-* Extra lives reset to zero when the active area is banked or busted.
+* Extra lives reset to zero as soon as the current turn ends.
 * The last drawn card is fully resolved before final scoring.
 * During play, show secured card counts instead of secured point totals; reveal
   point totals only after the game finishes.
@@ -306,7 +307,7 @@ prevented if the player holds an extra life: keep the drawn card as in a normal
 draw (it may still trigger a steal), spend one extra life, and continue the turn.
 If the player has no extra life, show the busting card for 2 seconds, then
 discard the active area and end the turn without offering a steal. Extra lives
-reset to zero whenever the active area is banked or busted. Otherwise, after
+reset to zero as soon as the current turn ends. Otherwise, after
 each draw, the player may optionally steal all face-up cards of that same value
 from all other players. Stealing never causes a bust. If the player does not
 bust from drawing, they may draw again or stop. If they stop, their active cards

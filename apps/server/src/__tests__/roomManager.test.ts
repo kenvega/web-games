@@ -656,7 +656,7 @@ describe("RoomManager", () => {
     expect(alice?.activeCount).toBe(4);
   });
 
-  it("resets extra lives once the active area is banked", () => {
+  it("resets extra lives as soon as the player ends their turn", () => {
     const { manager } = createManager(1000, () => [3, 4, 5, 8, 8]);
     createRoom(manager, true);
     joinBob(manager);
@@ -667,23 +667,38 @@ describe("RoomManager", () => {
       })
     );
 
-    for (const action of [
-      { type: "draw-card" as const },
-      { type: "draw-card" as const },
-      { type: "draw-card" as const },
-      { type: "stop-turn" as const }
-    ]) {
+    for (let draw = 0; draw < 3; draw += 1) {
       expectOk(
         manager.handleGameAction({
           roomCode: "23456789AB",
           guestId: aliceId,
-          action
+          action: { type: "draw-card" }
         })
       );
     }
 
-    // Alice earned a life, then stopped. Bob plays and stops, returning the turn
-    // to Alice, which banks her active cards and clears the earned life.
+    let alice = manager
+      .getPublicState("23456789AB")
+      ?.gameState?.players.find((player) => player.playerId === aliceId);
+    expect(alice?.extraLives).toBe(1);
+
+    const stopped = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "stop-turn" }
+      })
+    );
+    alice = stopped.state.gameState?.players.find(
+      (player) => player.playerId === aliceId
+    );
+    expect(stopped.state.gameState?.currentPlayerId).toBe(bobId);
+    expect(alice?.extraLives).toBe(0);
+    expect(alice?.activeCount).toBe(3);
+    expect(alice?.securedCardCount).toBe(0);
+
+    // Ending the turn clears the life immediately, while the stopped cards
+    // remain active until Alice's next turn begins and banks them.
     expectOk(
       manager.handleGameAction({
         roomCode: "23456789AB",
@@ -699,7 +714,7 @@ describe("RoomManager", () => {
       })
     );
 
-    const alice = backToAlice.state.gameState?.players.find(
+    alice = backToAlice.state.gameState?.players.find(
       (player) => player.playerId === aliceId
     );
     expect(backToAlice.state.gameState?.currentPlayerId).toBe(aliceId);

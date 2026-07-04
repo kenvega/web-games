@@ -676,8 +676,25 @@ export class CardBankGameModule
       return state;
     }
 
+    const currentPlayerId = this.getCurrentPlayerId(state);
+    const currentPlayer =
+      currentPlayerId === null ? undefined : state.players[currentPlayerId];
+    const players =
+      currentPlayer === undefined || currentPlayer.extraLives === 0
+        ? state.players
+        : {
+            ...state.players,
+            [currentPlayer.playerId]: {
+              ...currentPlayer,
+              extraLives: 0
+            }
+          };
+
     let nextState: CardBankGameState = {
       ...state,
+      // Extra lives protect only the turn in which they were earned. Active
+      // cards remain exposed until they are banked on the player's next turn.
+      players,
       currentPlayerIndex:
         (state.currentPlayerIndex + 1) % state.turnOrder.length,
       turnPhase: "awaiting-draw",
