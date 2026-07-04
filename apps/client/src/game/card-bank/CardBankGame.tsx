@@ -26,6 +26,7 @@ import {
   type CSSProperties,
   type ReactNode
 } from "react";
+import { GroupedCardTile } from "../../components/GroupedCardTile.js";
 
 type PlayerLookup = Map<string, PublicPlayer>;
 type PlayerState = PublicCardBankGameState["players"][number];
@@ -993,26 +994,19 @@ function CardTile({
   value: CardBankCardValue;
   highlighted?: boolean;
   flash?: boolean;
-  size: "small" | "large" | "pile" | "summary";
+  size: "small" | "large" | "pile";
   className?: string;
   style?: CSSProperties;
 }) {
   const isLarge = size === "large";
   const isPile = size === "pile";
-  const isSummary = size === "summary";
-  const tileSizeClass = isSummary
-    ? "h-12 w-9 sm:h-14 sm:w-10"
-    : isPile
-      ? "h-16 w-11 sm:h-28 sm:w-20"
-      : isLarge
-        ? "aspect-[5/7] w-full max-w-20"
-        : "aspect-[5/7] w-12 sm:w-14 lg:w-[3.25rem] xl:w-14";
+  const tileSizeClass = isPile
+    ? "h-16 w-11 sm:h-28 sm:w-20"
+    : isLarge
+      ? "aspect-[5/7] w-full max-w-20"
+      : "aspect-[5/7] w-12 sm:w-14 lg:w-[3.25rem] xl:w-14";
   const centerSize =
-    isSummary
-      ? value === 10
-        ? "text-lg"
-        : "text-xl"
-      : size === "small"
+    size === "small"
       ? value === 10
         ? "text-xl"
         : "text-2xl"
@@ -1035,27 +1029,23 @@ function CardTile({
       }}
     >
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.18),transparent_45%,rgba(0,0,0,0.12))]" />
-      {!isSummary ? (
-        <span
-          className={`absolute left-1.5 top-1 font-bold leading-none ${
-            isLarge || isPile ? "text-sm" : "text-xs"
-          }`}
-        >
-          {value}
-        </span>
-      ) : null}
+      <span
+        className={`absolute left-1.5 top-1 font-bold leading-none ${
+          isLarge || isPile ? "text-sm" : "text-xs"
+        }`}
+      >
+        {value}
+      </span>
       <span className={`relative font-serif font-black leading-none ${centerSize}`}>
         {value}
       </span>
-      {!isSummary ? (
-        <span
-          className={`absolute bottom-1 right-1.5 font-bold leading-none ${
-            isLarge || isPile ? "text-sm" : "text-xs"
-          }`}
-        >
-          {value}
-        </span>
-      ) : null}
+      <span
+        className={`absolute bottom-1 right-1.5 font-bold leading-none ${
+          isLarge || isPile ? "text-sm" : "text-xs"
+        }`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -1072,16 +1062,8 @@ function FinalCardGroup({
   } each`;
 
   return (
-    <li title={label}>
-      <div aria-label={label} className="relative" role="img">
-        <CardTile size="summary" value={value} />
-        <span
-          aria-hidden="true"
-          className="absolute -bottom-1 -right-1.5 min-w-6 rounded-full border border-cyan-100/30 bg-slate-950 px-1 py-0.5 text-center text-[0.65rem] font-black leading-none text-cyan-100 shadow-md"
-        >
-          ×{count}
-        </span>
-      </div>
+    <li>
+      <GroupedCardTile count={count} label={label} value={value} />
     </li>
   );
 }
