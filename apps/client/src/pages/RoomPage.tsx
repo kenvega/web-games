@@ -17,6 +17,10 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { ChatPanel } from "../chat/ChatPanel.js";
 import { ChatToast } from "../chat/ChatToast.js";
+import {
+  BankingHistory,
+  useBankingHistory
+} from "../components/BankingHistory.js";
 import { Button } from "../components/Button.js";
 import { ConnectionBadge } from "../components/ConnectionBadge.js";
 import { GameInstructions } from "../components/GameInstructions.js";
@@ -299,6 +303,13 @@ export function RoomPage() {
     return null;
   };
 
+  const [sidebarTab, setSidebarTab] = useState<"rules" | "history">("rules");
+  const bankingHistory = useBankingHistory(
+    room?.gameState ?? null,
+    room?.players ?? [],
+    room?.version ?? 0
+  );
+
   const handleGameAction = async (
     action: CardBankGameAction
   ): Promise<string | null> => {
@@ -461,8 +472,38 @@ export function RoomPage() {
             </div>
           ) : null}
 
-          <aside className="hidden content-start gap-5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)] lg:grid">
-            <GameInstructions />
+          <aside className="hidden min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-0 rounded-md border border-cyan-200/15 bg-slate-950/45 shadow-[0_20px_70px_rgba(0,0,0,0.22)] lg:grid">
+            <div className="grid grid-cols-2 border-b border-cyan-200/15">
+              <button
+                className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition ${
+                  sidebarTab === "rules"
+                    ? "border-b-2 border-emerald-400 text-emerald-300"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                onClick={() => setSidebarTab("rules")}
+                type="button"
+              >
+                How to Play
+              </button>
+              <button
+                className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition ${
+                  sidebarTab === "history"
+                    ? "border-b-2 border-emerald-400 text-emerald-300"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                onClick={() => setSidebarTab("history")}
+                type="button"
+              >
+                History
+              </button>
+            </div>
+            <div className="themed-scrollbar min-h-0 overflow-y-auto p-4">
+              {sidebarTab === "rules" ? (
+                <GameInstructions />
+              ) : (
+                <BankingHistory events={bankingHistory} />
+              )}
+            </div>
           </aside>
 
           {room.phase === "waiting" ? (
@@ -501,10 +542,42 @@ export function RoomPage() {
 
       {isRoomMenuOpen ? (
         <MobileModal
-          title="How to Play"
+          title={sidebarTab === "rules" ? "How to Play" : "History"}
           onClose={() => setIsRoomMenuOpen(false)}
         >
-          <GameInstructions />
+          <div className="grid h-full grid-rows-[auto_minmax(0,1fr)] gap-0">
+            <div className="grid grid-cols-2 border-b border-cyan-200/15 -mx-4 -mt-4 mb-4">
+              <button
+                className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition ${
+                  sidebarTab === "rules"
+                    ? "border-b-2 border-emerald-400 text-emerald-300"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                onClick={() => setSidebarTab("rules")}
+                type="button"
+              >
+                How to Play
+              </button>
+              <button
+                className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide transition ${
+                  sidebarTab === "history"
+                    ? "border-b-2 border-emerald-400 text-emerald-300"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+                onClick={() => setSidebarTab("history")}
+                type="button"
+              >
+                History
+              </button>
+            </div>
+            <div className="min-h-0 overflow-y-auto">
+              {sidebarTab === "rules" ? (
+                <GameInstructions />
+              ) : (
+                <BankingHistory events={bankingHistory} />
+              )}
+            </div>
+          </div>
         </MobileModal>
       ) : null}
 
