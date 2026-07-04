@@ -24,6 +24,10 @@ todo
 
   the badge showing whose turn it is should go away on mobile
 
+  when you click on invite the message of copied to clipboard should appear in another way
+
+  it should reset your extra lifes if you end your turn before
+
 done
 
   add the rule that gives you an extra life if you have 3 cards in a row

@@ -867,6 +867,77 @@ describe("RoomManager", () => {
     expect(finalState.state.gameState?.winnerPlayerIds).toEqual([bobId]);
   });
 
+  it("resolves a steal on the last deck card before final scoring", () => {
+    // Deck: [3, 3] — Alice draws 3, stops. Bob draws 3 (last card),
+    // steal is offered because Alice has a 3. Bob steals, then the game
+    // ends. Bob should have both cards (score 6), Alice should have 0.
+    const { manager } = createManager(1000, () => [3, 3]);
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    // Alice draws 3 (deck: [3])
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card" }
+      })
+    );
+    // Alice stops — her 3 stays face-up and stealable
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "stop-turn" }
+      })
+    );
+
+    // Bob's turn: draws 3 (last card). Alice has an active 3, so steal
+    // prompt appears even though the deck is now empty.
+    const drawResult = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "draw-card" }
+      })
+    );
+    expect(drawResult.state.gameState?.deckCount).toBe(0);
+    expect(drawResult.state.gameState?.turnPhase).toBe("awaiting-steal");
+    expect(drawResult.state.phase).toBe("playing");
+
+    // Bob steals Alice's 3 — game should finish after resolving
+    const finalState = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        action: { type: "resolve-steal", steal: true }
+      })
+    );
+
+    expect(finalState.state.phase).toBe("finished");
+    expect(finalState.state.gameState?.status).toBe("finished");
+
+    // Bob has both cards (two 3s = 6 points)
+    const bobScore = finalState.state.players.find(
+      (player) => player.id === bobId
+    )?.score;
+    expect(bobScore).toBe(6);
+
+    // Alice has 0 (her 3 was stolen)
+    const aliceScore = finalState.state.players.find(
+      (player) => player.id === aliceId
+    )?.score;
+    expect(aliceScore).toBe(0);
+
+    expect(finalState.state.gameState?.winnerPlayerIds).toEqual([bobId]);
+  });
+
   it("auto-stops a disconnected active player", () => {
     const { manager } = createManager(1000, () => [1, 2, 3]);
     createRoom(manager);
