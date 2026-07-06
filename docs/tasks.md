@@ -2,13 +2,6 @@ todo
 
   deck cards could only show when there are 15 cards left
 
-  when it's not your turn it still says
-    you drew a 7
-      should say that other player drew a 7
-
-  the badge showing whose turn it is should go away on mobile
-    probably we should show the phase in the controls when you are not playing
-
   when you click on invite the message of copied to clipboard should appear in another way
 
 done
@@ -44,3 +37,7 @@ done
         and right away it switches to showing the final scores
 
   add a history of cards banked
+
+  don't show disabled buttons for when it's not your turn. show what the other player is doing
+
+  the badge showing whose turn it is should go away on mobile to make better use of vertical space

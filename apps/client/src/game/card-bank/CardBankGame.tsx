@@ -30,6 +30,10 @@ import { GroupedCardTile } from "../../components/GroupedCardTile.js";
 
 type PlayerLookup = Map<string, PublicPlayer>;
 type PlayerState = PublicCardBankGameState["players"][number];
+type TurnPresentation = {
+  label: string;
+  detail: string;
+};
 
 // A short-lived animation for cards leaving a player's active area: "secure"
 // flies them toward the score counter, "bust" drops them and fades out.
@@ -52,27 +56,71 @@ function getCardTotal(cards: CardBankCardCounts): number {
   return CARD_BANK_CARD_VALUES.reduce((total, value) => total + cards[value], 0);
 }
 
-function getPhaseDetail(
+function getTurnPresentation(
   gameState: PublicCardBankGameState,
-  currentPlayerName: string
-): string {
+  currentPlayerName: string,
+  isCurrentTurn: boolean
+): TurnPresentation {
   if (gameState.status === "finished") {
-    return "Round complete";
+    return {
+      label: "Game Complete",
+      detail: "Round complete."
+    };
   }
+
+  const label = isCurrentTurn ? "Your Turn" : `${currentPlayerName}'s Turn`;
 
   switch (gameState.turnPhase) {
     case "awaiting-draw":
-      return `${currentPlayerName} can draw from the deck.`;
-    case "awaiting-steal":
-      return `${currentPlayerName} is resolving a steal.`;
+      return {
+        label,
+        detail: isCurrentTurn
+          ? "Draw from the deck."
+          : "Ready to draw from the deck."
+      };
+    case "awaiting-steal": {
+      const pendingSteal = gameState.pendingSteal;
+      if (pendingSteal === null) {
+        return {
+          label,
+          detail: isCurrentTurn
+            ? "Choose whether to steal matching cards."
+            : "Deciding whether to steal matching cards."
+        };
+      }
+
+      const cardLabel = pendingSteal.totalCount === 1 ? "card" : "cards";
+      return {
+        label,
+        detail: isCurrentTurn
+          ? `You drew a ${pendingSteal.drawnValue}. Choose whether to steal ${pendingSteal.totalCount} matching ${cardLabel}.`
+          : `Drew a ${pendingSteal.drawnValue}. Deciding whether to steal ${pendingSteal.totalCount} matching ${cardLabel}.`
+      };
+    }
     case "awaiting-decision":
-      return `${currentPlayerName} can draw again or stop.`;
+      return {
+        label,
+        detail: isCurrentTurn
+          ? "Draw again or stop."
+          : "Deciding whether to draw again or stop."
+      };
     case "revealing-bust":
-      return `${currentPlayerName} busted.`;
+      return {
+        label,
+        detail: isCurrentTurn
+          ? "You busted. Discarding active cards."
+          : "Busted. Discarding active cards."
+      };
     case "ending":
-      return "Securing final cards…";
+      return {
+        label,
+        detail: "Securing final cards…"
+      };
     case "finished":
-      return "Round complete";
+      return {
+        label: "Game Complete",
+        detail: "Round complete."
+      };
   }
 }
 
@@ -236,19 +284,18 @@ export function CardBankGame({
     connected && isCurrentTurn && gameState.turnPhase === "awaiting-steal";
   const drawLabel =
     gameState.turnPhase === "awaiting-decision" ? "Draw Again" : "Draw";
-  const turnLabel =
-    gameState.status === "finished"
-      ? "Game Complete"
-      : isCurrentTurn
-        ? "Your Turn"
-        : `${currentTurnPlayerName}'s Turn`;
+  const turnPresentation = getTurnPresentation(
+    gameState,
+    currentTurnPlayerName,
+    isCurrentTurn
+  );
 
   return (
     <section className="grid min-w-0 content-start gap-2">
       <TurnBadge
-        detail={getPhaseDetail(gameState, currentTurnPlayerName)}
+        detail={turnPresentation.detail}
         isCurrentTurn={isCurrentTurn}
-        label={turnLabel}
+        label={turnPresentation.label}
       />
 
       {gameState.finalStandings !== null ? (
@@ -297,7 +344,7 @@ export function CardBankGame({
           discardCount={gameState.discardCount}
         />
 
-        {gameState.pendingSteal !== null ? (
+        {gameState.pendingSteal !== null && isCurrentTurn ? (
           <PendingStealPrompt
             canResolveSteal={canResolveSteal}
             onResolve={(steal) =>
@@ -322,13 +369,13 @@ export function CardBankGame({
             }
             canDraw={canDraw}
             canStop={canStop}
-            currentTurnPlayerName={currentTurnPlayerName}
             drawLabel={drawLabel}
             gameState={gameState}
             isCurrentTurn={isCurrentTurn}
             onDraw={() => void runAction({ type: "draw-card" })}
             onStop={() => void runAction({ type: "stop-turn" })}
             submittingAction={submittingAction}
+            turnPresentation={turnPresentation}
           />
         )}
       </section>
@@ -372,7 +419,7 @@ function TurnBadge({
   isCurrentTurn: boolean;
 }) {
   return (
-    <div className="grid content-start justify-items-center gap-1 self-start">
+    <div className="hidden content-start justify-items-center gap-1 self-start lg:grid">
       <div
         className={`inline-flex items-center gap-3 whitespace-nowrap rounded-full border px-5 py-2 text-sm font-extrabold uppercase leading-none tracking-wide lg:h-8 lg:gap-2 lg:px-4 lg:py-0 lg:text-xs ${
           isCurrentTurn
@@ -525,14 +572,14 @@ function PendingStealPrompt({
     .join(", ");
 
   return (
-    <div className="grid content-center gap-3 rounded-md border border-sky-400/45 bg-sky-950/35 p-2 text-center shadow-[0_0_34px_rgba(56,189,248,0.16)]">
+    <div className="grid h-[6.375rem] content-center gap-3 rounded-md border border-sky-400/45 bg-sky-950/35 p-2 text-center shadow-[0_0_34px_rgba(56,189,248,0.16)] lg:h-auto">
       <div>
-        <p className="hidden text-lg font-extrabold text-slate-100 sm:block">
+        <p className="hidden text-lg font-extrabold text-slate-100 lg:block">
           You drew a{" "}
           <span className="text-amber-200">{pendingSteal.drawnValue}</span>.
         </p>
         <p className="text-lg font-extrabold text-slate-100">
-          Steal all matching {formatStealTarget(pendingSteal.drawnValue)}?
+          Your turn — steal all matching {formatStealTarget(pendingSteal.drawnValue)}?
         </p>
       </div>
       <div className="grid gap-2 grid-cols-2">
@@ -552,7 +599,7 @@ function PendingStealPrompt({
           Decline
         </GameButton>
       </div>
-      <p className="hidden text-xs leading-5 text-slate-400 sm:block">
+      <p className="hidden text-xs leading-5 text-slate-400 lg:block">
         Matching cards available: {candidateText}
       </p>
     </div>
@@ -562,18 +609,17 @@ function PendingStealPrompt({
 function TurnActionPanel({
   gameState,
   isCurrentTurn,
-  currentTurnPlayerName,
   drawLabel,
   canDraw,
   canStop,
   submittingAction,
   bustReveal,
   onDraw,
-  onStop
+  onStop,
+  turnPresentation
 }: {
   gameState: PublicCardBankGameState;
   isCurrentTurn: boolean;
-  currentTurnPlayerName: string;
   drawLabel: string;
   canDraw: boolean;
   canStop: boolean;
@@ -581,51 +627,75 @@ function TurnActionPanel({
   bustReveal: { name: string; value: CardBankCardValue } | null;
   onDraw: () => void;
   onStop: () => void;
+  turnPresentation: TurnPresentation;
 }) {
   const isPlayable = gameState.status === "playing";
+  const canChooseMove =
+    isPlayable &&
+    isCurrentTurn &&
+    (gameState.turnPhase === "awaiting-draw" ||
+      gameState.turnPhase === "awaiting-decision");
 
   // While a bust is being revealed, take over the action panel with the bust
   // message so it reads in place instead of pushing the rest of the board down.
   if (bustReveal !== null) {
     return (
-      <div className="grid content-center gap-3 rounded-md border border-rose-300/40 bg-rose-500/10 p-2 lg:p-4">
+      <div className="grid h-[6.375rem] content-center gap-3 rounded-md border border-rose-300/40 bg-rose-500/10 p-2 lg:h-auto lg:p-4">
         <BustNotice name={bustReveal.name} value={bustReveal.value} />
       </div>
     );
   }
 
+  if (!canChooseMove) {
+    return <TurnStatusPanel presentation={turnPresentation} />;
+  }
+
   return (
-    <div className="grid content-center gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:p-4">
+    <div className="grid h-[6.375rem] content-center gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:h-auto lg:p-4">
       <div>
         <p className="text-lg font-bold text-slate-100">
-          {isPlayable
-            ? isCurrentTurn
-              ? "Choose your move"
-              : `Waiting for ${currentTurnPlayerName}`
-            : "Round complete"}
+          Your turn — choose your move
         </p>
       </div>
 
-      {isPlayable ? (
-        <div className="grid grid-cols-2 gap-2">
-          <GameButton
-            disabled={!canDraw || submittingAction !== null}
-            icon={<Play size={16} />}
-            onClick={onDraw}
-            tone="primary"
-          >
-            {drawLabel}
-          </GameButton>
-          <GameButton
-            disabled={!canStop || submittingAction !== null}
-            icon={<X size={16} />}
-            onClick={onStop}
-            tone="secondary"
-          >
-            Stop
-          </GameButton>
-        </div>
-      ) : null}
+      <div className="grid grid-cols-2 gap-2">
+        <GameButton
+          disabled={!canDraw || submittingAction !== null}
+          icon={<Play size={16} />}
+          onClick={onDraw}
+          tone="primary"
+        >
+          {drawLabel}
+        </GameButton>
+        <GameButton
+          disabled={!canStop || submittingAction !== null}
+          icon={<X size={16} />}
+          onClick={onStop}
+          tone="secondary"
+        >
+          Stop
+        </GameButton>
+      </div>
+    </div>
+  );
+}
+
+function TurnStatusPanel({ presentation }: { presentation: TurnPresentation }) {
+  return (
+    <div
+      className="grid h-[6.375rem] content-center gap-1 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:h-auto lg:p-4"
+      role="status"
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <span
+          aria-hidden
+          className="h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-300"
+        />
+        <p className="truncate text-lg font-bold text-slate-100">
+          {presentation.label}
+        </p>
+      </div>
+      <p className="text-sm leading-5 text-slate-400">{presentation.detail}</p>
     </div>
   );
 }
