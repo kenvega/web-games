@@ -88,6 +88,7 @@ export type PublicCardBankGameState = {
   currentPlayerId: string | null;
   turnPhase: CardBankTurnPhase;
   deckCount: number;
+  drawChoiceCount: number;
   discardCount: number;
   players: PublicCardBankPlayerState[];
   pendingSteal: PublicCardBankPendingSteal | null;
@@ -184,6 +185,7 @@ export type SendChatMessageInput = {
 export type CardBankGameAction =
   | {
       type: "draw-card";
+      choiceIndex?: 0 | 1 | undefined;
     }
   | {
       type: "resolve-steal";

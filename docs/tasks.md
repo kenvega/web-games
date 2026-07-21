@@ -4,6 +4,14 @@ todo
 
   when you click on invite the message of copied to clipboard should appear in another way
 
+  para el historial que no haga que la pantalla en desktop se pueda scrollear
+
+  cuando salgan los puntajes tampoco
+
+  que lo ponga en español y pueda cambiar de idioma
+
+  que puedas escoger entre 3 cartas si quieres robar o darle a stop
+
 done
 
   show each player's final scoring cards grouped by value

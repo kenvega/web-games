@@ -77,10 +77,16 @@ anything else. No player input is needed for this step.
 This is the only normal time stopped cards become safe. Stopping does not bank
 cards immediately.
 
-### 2. Draw one card
+### 2. Choose and reveal one card
 
-Reveal the top card of the central deck and place it face up in front of you.
-Keep your active cards grouped by value.
+The game deals two face-down choices from the shuffled central deck. Choose one
+to reveal and place face up in front of you. The unchosen card stays in the
+deck. Keep your active cards grouped by value.
+
+The two face-down choices and a card-shaped Stop tile are shown together. The
+Stop tile is disabled until you have completed at least one safe draw in the
+current turn. After each safe draw and any steal decision, the same three-slot
+choice is offered again.
 
 ### 3. Reveal and resolve busts
 
@@ -165,8 +171,8 @@ finds, exactly as it does after a draw.
 
 After a safe draw and any steal decision has been fully resolved, choose one:
 
-* continue drawing
-* stop
+* choose another face-down card
+* choose the Stop tile
 
 If you stop, your active cards remain face up in front of you and can still be
 stolen by later players. They become safe only at the start of your next turn.
@@ -226,7 +232,7 @@ Replace the current demo game contract with Card Banking-specific state and
 actions.
 The game should use these player actions:
 
-* `draw-card`
+* `draw-card` with a server-validated choice index
 * `resolve-steal`
 * `stop-turn`
 
@@ -237,6 +243,7 @@ the game consistently:
 * turn phase, such as awaiting draw, awaiting steal, awaiting decision,
   revealing bust, or finished
 * remaining deck count
+* number of currently available face-down choices (never their values)
 * discard count
 * each player's active cards grouped by value
 * each player's secured card count during play

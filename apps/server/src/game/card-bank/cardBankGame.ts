@@ -266,7 +266,7 @@ export class CardBankGameModule
 
     switch (input.action.type) {
       case "draw-card":
-        return this.drawCard(input.room, state);
+        return this.drawCard(input.room, state, input.action.choiceIndex ?? 0);
       case "resolve-steal":
         return this.resolveSteal(input.room, state, input.action.steal);
       case "stop-turn":
@@ -328,6 +328,7 @@ export class CardBankGameModule
         state.status === "finished" ? null : this.getCurrentPlayerId(state),
       turnPhase: state.turnPhase,
       deckCount: state.deck.length,
+      drawChoiceCount: Math.min(2, state.deck.length),
       discardCount: state.discard.length,
       players: state.turnOrder.map((playerId) => {
         const player = state.players[playerId] as CardBankPlayerState;
@@ -383,7 +384,8 @@ export class CardBankGameModule
 
   private drawCard(
     room: Room,
-    state: CardBankGameState
+    state: CardBankGameState,
+    choiceIndex: 0 | 1
   ): GameActionResult<CardBankGameState> {
     if (
       state.turnPhase !== "awaiting-draw" &&
@@ -412,8 +414,21 @@ export class CardBankGameModule
       };
     }
 
-    const drawnValue = state.deck[0] as CardBankCardValue;
-    const remainingDeck = state.deck.slice(1);
+    if (choiceIndex >= Math.min(2, state.deck.length)) {
+      return {
+        accepted: false,
+        errorCode: "INVALID_GAME_ACTION",
+        message: "That card is not available."
+      };
+    }
+
+    // The first two positions in the shuffled server-side deck are dealt as
+    // face-down choices. Only the selected card leaves the deck; the other one
+    // remains available for a future choice.
+    const drawnValue = state.deck[choiceIndex] as CardBankCardValue;
+    const remainingDeck = state.deck.filter(
+      (_card, index) => index !== choiceIndex
+    );
     const currentPlayer = state.players[currentPlayerId] as CardBankPlayerState;
     const triplesBeforeDraw = countConsecutiveTriples(currentPlayer.activeCards);
     const nextPlayer = {

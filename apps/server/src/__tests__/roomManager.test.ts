@@ -305,6 +305,59 @@ describe("RoomManager", () => {
     expect(start.state.gameState?.players).toHaveLength(2);
   });
 
+  it("draws the selected face-down card and leaves the other choice in the deck", () => {
+    const { manager } = createManager(1000, () => [2, 7]);
+    createRoom(manager);
+    joinBob(manager);
+    const started = expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    expect(started.state.gameState?.drawChoiceCount).toBe(2);
+
+    const pickedSecond = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card", choiceIndex: 1 }
+      })
+    );
+    const alice = pickedSecond.state.gameState?.players.find(
+      (player) => player.playerId === aliceId
+    );
+
+    expect(alice?.activeCards[7]).toBe(1);
+    expect(alice?.activeCards[2]).toBe(0);
+    expect(pickedSecond.state.gameState?.deckCount).toBe(1);
+    expect(pickedSecond.state.gameState?.drawChoiceCount).toBe(1);
+
+    expectError(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card", choiceIndex: 1 }
+      }),
+      "INVALID_GAME_ACTION"
+    );
+
+    const pickedRemaining = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card", choiceIndex: 0 }
+      })
+    );
+    expect(pickedRemaining.state.gameState?.deckCount).toBe(0);
+    expect(
+      pickedRemaining.state.gameState?.players.find(
+        (player) => player.playerId === aliceId
+      )?.securedCardCount
+    ).toBe(2);
+  });
+
   it("keeps stopped cards stealable and resolves optional steals", () => {
     const { manager } = createManager(1000, () => [1, 1, 2]);
     createRoom(manager);

@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   Heart,
   Layers,
-  Play,
   RotateCcw,
   Trophy,
   X
@@ -75,8 +74,8 @@ function getTurnPresentation(
       return {
         label,
         detail: isCurrentTurn
-          ? "Draw from the deck."
-          : "Ready to draw from the deck."
+          ? "Choose one of the face-down cards."
+          : "Choosing a face-down card."
       };
     case "awaiting-steal": {
       const pendingSteal = gameState.pendingSteal;
@@ -101,8 +100,8 @@ function getTurnPresentation(
       return {
         label,
         detail: isCurrentTurn
-          ? "Draw again or stop."
-          : "Deciding whether to draw again or stop."
+          ? "Pick another card or stop."
+          : "Deciding whether to pick again or stop."
       };
     case "revealing-bust":
       return {
@@ -145,6 +144,9 @@ export function CardBankGame({
   const [submittingAction, setSubmittingAction] = useState<
     CardBankGameAction["type"] | null
   >(null);
+  const [selectedDrawChoice, setSelectedDrawChoice] = useState<0 | 1 | null>(
+    null
+  );
   const gameState = room.gameState;
   const playerLookup = useMemo(
     () => new Map(room.players.map((player) => [player.id, player])),
@@ -245,10 +247,14 @@ export function CardBankGame({
   }, [room.version, gameState]);
 
   const runAction = async (action: CardBankGameAction) => {
+    if (action.type === "draw-card") {
+      setSelectedDrawChoice(action.choiceIndex ?? 0);
+    }
     setSubmittingAction(action.type);
     setFeedback(null);
     const result = await onAction(action);
     setSubmittingAction(null);
+    setSelectedDrawChoice(null);
     setFeedback(result);
   };
 
@@ -282,8 +288,6 @@ export function CardBankGame({
     connected && isCurrentTurn && gameState.turnPhase === "awaiting-decision";
   const canResolveSteal =
     connected && isCurrentTurn && gameState.turnPhase === "awaiting-steal";
-  const drawLabel =
-    gameState.turnPhase === "awaiting-decision" ? "Draw Again" : "Draw";
   const turnPresentation = getTurnPresentation(
     gameState,
     currentTurnPlayerName,
@@ -369,11 +373,13 @@ export function CardBankGame({
             }
             canDraw={canDraw}
             canStop={canStop}
-            drawLabel={drawLabel}
             gameState={gameState}
             isCurrentTurn={isCurrentTurn}
-            onDraw={() => void runAction({ type: "draw-card" })}
+            onDraw={(choiceIndex) =>
+              void runAction({ type: "draw-card", choiceIndex })
+            }
             onStop={() => void runAction({ type: "stop-turn" })}
+            selectedDrawChoice={selectedDrawChoice}
             submittingAction={submittingAction}
             turnPresentation={turnPresentation}
           />
@@ -572,7 +578,7 @@ function PendingStealPrompt({
     .join(", ");
 
   return (
-    <div className="grid h-[6.375rem] content-center gap-3 rounded-md border border-sky-400/45 bg-sky-950/35 p-2 text-center shadow-[0_0_34px_rgba(56,189,248,0.16)] lg:h-auto">
+    <div className="grid min-h-[10.5rem] content-center gap-3 rounded-md border border-sky-400/45 bg-sky-950/35 p-2 text-center shadow-[0_0_34px_rgba(56,189,248,0.16)] lg:p-4">
       <div>
         <p className="hidden text-lg font-extrabold text-slate-100 lg:block">
           You drew a{" "}
@@ -609,10 +615,10 @@ function PendingStealPrompt({
 function TurnActionPanel({
   gameState,
   isCurrentTurn,
-  drawLabel,
   canDraw,
   canStop,
   submittingAction,
+  selectedDrawChoice,
   bustReveal,
   onDraw,
   onStop,
@@ -620,12 +626,12 @@ function TurnActionPanel({
 }: {
   gameState: PublicCardBankGameState;
   isCurrentTurn: boolean;
-  drawLabel: string;
   canDraw: boolean;
   canStop: boolean;
   submittingAction: CardBankGameAction["type"] | null;
+  selectedDrawChoice: 0 | 1 | null;
   bustReveal: { name: string; value: CardBankCardValue } | null;
-  onDraw: () => void;
+  onDraw: (choiceIndex: 0 | 1) => void;
   onStop: () => void;
   turnPresentation: TurnPresentation;
 }) {
@@ -640,7 +646,7 @@ function TurnActionPanel({
   // message so it reads in place instead of pushing the rest of the board down.
   if (bustReveal !== null) {
     return (
-      <div className="grid h-[6.375rem] content-center gap-3 rounded-md border border-rose-300/40 bg-rose-500/10 p-2 lg:h-auto lg:p-4">
+      <div className="grid min-h-[10.5rem] content-center gap-3 rounded-md border border-rose-300/40 bg-rose-500/10 p-2 lg:p-4">
         <BustNotice name={bustReveal.name} value={bustReveal.value} />
       </div>
     );
@@ -651,39 +657,110 @@ function TurnActionPanel({
   }
 
   return (
-    <div className="grid h-[6.375rem] content-center gap-3 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:h-auto lg:p-4">
-      <div>
-        <p className="text-lg font-bold text-slate-100">
-          Your turn — choose your move
-        </p>
-      </div>
+    <div className="grid min-h-[10.5rem] content-center gap-2 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:p-3">
+      <p className="text-center text-sm font-bold text-slate-100">
+        Pick a face-down card{canStop ? " or stop" : " to begin"}
+      </p>
 
-      <div className="grid grid-cols-2 gap-2">
-        <GameButton
-          disabled={!canDraw || submittingAction !== null}
-          icon={<Play size={16} />}
-          onClick={onDraw}
-          tone="primary"
-        >
-          {drawLabel}
-        </GameButton>
-        <GameButton
+      <div className="grid grid-cols-3 items-stretch justify-items-center gap-3">
+        {([0, 1] as const).map((choiceIndex) => (
+          <DrawChoiceCard
+            available={choiceIndex < gameState.drawChoiceCount}
+            disabled={!canDraw || submittingAction !== null}
+            key={choiceIndex}
+            onClick={() => onDraw(choiceIndex)}
+            selected={selectedDrawChoice === choiceIndex}
+            slot={choiceIndex + 1}
+          />
+        ))}
+        <StopChoiceCard
           disabled={!canStop || submittingAction !== null}
-          icon={<X size={16} />}
           onClick={onStop}
-          tone="secondary"
-        >
-          Stop
-        </GameButton>
+          submitting={submittingAction === "stop-turn"}
+        />
       </div>
     </div>
+  );
+}
+
+function DrawChoiceCard({
+  available,
+  disabled,
+  onClick,
+  selected,
+  slot
+}: {
+  available: boolean;
+  disabled: boolean;
+  onClick: () => void;
+  selected: boolean;
+  slot: number;
+}) {
+  return (
+    <button
+      aria-label={
+        available ? `Choose face-down card ${slot}` : `Card ${slot} unavailable`
+      }
+      className={`group relative aspect-[5/7] w-full max-w-20 rounded-md border-2 p-1.5 text-cyan-100 shadow-[0_8px_18px_rgba(0,0,0,0.3)] transition duration-200 sm:max-w-24 lg:max-w-20 ${
+        available
+          ? "border-slate-300/80 bg-[#102742] hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_12px_24px_rgba(16,185,129,0.28)]"
+          : "border-dashed border-slate-600 bg-slate-900/60"
+      } ${selected ? "cb-choice-pick border-emerald-300" : ""} disabled:cursor-not-allowed disabled:opacity-45`}
+      disabled={disabled || !available}
+      onClick={onClick}
+      type="button"
+    >
+      <span className="grid h-full place-items-center rounded border border-cyan-100/20 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.14),transparent_65%)]">
+        {available ? (
+          <span className="grid justify-items-center gap-1">
+            <Layers aria-hidden className="h-6 w-6 text-cyan-100/65" />
+            <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-cyan-100/75">
+              Pick
+            </span>
+          </span>
+        ) : (
+          <span className="text-[0.65rem] font-bold uppercase tracking-wide text-slate-500">
+            Empty
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
+
+function StopChoiceCard({
+  disabled,
+  onClick,
+  submitting
+}: {
+  disabled: boolean;
+  onClick: () => void;
+  submitting: boolean;
+}) {
+  return (
+    <button
+      aria-label={disabled ? "Draw a card before stopping" : "Stop this turn"}
+      className="group relative aspect-[5/7] w-full max-w-20 rounded-md border-2 border-rose-200/55 bg-slate-900 p-1.5 text-rose-100 shadow-[0_8px_18px_rgba(0,0,0,0.3)] transition duration-200 hover:-translate-y-1 hover:border-rose-300 hover:bg-rose-950/60 hover:shadow-[0_12px_24px_rgba(244,63,94,0.22)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:max-w-24 lg:max-w-20"
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      <span className="grid h-full place-items-center rounded border border-rose-100/15 bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.12),transparent_65%)]">
+        <span className="grid justify-items-center gap-1">
+          <X aria-hidden className="h-7 w-7" />
+          <span className="text-[0.65rem] font-extrabold uppercase tracking-widest">
+            {submitting ? "Stopping" : "Stop"}
+          </span>
+        </span>
+      </span>
+    </button>
   );
 }
 
 function TurnStatusPanel({ presentation }: { presentation: TurnPresentation }) {
   return (
     <div
-      className="grid h-[6.375rem] content-center gap-1 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:h-auto lg:p-4"
+      className="grid min-h-[10.5rem] content-center gap-1 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:p-4"
       role="status"
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -1031,7 +1108,6 @@ function CardGrid({
 
   return (
     <div className={gridClass}>
-
       {CARD_BANK_CARD_VALUES.flatMap((value) => {
         const count = cards[value];
         // Without a prior snapshot (first render) treat every card as old so

@@ -71,6 +71,23 @@ input {
   animation: cb-card-flash 1.1s ease-out;
 }
 
+/* Press a selected face-down choice toward the table while the server reveals
+   it in the player's active area. */
+@keyframes cb-choice-pick {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(0.25rem) scale(0.94);
+    box-shadow: 0 0 20px rgba(110, 231, 183, 0.55);
+  }
+}
+
+.cb-choice-pick {
+  animation: cb-choice-pick 0.45s ease-in-out infinite;
+}
+
 /* Flash the extra-lives badge border whenever the count changes. */
 @keyframes cb-lives-flash {
   0% {
@@ -193,6 +210,7 @@ input {
 
 @media (prefers-reduced-motion: reduce) {
   .cb-card-flash,
+  .cb-choice-pick,
   .cb-lives-flash,
   .cb-lives-leave,
   .cb-secure-fly,

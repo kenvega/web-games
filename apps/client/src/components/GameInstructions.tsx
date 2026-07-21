@@ -12,8 +12,8 @@ export function GameInstructions() {
         <div>
           <p className="font-semibold text-slate-100">On your turn:</p>
           <ul className="mt-1 grid gap-1 pl-4 list-disc text-slate-400">
-            <li>Draw a card from the deck into your active area.</li>
-            <li>Keep drawing or stop to protect your cards.</li>
+            <li>Pick one of two face-down cards to reveal.</li>
+            <li>After a safe draw, pick again or choose the Stop tile.</li>
             <li>Cards are banked safely at the start of your next turn.</li>
           </ul>
         </div>
