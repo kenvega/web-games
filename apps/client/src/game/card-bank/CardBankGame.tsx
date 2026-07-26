@@ -578,14 +578,15 @@ function PendingStealPrompt({
     .join(", ");
 
   return (
-    <div className="grid min-h-[10.5rem] content-center gap-3 rounded-md border border-sky-400/45 bg-sky-950/35 p-2 text-center shadow-[0_0_34px_rgba(56,189,248,0.16)] lg:p-4">
+    <div className="grid min-h-[7.5rem] content-center gap-2 rounded-md border border-sky-400/45 bg-sky-950/35 p-2 text-center shadow-[0_0_34px_rgba(56,189,248,0.16)] lg:min-h-[10.5rem] lg:gap-3 lg:p-4">
       <div>
         <p className="hidden text-lg font-extrabold text-slate-100 lg:block">
           You drew a{" "}
           <span className="text-amber-200">{pendingSteal.drawnValue}</span>.
         </p>
-        <p className="text-lg font-extrabold text-slate-100">
-          Your turn — steal all matching {formatStealTarget(pendingSteal.drawnValue)}?
+        <p className="text-sm font-extrabold text-slate-100 sm:text-base lg:text-lg">
+          Your turn — steal all matching{" "}
+          {formatStealTarget(pendingSteal.drawnValue)}?
         </p>
       </div>
       <div className="grid gap-2 grid-cols-2">
@@ -646,7 +647,7 @@ function TurnActionPanel({
   // message so it reads in place instead of pushing the rest of the board down.
   if (bustReveal !== null) {
     return (
-      <div className="grid min-h-[10.5rem] content-center gap-3 rounded-md border border-rose-300/40 bg-rose-500/10 p-2 lg:p-4">
+      <div className="grid min-h-[7.5rem] content-center gap-2 rounded-md border border-rose-300/40 bg-rose-500/10 p-2 lg:min-h-[10.5rem] lg:gap-3 lg:p-4">
         <BustNotice name={bustReveal.name} value={bustReveal.value} />
       </div>
     );
@@ -657,12 +658,12 @@ function TurnActionPanel({
   }
 
   return (
-    <div className="grid min-h-[10.5rem] content-center gap-2 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:p-3">
-      <p className="text-center text-sm font-bold text-slate-100">
+    <div className="grid min-h-[7.5rem] content-center gap-1.5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-1.5 sm:min-h-[8.5rem] sm:gap-2 sm:p-2 lg:min-h-[10.5rem] lg:p-3">
+      <p className="text-center text-xs font-bold text-slate-100 sm:text-sm">
         Pick a face-down card{canStop ? " or stop" : " to begin"}
       </p>
 
-      <div className="grid grid-cols-3 items-stretch justify-items-center gap-3">
+      <div className="grid grid-cols-3 items-stretch justify-items-center gap-2 sm:gap-3">
         {([0, 1] as const).map((choiceIndex) => (
           <DrawChoiceCard
             available={choiceIndex < gameState.drawChoiceCount}
@@ -701,7 +702,7 @@ function DrawChoiceCard({
       aria-label={
         available ? `Choose face-down card ${slot}` : `Card ${slot} unavailable`
       }
-      className={`group relative aspect-[5/7] w-full max-w-20 rounded-md border-2 p-1.5 text-cyan-100 shadow-[0_8px_18px_rgba(0,0,0,0.3)] transition duration-200 sm:max-w-24 lg:max-w-20 ${
+      className={`group relative aspect-[5/7] w-full max-w-14 rounded-md border-2 p-1 text-cyan-100 shadow-[0_8px_18px_rgba(0,0,0,0.3)] transition duration-200 sm:max-w-16 sm:p-1.5 lg:max-w-20 ${
         available
           ? "border-slate-300/80 bg-[#102742] hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_12px_24px_rgba(16,185,129,0.28)]"
           : "border-dashed border-slate-600 bg-slate-900/60"
@@ -713,8 +714,11 @@ function DrawChoiceCard({
       <span className="grid h-full place-items-center rounded border border-cyan-100/20 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.14),transparent_65%)]">
         {available ? (
           <span className="grid justify-items-center gap-1">
-            <Layers aria-hidden className="h-6 w-6 text-cyan-100/65" />
-            <span className="text-[0.65rem] font-extrabold uppercase tracking-widest text-cyan-100/75">
+            <Layers
+              aria-hidden
+              className="h-5 w-5 text-cyan-100/65 sm:h-6 sm:w-6"
+            />
+            <span className="text-[0.6rem] font-extrabold uppercase tracking-wider text-cyan-100/75 sm:text-[0.65rem] sm:tracking-widest">
               Pick
             </span>
           </span>
@@ -740,15 +744,15 @@ function StopChoiceCard({
   return (
     <button
       aria-label={disabled ? "Draw a card before stopping" : "Stop this turn"}
-      className="group relative aspect-[5/7] w-full max-w-20 rounded-md border-2 border-rose-200/55 bg-slate-900 p-1.5 text-rose-100 shadow-[0_8px_18px_rgba(0,0,0,0.3)] transition duration-200 hover:-translate-y-1 hover:border-rose-300 hover:bg-rose-950/60 hover:shadow-[0_12px_24px_rgba(244,63,94,0.22)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:max-w-24 lg:max-w-20"
+      className="group relative aspect-[5/7] w-full max-w-14 rounded-md border-2 border-rose-200/55 bg-slate-900 p-1 text-rose-100 shadow-[0_8px_18px_rgba(0,0,0,0.3)] transition duration-200 hover:-translate-y-1 hover:border-rose-300 hover:bg-rose-950/60 hover:shadow-[0_12px_24px_rgba(244,63,94,0.22)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 sm:max-w-16 sm:p-1.5 lg:max-w-20"
       disabled={disabled}
       onClick={onClick}
       type="button"
     >
       <span className="grid h-full place-items-center rounded border border-rose-100/15 bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.12),transparent_65%)]">
         <span className="grid justify-items-center gap-1">
-          <X aria-hidden className="h-7 w-7" />
-          <span className="text-[0.65rem] font-extrabold uppercase tracking-widest">
+          <X aria-hidden className="h-5 w-5 sm:h-7 sm:w-7" />
+          <span className="text-[0.6rem] font-extrabold uppercase tracking-wider sm:text-[0.65rem] sm:tracking-widest">
             {submitting ? "Stopping" : "Stop"}
           </span>
         </span>
@@ -760,7 +764,7 @@ function StopChoiceCard({
 function TurnStatusPanel({ presentation }: { presentation: TurnPresentation }) {
   return (
     <div
-      className="grid min-h-[10.5rem] content-center gap-1 rounded-md border border-cyan-200/15 bg-slate-950/45 p-2 lg:p-4"
+      className="grid min-h-[5rem] content-center gap-0.5 rounded-md border border-cyan-200/15 bg-slate-950/45 px-3 py-2 sm:min-h-[6rem] sm:gap-1 lg:min-h-[10.5rem] lg:p-4"
       role="status"
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -768,11 +772,13 @@ function TurnStatusPanel({ presentation }: { presentation: TurnPresentation }) {
           aria-hidden
           className="h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-300"
         />
-        <p className="truncate text-lg font-bold text-slate-100">
+        <p className="truncate text-sm font-bold text-slate-100 sm:text-base lg:text-lg">
           {presentation.label}
         </p>
       </div>
-      <p className="text-sm leading-5 text-slate-400">{presentation.detail}</p>
+      <p className="text-xs leading-4 text-slate-400 sm:text-sm sm:leading-5">
+        {presentation.detail}
+      </p>
     </div>
   );
 }
