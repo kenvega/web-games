@@ -943,7 +943,6 @@ function PlayerArea({
   variant: "opponent" | "current";
 }) {
   const isCurrentArea = variant === "current";
-  const cardSize = isCurrentArea ? "large" : "small";
 
   return (
     <article
@@ -993,14 +992,14 @@ function PlayerArea({
           previousCards={previousCards}
           pendingBustValue={pendingBustValue}
           pendingStealValue={pendingStealValue}
-          size={cardSize}
+          size="small"
         />
         {departure !== null ? (
           <CardDepartureOverlay
             cards={departure.cards}
             key={departure.token}
             kind={departure.kind}
-            size={cardSize}
+            size="small"
           />
         ) : null}
       </div>
