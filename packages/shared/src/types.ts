@@ -12,6 +12,13 @@ export const CARD_BANK_CARD_VALUES = [
 
 export type CardBankCardValue = (typeof CARD_BANK_CARD_VALUES)[number];
 
+export const CARD_BANK_DRAW_CHOICE_INDEXES = [0, 1, 2, 3] as const;
+export const CARD_BANK_DRAW_CHOICE_COUNT =
+  CARD_BANK_DRAW_CHOICE_INDEXES.length;
+
+export type CardBankDrawChoiceIndex =
+  (typeof CARD_BANK_DRAW_CHOICE_INDEXES)[number];
+
 export type CardBankCardCounts = Record<CardBankCardValue, number>;
 
 export const CARD_BANK_CARD_COUNTS: CardBankCardCounts = {
@@ -185,7 +192,7 @@ export type SendChatMessageInput = {
 export type CardBankGameAction =
   | {
       type: "draw-card";
-      choiceIndex?: 0 | 1 | undefined;
+      choiceIndex?: CardBankDrawChoiceIndex | undefined;
     }
   | {
       type: "resolve-steal";

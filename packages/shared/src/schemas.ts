@@ -65,7 +65,14 @@ export const sendChatMessageInputSchema = z.object({
 export const cardBankGameActionSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("draw-card"),
-    choiceIndex: z.union([z.literal(0), z.literal(1)]).optional()
+    choiceIndex: z
+      .union([
+        z.literal(0),
+        z.literal(1),
+        z.literal(2),
+        z.literal(3)
+      ])
+      .optional()
   }),
   z.object({
     type: z.literal("resolve-steal"),

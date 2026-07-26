@@ -1,8 +1,10 @@
 import {
   CARD_BANK_CARD_COUNTS,
   CARD_BANK_CARD_VALUES,
+  CARD_BANK_DRAW_CHOICE_COUNT,
   type CardBankCardCounts,
   type CardBankCardValue,
+  type CardBankDrawChoiceIndex,
   type CardBankGameAction,
   type PublicCardBankGameState,
   type PublicCardBankPendingBust,
@@ -328,7 +330,7 @@ export class CardBankGameModule
         state.status === "finished" ? null : this.getCurrentPlayerId(state),
       turnPhase: state.turnPhase,
       deckCount: state.deck.length,
-      drawChoiceCount: Math.min(2, state.deck.length),
+      drawChoiceCount: Math.min(CARD_BANK_DRAW_CHOICE_COUNT, state.deck.length),
       discardCount: state.discard.length,
       players: state.turnOrder.map((playerId) => {
         const player = state.players[playerId] as CardBankPlayerState;
@@ -385,7 +387,7 @@ export class CardBankGameModule
   private drawCard(
     room: Room,
     state: CardBankGameState,
-    choiceIndex: 0 | 1
+    choiceIndex: CardBankDrawChoiceIndex
   ): GameActionResult<CardBankGameState> {
     if (
       state.turnPhase !== "awaiting-draw" &&
@@ -414,7 +416,9 @@ export class CardBankGameModule
       };
     }
 
-    if (choiceIndex >= Math.min(2, state.deck.length)) {
+    if (
+      choiceIndex >= Math.min(CARD_BANK_DRAW_CHOICE_COUNT, state.deck.length)
+    ) {
       return {
         accepted: false,
         errorCode: "INVALID_GAME_ACTION",
@@ -422,9 +426,9 @@ export class CardBankGameModule
       };
     }
 
-    // The first two positions in the shuffled server-side deck are dealt as
-    // face-down choices. Only the selected card leaves the deck; the other one
-    // remains available for a future choice.
+    // The first four positions in the shuffled server-side deck are dealt as
+    // face-down choices. Only the selected card leaves the deck; the others
+    // remain available for a future choice.
     const drawnValue = state.deck[choiceIndex] as CardBankCardValue;
     const remainingDeck = state.deck.filter(
       (_card, index) => index !== choiceIndex

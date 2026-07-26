@@ -79,13 +79,13 @@ cards immediately.
 
 ### 2. Choose and reveal one card
 
-The game deals two face-down choices from the shuffled central deck. Choose one
-to reveal and place face up in front of you. The unchosen card stays in the
+The game deals four face-down choices from the shuffled central deck. Choose one
+to reveal and place face up in front of you. The unchosen cards stay in the
 deck. Keep your active cards grouped by value.
 
-The two face-down choices and a card-shaped Stop tile are shown together. The
+The four face-down choices and a card-shaped Stop tile are shown together. The
 Stop tile is disabled until you have completed at least one safe draw in the
-current turn. After each safe draw and any steal decision, the same three-slot
+current turn. After each safe draw and any steal decision, the same five-slot
 choice is offered again.
 
 ### 3. Reveal and resolve busts

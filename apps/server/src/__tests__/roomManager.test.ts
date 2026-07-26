@@ -305,8 +305,8 @@ describe("RoomManager", () => {
     expect(start.state.gameState?.players).toHaveLength(2);
   });
 
-  it("draws the selected face-down card and leaves the other choice in the deck", () => {
-    const { manager } = createManager(1000, () => [2, 7]);
+  it("draws one of four face-down cards and leaves the other choices in the deck", () => {
+    const { manager } = createManager(1000, () => [2, 7, 4, 9]);
     createRoom(manager);
     joinBob(manager);
     const started = expectOk(
@@ -316,33 +316,47 @@ describe("RoomManager", () => {
       })
     );
 
-    expect(started.state.gameState?.drawChoiceCount).toBe(2);
+    expect(started.state.gameState?.drawChoiceCount).toBe(4);
 
-    const pickedSecond = expectOk(
+    const pickedFourth = expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card", choiceIndex: 3 }
+      })
+    );
+    const alice = pickedFourth.state.gameState?.players.find(
+      (player) => player.playerId === aliceId
+    );
+
+    expect(alice?.activeCards[9]).toBe(1);
+    expect(alice?.activeCards[2]).toBe(0);
+    expect(pickedFourth.state.gameState?.deckCount).toBe(3);
+    expect(pickedFourth.state.gameState?.drawChoiceCount).toBe(3);
+
+    expectError(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card", choiceIndex: 3 }
+      }),
+      "INVALID_GAME_ACTION"
+    );
+
+    expectOk(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card", choiceIndex: 2 }
+      })
+    );
+    expectOk(
       manager.handleGameAction({
         roomCode: "23456789AB",
         guestId: aliceId,
         action: { type: "draw-card", choiceIndex: 1 }
       })
     );
-    const alice = pickedSecond.state.gameState?.players.find(
-      (player) => player.playerId === aliceId
-    );
-
-    expect(alice?.activeCards[7]).toBe(1);
-    expect(alice?.activeCards[2]).toBe(0);
-    expect(pickedSecond.state.gameState?.deckCount).toBe(1);
-    expect(pickedSecond.state.gameState?.drawChoiceCount).toBe(1);
-
-    expectError(
-      manager.handleGameAction({
-        roomCode: "23456789AB",
-        guestId: aliceId,
-        action: { type: "draw-card", choiceIndex: 1 }
-      }),
-      "INVALID_GAME_ACTION"
-    );
-
     const pickedRemaining = expectOk(
       manager.handleGameAction({
         roomCode: "23456789AB",
@@ -355,7 +369,7 @@ describe("RoomManager", () => {
       pickedRemaining.state.gameState?.players.find(
         (player) => player.playerId === aliceId
       )?.securedCardCount
-    ).toBe(2);
+    ).toBe(4);
   });
 
   it("keeps stopped cards stealable and resolves optional steals", () => {

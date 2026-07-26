@@ -1,8 +1,10 @@
 import {
   CARD_BANK_CARD_COLORS,
   CARD_BANK_CARD_VALUES,
+  CARD_BANK_DRAW_CHOICE_INDEXES,
   type CardBankCardCounts,
   type CardBankCardValue,
+  type CardBankDrawChoiceIndex,
   type CardBankGameAction,
   type PublicCardBankGameState,
   type PublicPlayer,
@@ -144,9 +146,8 @@ export function CardBankGame({
   const [submittingAction, setSubmittingAction] = useState<
     CardBankGameAction["type"] | null
   >(null);
-  const [selectedDrawChoice, setSelectedDrawChoice] = useState<0 | 1 | null>(
-    null
-  );
+  const [selectedDrawChoice, setSelectedDrawChoice] =
+    useState<CardBankDrawChoiceIndex | null>(null);
   const gameState = room.gameState;
   const playerLookup = useMemo(
     () => new Map(room.players.map((player) => [player.id, player])),
@@ -630,9 +631,9 @@ function TurnActionPanel({
   canDraw: boolean;
   canStop: boolean;
   submittingAction: CardBankGameAction["type"] | null;
-  selectedDrawChoice: 0 | 1 | null;
+  selectedDrawChoice: CardBankDrawChoiceIndex | null;
   bustReveal: { name: string; value: CardBankCardValue } | null;
-  onDraw: (choiceIndex: 0 | 1) => void;
+  onDraw: (choiceIndex: CardBankDrawChoiceIndex) => void;
   onStop: () => void;
   turnPresentation: TurnPresentation;
 }) {
@@ -663,8 +664,8 @@ function TurnActionPanel({
         Pick a face-down card{canStop ? " or stop" : " to begin"}
       </p>
 
-      <div className="grid grid-cols-3 items-stretch justify-items-center gap-2 sm:gap-3">
-        {([0, 1] as const).map((choiceIndex) => (
+      <div className="grid grid-cols-5 items-stretch justify-items-center gap-1.5 sm:gap-2 lg:gap-3">
+        {CARD_BANK_DRAW_CHOICE_INDEXES.map((choiceIndex) => (
           <DrawChoiceCard
             available={choiceIndex < gameState.drawChoiceCount}
             disabled={!canDraw || submittingAction !== null}
