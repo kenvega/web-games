@@ -6,6 +6,11 @@ export const DISPLAY_NAME_MAX_LENGTH = 24;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 6;
 
+export const CARD_BANK_GAME_ID = "card-bank" as const;
+export const SUPPORTED_GAME_IDS = [CARD_BANK_GAME_ID] as const;
+
+export type GameId = (typeof SUPPORTED_GAME_IDS)[number];
+
 export const CARD_BANK_CARD_VALUES = [
   1, 2, 3, 4, 5, 6, 7, 8, 9, 10
 ] as const;
@@ -122,6 +127,7 @@ export type PublicChatMessage = {
 
 export type PublicRoomState = {
   code: string;
+  gameId: GameId;
   phase: RoomPhase;
   hostPlayerId: string;
   players: PublicPlayer[];
@@ -164,6 +170,7 @@ export type CommandResult<T = null> =
     };
 
 export type CreateRoomInput = {
+  gameId: GameId;
   guestId: string;
   displayName: string;
   extraLivesEnabled: boolean;

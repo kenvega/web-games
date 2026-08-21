@@ -194,6 +194,7 @@ export function registerSocketHandlers(
       try {
         leaveCurrentRoom(socket);
         const result = roomManager.createRoom({
+          gameId: input.gameId,
           guestId: input.guestId,
           displayName: input.displayName,
           socketId: socket.id,

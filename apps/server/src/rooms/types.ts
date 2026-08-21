@@ -1,4 +1,5 @@
 import type {
+  GameId,
   PublicChatMessage,
   PublicPlayer,
   RoomPhase
@@ -11,6 +12,7 @@ export type Player = PublicPlayer & {
 
 export type Room = {
   code: string;
+  gameId: GameId;
   hostPlayerId: string;
   phase: RoomPhase;
   players: Record<string, Player>;

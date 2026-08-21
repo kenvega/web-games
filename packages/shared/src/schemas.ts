@@ -3,7 +3,8 @@ import {
   CHAT_MESSAGE_MAX_LENGTH,
   DISPLAY_NAME_MAX_LENGTH,
   ROOM_CODE_ALPHABET,
-  ROOM_CODE_LENGTH
+  ROOM_CODE_LENGTH,
+  SUPPORTED_GAME_IDS
 } from "./types.js";
 
 const roomCodePattern = new RegExp(
@@ -21,6 +22,8 @@ export const displayNameSchema = z
 
 export const guestIdSchema = z.string().uuid();
 
+export const gameIdSchema = z.enum(SUPPORTED_GAME_IDS);
+
 export const roomCodeSchema = z
   .string()
   .trim()
@@ -37,6 +40,7 @@ export const chatMessageTextSchema = z
   );
 
 export const createRoomInputSchema = z.object({
+  gameId: gameIdSchema,
   guestId: guestIdSchema,
   displayName: displayNameSchema,
   extraLivesEnabled: z.boolean()

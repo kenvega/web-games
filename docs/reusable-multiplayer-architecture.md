@@ -1,0 +1,149 @@
+# Reusable Multiplayer Architecture
+
+## Purpose
+
+This repository is intended to host multiple small multiplayer games while
+sharing one understandable multiplayer foundation. Reuse should happen at
+clear boundaries; the goal is not to turn every game concept into a generic
+framework.
+
+The reusable layer should answer questions such as:
+
+- Who is this browser guest?
+- Which room are they in?
+- Who is connected and who is the host?
+- How are commands validated, acknowledged, and broadcast?
+- How does a client recover the latest state after reconnecting?
+- How are invitations and room chat handled?
+
+Each game should continue to answer its own questions about rules, actions,
+timing, scoring, settings, visuals, and reactions to player disconnection.
+
+## Boundary
+
+### Reusable multiplayer foundation
+
+- Guest identity and stored display names.
+- Socket connection and reconnection status.
+- Typed Socket.IO commands, acknowledgements, and errors.
+- Room-code generation and shareable room links.
+- Room creation, joining, leaving, cleanup, and versioning.
+- Membership, presence, host ownership, and duplicate-session replacement.
+- Chat validation, retention, transport, and UI.
+- Common lobby primitives such as player lists and connection indicators.
+- Server-authoritative command processing and state broadcasts.
+- Express, Socket.IO, deployment, and generic room integration tests.
+
+### Game-specific code
+
+- Game state and action types.
+- Runtime schemas for game settings and actions.
+- Minimum and maximum players when they differ by game.
+- Start and finish conditions.
+- Rules, scoring, turns, timers, and conflict resolution.
+- Behavior when an active player disconnects.
+- Game board, animations, instructions, history, and branding.
+
+## Room identity
+
+Every room has an explicit `gameId`. A room must never rely on the currently
+rendered page or a server default to determine which game it represents.
+
+The currently supported identity is:
+
+```text
+card-bank
+```
+
+The shared package owns the validated list of supported IDs. `gameId` is
+required by the room-creation command, stored in the server's room record, and
+included in every public room state. Joining still requires only a room code:
+after joining, the returned room state tells the client which game owns the
+room. This allows invitation URLs to remain game-independent:
+
+```text
+/room/:roomCode
+```
+
+Adding a future game begins by adding its stable ID to the supported list.
+Changing an existing ID should be treated as a compatibility change because
+room state, routes, logs, and future persistence may depend on it.
+
+## Current extraction status
+
+1. **Game identity — complete.** Rooms explicitly carry a validated `gameId`.
+2. **Shared room state — pending.** `PublicRoomState` still directly contains
+   Card Banking state and its `extraLivesEnabled` setting.
+3. **Room manager game selection — pending.** `RoomManager` still constructs a
+   `CardBankGameModule` directly instead of resolving a module by `gameId`.
+4. **Socket action validation — pending.** The shared `game:action` schema
+   currently accepts only Card Banking actions.
+5. **Game timers — pending.** Bust-reveal and ending timers still live in the
+   otherwise reusable socket handler.
+6. **Client room boundary — pending.** `RoomPage` still combines generic room
+   session behavior with Card Banking UI, settings, rules, and history.
+7. **Game entry pages — pending.** `HomePage` combines reusable create/join
+   behavior with Card Banking branding and settings.
+
+These steps should be completed in order when practical. Each step should
+preserve a working Card Banking game and include tests for the reusable
+contract it introduces.
+
+## Intended server shape
+
+The server should eventually use a small, explicit game registry:
+
+```text
+gameId -> game module
+```
+
+A game module should own its state creation, action schema, action handling,
+public-state projection, lifecycle hooks, and game-specific timers. The room
+service should own membership and lifecycle checks that apply to every game.
+
+A static registry is preferred over a dynamic plugin system. It keeps supported
+games visible in the repository and makes invalid game IDs fail predictably.
+
+## Intended client shape
+
+The client should eventually have:
+
+- A room-session hook for joining, leaving, reconnecting, receiving versioned
+  state, sending chat, and sending game actions.
+- A room shell for connection status, invitations, presence, chat, and common
+  mobile panels.
+- A game renderer selected by `room.gameId`.
+- Game-owned components for the board, settings, rules, history, and branding.
+
+A likely route structure is:
+
+```text
+/                         game catalog
+/games/:gameId            game-specific create/join page
+/room/:roomCode            universal invitation destination
+```
+
+The universal room route should render the appropriate game only after reading
+the server-provided `gameId`.
+
+## Real-time behavior
+
+The shared action pipeline is event-driven, not inherently turn-based. A game
+module may accept actions from every player and use the order in which the
+server processes valid actions to resolve contention.
+
+Full authoritative room-state broadcasts are appropriate for occasional or
+moderate-frequency actions. A future movement-heavy game may add throttled
+game-specific transient events and periodic snapshots without moving that
+traffic into the generic room API.
+
+## Design rules for future changes
+
+- Generic room code must not import a concrete game's UI.
+- Prefer game-owned state over optional game fields added to the generic room.
+- Validate all client commands at runtime.
+- Clients request actions; they never submit trusted replacement state.
+- Preserve the room code as the invitation authority.
+- Prefer a small registry and discriminated types over an elaborate plugin
+  framework.
+- Do not generalize a concept until at least two games need the same behavior.

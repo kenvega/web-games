@@ -1,4 +1,8 @@
-import { displayNameSchema, roomCodeSchema } from "@multiplayer-blueprint/shared";
+import {
+  CARD_BANK_GAME_ID,
+  displayNameSchema,
+  roomCodeSchema
+} from "@multiplayer-blueprint/shared";
 import { LogIn, Plus } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -43,6 +47,7 @@ export function HomePage() {
     try {
       await ensureConnected();
       const result = await createRoomCommand(socket, {
+        gameId: CARD_BANK_GAME_ID,
         guestId: getGuestId(),
         displayName: storedName,
         extraLivesEnabled

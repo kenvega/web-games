@@ -139,19 +139,12 @@ If the same guest opens the same room from a second active socket, the new socke
 
 If the host disconnects, the host role remains assigned to that player. Other players cannot take host controls until the host reconnects.
 
-## Demo Game
+## Included Game
 
-The included game is “First to React”:
+The included game is Card Banking. Its rules are documented in
+`docs/game-rules.md`.
 
-1. The host starts when at least two connected players are present.
-2. The server schedules a synchronized countdown.
-3. When the round is active, each player can press once.
-4. The server awards one point to the first valid action it processes.
-5. The match ends when a player reaches three points.
-
-Scores reset when the host returns a finished match to the waiting lobby for a new match.
-
-## Replacing the Demo Game
+## Adding Games
 
 Generic multiplayer infrastructure lives in:
 
@@ -160,15 +153,17 @@ Generic multiplayer infrastructure lives in:
 - `apps/server/src/chat`
 - `packages/shared/src`
 
-Demo-specific server logic lives in:
+Card Banking server logic lives in:
 
-- `apps/server/src/game/demo`
+- `apps/server/src/game/card-bank`
 
-Demo-specific React UI lives in:
+Card Banking React UI lives in:
 
-- `apps/client/src/game/demo`
+- `apps/client/src/game/card-bank`
 
-For a new game, replace the demo game folders and adjust the shared game action/state types while keeping the room, identity, lobby, chat, and Socket.IO scaffolding.
+Rooms now carry an explicit game ID so this repository can add games without
+replacing Card Banking. See `docs/reusable-multiplayer-architecture.md` for the
+reusable boundary and extraction roadmap.
 
 ## Shared Event Contracts
 

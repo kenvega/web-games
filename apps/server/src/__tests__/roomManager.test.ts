@@ -1,4 +1,5 @@
 import {
+  CARD_BANK_GAME_ID,
   CHAT_MESSAGE_MAX_LENGTH,
   MAX_CHAT_MESSAGES,
   type CardBankCardValue,
@@ -59,6 +60,7 @@ function createManager(
 function createRoom(manager: RoomManager, extraLivesEnabled = false) {
   return expectOk(
     manager.createRoom({
+      gameId: CARD_BANK_GAME_ID,
       guestId: aliceId,
       displayName: "Alice",
       socketId: "socket-a",
@@ -110,11 +112,27 @@ describe("RoomManager", () => {
     const created = createRoom(manager);
 
     expect(created.roomCode).toBe("23456789AB");
+    expect(created.state.gameId).toBe(CARD_BANK_GAME_ID);
     expect(created.state.hostPlayerId).toBe(aliceId);
     expect(created.state.players).toHaveLength(1);
     expect(created.state.players[0]?.displayName).toBe("Alice");
     expect(created.state.phase).toBe("waiting");
     expect(created.state.version).toBe(1);
+  });
+
+  it("rejects unsupported game IDs", () => {
+    const { manager } = createManager();
+
+    const result = manager.createRoom({
+      gameId: "unknown-game",
+      guestId: aliceId,
+      displayName: "Alice",
+      socketId: "socket-a",
+      extraLivesEnabled: false
+    });
+
+    expectError(result, "INVALID_INPUT");
+    expect(manager.getRoomCount()).toBe(0);
   });
 
   it("allows duplicate display names and rejects invalid names", () => {

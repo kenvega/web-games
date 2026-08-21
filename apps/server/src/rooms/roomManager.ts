@@ -1,6 +1,7 @@
 import {
   displayNameSchema,
   gameActionInputSchema,
+  gameIdSchema,
   guestIdSchema,
   joinRoomInputSchema,
   MAX_PLAYERS,
@@ -90,16 +91,25 @@ export class RoomManager {
   }
 
   createRoom(input: {
+    gameId: string;
     guestId: string;
     displayName: string;
     socketId: string;
     extraLivesEnabled?: boolean;
   }): CommandResult<{ roomCode: string; state: PublicRoomState }> {
+    const gameIdResult = gameIdSchema.safeParse(input.gameId);
     const guestIdResult = guestIdSchema.safeParse(input.guestId);
     const displayNameResult = displayNameSchema.safeParse(input.displayName);
 
-    if (!guestIdResult.success || !displayNameResult.success) {
-      return fail("INVALID_INPUT", "Enter a valid display name.");
+    if (
+      !gameIdResult.success ||
+      !guestIdResult.success ||
+      !displayNameResult.success
+    ) {
+      return fail(
+        "INVALID_INPUT",
+        "Select a valid game and enter a valid display name."
+      );
     }
 
     const now = this.now();
@@ -114,6 +124,7 @@ export class RoomManager {
     };
     const room: Room = {
       code,
+      gameId: gameIdResult.data,
       hostPlayerId: player.id,
       phase: "waiting",
       players: {
@@ -694,6 +705,7 @@ export class RoomManager {
   private toPublicState(room: Room): PublicRoomState {
     return {
       code: room.code,
+      gameId: room.gameId,
       phase: room.phase,
       hostPlayerId: room.hostPlayerId,
       players: Object.values(room.players)

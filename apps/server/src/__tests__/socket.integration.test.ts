@@ -1,4 +1,5 @@
 import {
+  CARD_BANK_GAME_ID,
   type ClientToServerEvents,
   type CommandResult,
   type CreateRoomInput,
@@ -169,6 +170,7 @@ describe("Socket.IO multiplayer flow", () => {
     await Promise.all([waitForConnect(alice), waitForConnect(bob)]);
 
     const created = await createRoom(alice, {
+      gameId: CARD_BANK_GAME_ID,
       guestId: aliceId,
       displayName: "Alice",
       extraLivesEnabled: false
@@ -299,6 +301,7 @@ describe("Socket.IO multiplayer flow", () => {
     await Promise.all([waitForConnect(alice), waitForConnect(bob)]);
 
     const created = await createRoom(alice, {
+      gameId: CARD_BANK_GAME_ID,
       guestId: aliceId,
       displayName: "Alice",
       extraLivesEnabled: false
