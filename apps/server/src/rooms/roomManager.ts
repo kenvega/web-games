@@ -101,6 +101,14 @@ export class RoomManager {
       );
     }
 
+    const gameModule = this.gameRegistry.get(parsedInput.data.gameId);
+    const settingsResult = gameModule.settingsSchema.safeParse(
+      parsedInput.data.settings
+    );
+    if (!settingsResult.success) {
+      return fail("INVALID_INPUT", "The game settings are invalid.");
+    }
+
     const now = this.now();
     const code = generateRoomCode(new Set(this.rooms.keys()), this.codeFactory);
     const player: Player = {
@@ -120,7 +128,7 @@ export class RoomManager {
       },
       chatMessages: [],
       game: {
-        settings: parsedInput.data.settings,
+        settings: settingsResult.data,
         state: null
       },
       version: 0,
@@ -345,6 +353,13 @@ export class RoomManager {
       return fail("INVALID_INPUT", "The settings do not match this game.");
     }
 
+    const settingsResult = this.getGameModule(room).settingsSchema.safeParse(
+      parsedInput.data.settings
+    );
+    if (!settingsResult.success) {
+      return fail("INVALID_INPUT", "The game settings are invalid.");
+    }
+
     const membershipError = this.validateHost(room, guestIdResult.data);
     if (membershipError !== null) {
       return fail(membershipError.code, membershipError.message);
@@ -357,7 +372,7 @@ export class RoomManager {
       );
     }
 
-    room.game.settings = parsedInput.data.settings;
+    room.game.settings = settingsResult.data;
 
     return ok({
       state: this.commit(room)
@@ -441,10 +456,18 @@ export class RoomManager {
       return fail("ROUND_NOT_ACTIVE", "There is no active game.");
     }
 
-    const result = this.getGameModule(room).handleAction({
+    const gameModule = this.getGameModule(room);
+    const actionResult = gameModule.actionSchema.safeParse(
+      parsedInput.data.action
+    );
+    if (!actionResult.success) {
+      return fail("INVALID_INPUT", "The game action is invalid.");
+    }
+
+    const result = gameModule.handleAction({
       room,
       playerId: player.id,
-      action: parsedInput.data.action,
+      action: actionResult.data,
       now: this.now()
     });
 

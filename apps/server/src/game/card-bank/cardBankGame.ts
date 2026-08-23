@@ -2,10 +2,13 @@ import {
   CARD_BANK_CARD_COUNTS,
   CARD_BANK_CARD_VALUES,
   CARD_BANK_DRAW_CHOICE_COUNT,
+  cardBankGameActionSchema,
+  cardBankSettingsSchema,
   type CardBankCardCounts,
   type CardBankCardValue,
   type CardBankDrawChoiceIndex,
   type CardBankGameAction,
+  type CardBankSettings,
   type PublicCardBankGameState,
   type PublicCardBankPendingBust,
   type PublicCardBankPendingSteal,
@@ -192,12 +195,16 @@ function compareStandings(
 
 type CardBankGameModuleContract = GameModule<
   Room,
+  CardBankSettings,
   CardBankGameState,
   CardBankGameAction,
   PublicCardBankGameState
 >;
 
 export class CardBankGameModule implements CardBankGameModuleContract {
+  readonly settingsSchema = cardBankSettingsSchema;
+  readonly actionSchema = cardBankGameActionSchema;
+
   private readonly rng: () => number;
   private readonly deckFactory: (() => CardBankCardValue[]) | null;
 

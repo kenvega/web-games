@@ -20,4 +20,25 @@ describe("GameRegistry", () => {
       registry.get(CARD_BANK_GAME_ID)
     );
   });
+
+  it("exposes the registered game's settings and action schemas", () => {
+    const cardBankModule = createGameRegistry().get(CARD_BANK_GAME_ID);
+
+    expect(
+      cardBankModule.settingsSchema.safeParse({
+        extraLivesEnabled: true
+      }).success
+    ).toBe(true);
+    expect(
+      cardBankModule.settingsSchema.safeParse({
+        extraLivesEnabled: "yes"
+      }).success
+    ).toBe(false);
+    expect(
+      cardBankModule.actionSchema.safeParse({ type: "stop-turn" }).success
+    ).toBe(true);
+    expect(
+      cardBankModule.actionSchema.safeParse({ type: "unknown-action" }).success
+    ).toBe(false);
+  });
 });

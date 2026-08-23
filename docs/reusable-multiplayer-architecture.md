@@ -77,8 +77,9 @@ room state, routes, logs, and future persistence may depend on it.
    `room.game`. Generic players no longer carry a numeric score.
 3. **Room manager game selection. Complete.** `RoomManager` resolves game
    behavior from the game registry using the room's `gameId`.
-4. **Socket action validation. Pending.** The shared `game:action` schema
-   currently accepts only Card Banking actions.
+4. **Game payload validation. Complete.** Generic command schemas validate
+   room and identity envelopes. The registry-selected game module validates
+   its own settings and actions.
 5. **Game timers. Pending.** Bust-reveal and ending timers still live in the
    otherwise reusable socket handler.
 6. **Client room boundary. Pending.** `RoomPage` still combines generic room
@@ -119,10 +120,11 @@ The server uses a small, explicit game registry:
 gameId -> game module
 ```
 
-A game module owns state creation, action handling, public-state projection,
-and its room cleanup hook. Action schema selection and game-specific timers
-still need to move into the game modules in later steps. The room service owns
-membership and lifecycle checks that apply to every game.
+A game module owns its settings and action schemas, state creation, action
+handling, public-state projection, and room cleanup hook. Game-specific timers
+still need to move into the game modules in a later step. The room service owns
+command-envelope validation plus membership and lifecycle checks that apply to
+every game.
 
 A static registry is preferred over a dynamic plugin system. It keeps supported
 games visible in the repository and makes invalid game IDs fail predictably.
@@ -136,6 +138,12 @@ game-specific constructor options to the room manager.
 To register another game, add its module type to `GameModuleMap` and construct
 it in `createGameRegistry`. The compiler then requires the registry to cover
 every supported `GameId`.
+
+The generic create-room, update-settings, and game-action schemas deliberately
+treat `settings` and `action` as opaque payloads. After resolving a module by
+the validated `gameId` (or by the room's stored `gameId`), `RoomManager` passes
+the payload to that module's `settingsSchema` or `actionSchema`. The generic
+room service must not import a concrete game's payload schema.
 
 ## Intended client shape
 

@@ -154,6 +154,23 @@ describe("RoomManager", () => {
     expect(manager.getRoomCount()).toBe(0);
   });
 
+  it("uses the selected game module to validate room settings", () => {
+    const { manager } = createManager();
+
+    const result = manager.createRoom({
+      gameId: CARD_BANK_GAME_ID,
+      guestId: aliceId,
+      displayName: "Alice",
+      socketId: "socket-a",
+      settings: {
+        extraLivesEnabled: "yes"
+      }
+    });
+
+    expectError(result, "INVALID_INPUT");
+    expect(manager.getRoomCount()).toBe(0);
+  });
+
   it("allows duplicate display names and rejects invalid names", () => {
     const { manager } = createManager();
     createRoom(manager);
@@ -406,6 +423,30 @@ describe("RoomManager", () => {
         (player) => player.playerId === aliceId
       )?.securedCardCount
     ).toBe(4);
+  });
+
+  it("uses the selected game module to validate game actions", () => {
+    const { manager } = createManager();
+    createRoom(manager);
+    joinBob(manager);
+    const started = expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+
+    expectError(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: { type: "draw-card", choiceIndex: 4 }
+      }),
+      "INVALID_INPUT"
+    );
+    expect(manager.getPublicState("23456789AB")?.version).toBe(
+      started.state.version
+    );
   });
 
   it("keeps stopped cards stealable and resolves optional steals", () => {
@@ -889,6 +930,21 @@ describe("RoomManager", () => {
       })
     );
     expect(enabled.state.game.settings.extraLivesEnabled).toBe(true);
+
+    expectError(
+      manager.updateRoomSettings({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        gameId: CARD_BANK_GAME_ID,
+        settings: {
+          extraLivesEnabled: "yes"
+        }
+      }),
+      "INVALID_INPUT"
+    );
+    expect(
+      manager.getPublicState("23456789AB")?.game.settings.extraLivesEnabled
+    ).toBe(true);
 
     // Non-host cannot change it.
     expectError(

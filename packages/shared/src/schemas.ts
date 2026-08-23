@@ -24,10 +24,6 @@ export const guestIdSchema = z.string().uuid();
 
 export const gameIdSchema = z.enum(SUPPORTED_GAME_IDS);
 
-export const cardBankSettingsSchema = z.object({
-  extraLivesEnabled: z.boolean()
-});
-
 export const roomCodeSchema = z
   .string()
   .trim()
@@ -47,13 +43,13 @@ export const createRoomInputSchema = z.object({
   gameId: gameIdSchema,
   guestId: guestIdSchema,
   displayName: displayNameSchema,
-  settings: cardBankSettingsSchema
+  settings: z.unknown()
 });
 
 export const updateRoomSettingsInputSchema = z.object({
   roomCode: roomCodeSchema,
   gameId: gameIdSchema,
-  settings: cardBankSettingsSchema
+  settings: z.unknown()
 });
 
 export const joinRoomInputSchema = z.object({
@@ -71,25 +67,9 @@ export const sendChatMessageInputSchema = z.object({
   text: chatMessageTextSchema
 });
 
-export const cardBankGameActionSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("draw-card"),
-    choiceIndex: z
-      .union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)])
-      .optional()
-  }),
-  z.object({
-    type: z.literal("resolve-steal"),
-    steal: z.boolean()
-  }),
-  z.object({
-    type: z.literal("stop-turn")
-  })
-]);
-
 export const gameActionInputSchema = z.object({
   roomCode: roomCodeSchema,
-  action: cardBankGameActionSchema
+  action: z.unknown()
 });
 
 export type CreateRoomInputData = z.infer<typeof createRoomInputSchema>;

@@ -1,4 +1,5 @@
 import type { CommandErrorCode } from "@multiplayer-blueprint/shared";
+import type { ZodType } from "zod";
 
 export type GameActionResult<TState> =
   | {
@@ -11,7 +12,10 @@ export type GameActionResult<TState> =
       message: string;
     };
 
-export interface GameModule<TRoom, TState, TAction, TPublicState> {
+export interface GameModule<TRoom, TSettings, TState, TAction, TPublicState> {
+  readonly settingsSchema: ZodType<TSettings>;
+  readonly actionSchema: ZodType<TAction>;
+
   start(room: TRoom, now: number): TState;
 
   handleAction(input: {
