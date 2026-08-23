@@ -85,12 +85,12 @@ room state, routes, logs, and future persistence may depend on it.
 6. **Client room boundary. Complete.** A reusable room-session hook and room
    shell own multiplayer behavior and shared UI. `RoomPage` selects a
    game-owned room renderer using the server-provided `gameId`.
-7. **Game entry pages. Pending.** `HomePage` combines reusable create/join
-   behavior with Card Banking branding and settings.
+7. **Game entry pages. Complete.** The main route is a reusable game catalog
+   and room-code join surface. Game-specific creation UI lives behind
+   `/games/:gameId`.
 
-These steps should be completed in order when practical. Each step should
-preserve a working Card Banking game and include tests for the reusable
-contract it introduces.
+Each extraction preserves a working Card Banking game and includes verification
+for the reusable contract it introduces.
 
 ## Room data
 
@@ -175,7 +175,28 @@ under `client/src/game/card-bank`. Adding another game requires another typed
 renderer and another explicit case in the room-page selection switch; it does
 not require duplicating socket listeners or reconnection logic.
 
-A likely route structure is:
+## Game catalog and entry boundary
+
+The root route renders `GameCatalogPage`. Catalog metadata is stored in a
+typed record covering every supported `GameId`, so adding an ID also requires a
+title, description, player-count label, and entry path. The catalog includes a
+reusable room-code join form; joining remains independent of game selection
+because the authoritative room state supplies the `gameId`.
+
+`useGuestDisplayName` centralizes browser guest identity plus display-name
+validation and storage. `RoomJoinForm` owns room-code validation and universal
+invitation navigation. `useCreateRoom` owns connection readiness, the shared
+create-room command, acknowledgement errors, and navigation to the created
+room.
+
+`GameEntryPage` validates the route's `gameId` and explicitly selects a
+game-owned entry renderer. Card Banking's entry renderer owns its branding,
+description, default settings, settings controls, and construction of its
+typed create-room payload. Adding another game requires a catalog entry, an
+entry-renderer case, and that game's own settings form; it does not require
+changing the reusable join or create transport.
+
+The route structure is:
 
 ```text
 /                         game catalog
@@ -199,7 +220,8 @@ traffic into the generic room API.
 
 ## Design rules for future changes
 
-- Generic room code must not import a concrete game's UI.
+- Reusable room/session code must not import a concrete game's UI. Explicit
+  renderer-selection pages are the boundary where those imports belong.
 - Prefer game-owned state over optional game fields added to the generic room.
 - Validate all client commands at runtime.
 - Clients request actions; they never submit trusted replacement state.

@@ -130,7 +130,7 @@ function MissingRoom({
         <h1 className="text-2xl font-bold text-slate-100">Room unavailable</h1>
         <p className="text-sm leading-6 text-slate-400">{message}</p>
         <Button onClick={onCreate} type="button" variant="primary">
-          Create a New Room
+          Browse Games
         </Button>
       </section>
     </main>
