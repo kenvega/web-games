@@ -162,8 +162,10 @@ Card Banking React UI lives in:
 - `apps/client/src/game/card-bank`
 
 Rooms now carry an explicit game ID so this repository can add games without
-replacing Card Banking. See `docs/reusable-multiplayer-architecture.md` for the
-reusable boundary and extraction roadmap.
+replacing Card Banking. See the
+[reusable multiplayer architecture](docs/reusable-multiplayer-architecture.md)
+for the boundary and the [adding a game checklist](docs/adding-a-game.md) for
+the implementation sequence.
 
 ## Shared Event Contracts
 

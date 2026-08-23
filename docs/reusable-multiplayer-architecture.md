@@ -1,5 +1,8 @@
 # Reusable multiplayer architecture
 
+For the implementation sequence, use the
+[Adding a game checklist](./adding-a-game.md).
+
 ## Purpose
 
 This repository is intended to host multiple small multiplayer games while
