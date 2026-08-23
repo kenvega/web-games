@@ -1,4 +1,4 @@
-# Reusable Multiplayer Architecture
+# Reusable multiplayer architecture
 
 ## Purpose
 
@@ -71,23 +71,45 @@ room state, routes, logs, and future persistence may depend on it.
 
 ## Current extraction status
 
-1. **Game identity — complete.** Rooms explicitly carry a validated `gameId`.
-2. **Shared room state — pending.** `PublicRoomState` still directly contains
-   Card Banking state and its `extraLivesEnabled` setting.
-3. **Room manager game selection — pending.** `RoomManager` still constructs a
+1. **Game identity. Complete.** Rooms explicitly carry a validated `gameId`.
+2. **Shared room state. Complete.** The shared room fields live in
+   `PublicRoomBase`. Card Banking owns its settings and state under
+   `room.game`. Generic players no longer carry a numeric score.
+3. **Room manager game selection. Pending.** `RoomManager` still constructs a
    `CardBankGameModule` directly instead of resolving a module by `gameId`.
-4. **Socket action validation — pending.** The shared `game:action` schema
+4. **Socket action validation. Pending.** The shared `game:action` schema
    currently accepts only Card Banking actions.
-5. **Game timers — pending.** Bust-reveal and ending timers still live in the
+5. **Game timers. Pending.** Bust-reveal and ending timers still live in the
    otherwise reusable socket handler.
-6. **Client room boundary — pending.** `RoomPage` still combines generic room
+6. **Client room boundary. Pending.** `RoomPage` still combines generic room
    session behavior with Card Banking UI, settings, rules, and history.
-7. **Game entry pages — pending.** `HomePage` combines reusable create/join
+7. **Game entry pages. Pending.** `HomePage` combines reusable create/join
    behavior with Card Banking branding and settings.
 
 These steps should be completed in order when practical. Each step should
 preserve a working Card Banking game and include tests for the reusable
 contract it introduces.
+
+## Room data
+
+The generic room model contains the room code, game ID, phase, host, players,
+chat, and version. Game-owned data sits under one property:
+
+```text
+room.game.settings
+room.game.state
+```
+
+Room creation and settings commands use the same game-specific settings shape.
+For Card Banking that shape currently contains `extraLivesEnabled`.
+
+`PublicRoomState` is a discriminated room type. When another game is added, it
+should add another room type keyed by its `gameId`, then join that type to the
+`PublicRoomState` union. Do not weaken game settings or state to `unknown` or a
+generic string-keyed object.
+
+Scores belong to the game state. Card Banking publishes them through final
+standings. `PublicPlayer` contains identity and presence only.
 
 ## Intended server shape
 

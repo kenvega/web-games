@@ -110,7 +110,10 @@ function removeCards(
 }
 
 function getCardCount(counts: CardBankCardCounts): number {
-  return CARD_BANK_CARD_VALUES.reduce((total, value) => total + counts[value], 0);
+  return CARD_BANK_CARD_VALUES.reduce(
+    (total, value) => total + counts[value],
+    0
+  );
 }
 
 function getScore(counts: CardBankCardCounts): number {
@@ -190,9 +193,7 @@ function compareStandings(
   return 0;
 }
 
-export class CardBankGameModule
-  implements CardBankGameModuleContract<CardBankGameState>
-{
+export class CardBankGameModule implements CardBankGameModuleContract<CardBankGameState> {
   private readonly rng: () => number;
   private readonly deckFactory: (() => CardBankCardValue[]) | null;
 
@@ -229,7 +230,7 @@ export class CardBankGameModule
 
     return {
       status: "playing",
-      extraLivesEnabled: room.extraLivesEnabled,
+      extraLivesEnabled: room.game.settings.extraLivesEnabled,
       turnPhase: "awaiting-draw",
       deck,
       discard: [],
@@ -249,7 +250,7 @@ export class CardBankGameModule
     action: CardBankGameAction;
     now: number;
   }): GameActionResult<CardBankGameState> {
-    const state = input.room.gameState;
+    const state = input.room.game.state;
     if (state === null || state.status === "finished") {
       return {
         accepted: false,
@@ -283,7 +284,7 @@ export class CardBankGameModule
   }
 
   handleDisconnectedActivePlayer(room: Room): CardBankGameState | null {
-    const state = room.gameState;
+    const state = room.game.state;
     if (state === null || state.status === "finished") {
       return null;
     }
@@ -314,15 +315,6 @@ export class CardBankGameModule
     });
   }
 
-  getPlayerScores(state: CardBankGameState): Record<string, number> {
-    return Object.fromEntries(
-      Object.values(state.players).map((player) => [
-        player.playerId,
-        getScore(player.bankedCards)
-      ])
-    );
-  }
-
   toPublicState(state: CardBankGameState): PublicCardBankGameState {
     return {
       status: state.status,
@@ -347,14 +339,16 @@ export class CardBankGameModule
           ? null
           : this.toPublicPendingSteal(state.pendingSteal),
       pendingBust:
-        state.pendingBust === null ? null : this.toPublicPendingBust(state.pendingBust),
+        state.pendingBust === null
+          ? null
+          : this.toPublicPendingBust(state.pendingBust),
       finalStandings: state.finalStandings,
       winnerPlayerIds: state.winnerPlayerIds
     };
   }
 
   resolvePendingBust(room: Room): CardBankGameState | null {
-    const state = room.gameState;
+    const state = room.game.state;
     if (
       state === null ||
       state.status === "finished" ||
@@ -368,7 +362,7 @@ export class CardBankGameModule
   }
 
   resolveEnding(room: Room): CardBankGameState | null {
-    const state = room.gameState;
+    const state = room.game.state;
     if (
       state === null ||
       state.status === "finished" ||
@@ -434,7 +428,9 @@ export class CardBankGameModule
       (_card, index) => index !== choiceIndex
     );
     const currentPlayer = state.players[currentPlayerId] as CardBankPlayerState;
-    const triplesBeforeDraw = countConsecutiveTriples(currentPlayer.activeCards);
+    const triplesBeforeDraw = countConsecutiveTriples(
+      currentPlayer.activeCards
+    );
     const nextPlayer = {
       ...currentPlayer,
       activeCards: cloneCounts(currentPlayer.activeCards)
@@ -805,7 +801,10 @@ export class CardBankGameModule
     let currentRank = 0;
     const finalStandings = sortedStandings.map((standing, index) => {
       const previous = sortedStandings[index - 1];
-      if (previous === undefined || compareStandings(previous, standing) !== 0) {
+      if (
+        previous === undefined ||
+        compareStandings(previous, standing) !== 0
+      ) {
         currentRank = index + 1;
       }
 
@@ -859,7 +858,9 @@ export class CardBankGameModule
   ): PublicCardBankPendingSteal {
     return {
       drawnValue: pendingSteal.drawnValue,
-      candidates: pendingSteal.candidates.map((candidate) => ({ ...candidate })),
+      candidates: pendingSteal.candidates.map((candidate) => ({
+        ...candidate
+      })),
       totalCount: pendingSteal.candidates.reduce(
         (total, candidate) => total + candidate.count,
         0

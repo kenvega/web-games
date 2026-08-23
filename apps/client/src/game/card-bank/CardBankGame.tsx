@@ -54,7 +54,10 @@ function getPlayerName(players: PlayerLookup, playerId: string): string {
 }
 
 function getCardTotal(cards: CardBankCardCounts): number {
-  return CARD_BANK_CARD_VALUES.reduce((total, value) => total + cards[value], 0);
+  return CARD_BANK_CARD_VALUES.reduce(
+    (total, value) => total + cards[value],
+    0
+  );
 }
 
 function getTurnPresentation(
@@ -148,7 +151,7 @@ export function CardBankGame({
   >(null);
   const [selectedDrawChoice, setSelectedDrawChoice] =
     useState<CardBankDrawChoiceIndex | null>(null);
-  const gameState = room.gameState;
+  const gameState = room.game.state;
   const playerLookup = useMemo(
     () => new Map(room.players.map((player) => [player.id, player])),
     [room.players]
@@ -191,7 +194,10 @@ export function CardBankGame({
         prevActiveCount > 0 &&
         player.activeCount === 0
       ) {
-        if (prevSecured !== undefined && player.securedCardCount > prevSecured) {
+        if (
+          prevSecured !== undefined &&
+          player.securedCardCount > prevSecured
+        ) {
           newDepartures.push({
             playerId: player.playerId,
             departure: { kind: "secure", cards: prevCards, token: room.version }
@@ -234,17 +240,20 @@ export function CardBankGame({
       (most, item) => Math.max(most, getCardTotal(item.departure.cards)),
       0
     );
-    window.setTimeout(() => {
-      setDepartures((current) => {
-        const next = new Map(current);
-        for (const [playerId, token] of tokensById) {
-          if (next.get(playerId)?.token === token) {
-            next.delete(playerId);
+    window.setTimeout(
+      () => {
+        setDepartures((current) => {
+          const next = new Map(current);
+          for (const [playerId, token] of tokensById) {
+            if (next.get(playerId)?.token === token) {
+              next.delete(playerId);
+            }
           }
-        }
-        return next;
-      });
-    }, CARD_DEPARTURE_BASE_MS + maxCards * CARD_DEPARTURE_STAGGER_MS);
+          return next;
+        });
+      },
+      CARD_DEPARTURE_BASE_MS + maxCards * CARD_DEPARTURE_STAGGER_MS
+    );
   }, [room.version, gameState]);
 
   const runAction = async (action: CardBankGameAction) => {
@@ -279,7 +288,9 @@ export function CardBankGame({
   const opponentStates =
     currentPlayerState === null
       ? gameState.players
-      : gameState.players.filter((player) => player.playerId !== currentPlayerId);
+      : gameState.players.filter(
+          (player) => player.playerId !== currentPlayerId
+        );
   const canDraw =
     connected &&
     isCurrentTurn &&
@@ -497,9 +508,7 @@ function CompactPileStat({
       <span className="ml-1 truncate font-semibold text-slate-300">
         {label}
       </span>
-      <span className="font-bold leading-none text-slate-100">
-        {count}
-      </span>
+      <span className="font-bold leading-none text-slate-100">{count}</span>
     </div>
   );
 }
@@ -848,9 +857,10 @@ function BustNotice({
 function LivesBadge({ extraLives }: { extraLives: number }) {
   const previousRef = useRef(extraLives);
   const [enterToken, setEnterToken] = useState(0);
-  const [leaving, setLeaving] = useState<{ value: number; token: number } | null>(
-    null
-  );
+  const [leaving, setLeaving] = useState<{
+    value: number;
+    token: number;
+  } | null>(null);
 
   useLayoutEffect(() => {
     const previous = previousRef.current;
@@ -973,7 +983,9 @@ function PlayerArea({
               departure?.kind === "secure"
                 ? {
                     animationDelay: `${
-                      (getCardTotal(departure.cards) - 1) * CARD_DEPARTURE_STAGGER_MS + 580
+                      (getCardTotal(departure.cards) - 1) *
+                        CARD_DEPARTURE_STAGGER_MS +
+                      580
                     }ms`
                   }
                 : undefined
@@ -1118,7 +1130,8 @@ function CardGrid({
         const count = cards[value];
         // Without a prior snapshot (first render) treat every card as old so
         // the board does not flash on initial load.
-        const previousCount = previousCards === null ? count : previousCards[value];
+        const previousCount =
+          previousCards === null ? count : previousCards[value];
         return Array.from({ length: count }, (_, occurrence) => (
           <CardTile
             flash={occurrence >= previousCount}
@@ -1188,7 +1201,9 @@ function CardTile({
       >
         {value}
       </span>
-      <span className={`relative font-serif font-black leading-none ${centerSize}`}>
+      <span
+        className={`relative font-serif font-black leading-none ${centerSize}`}
+      >
         {value}
       </span>
       <span
@@ -1268,7 +1283,8 @@ function FinalStandings({
                     #{standing.rank} {playerName}
                   </p>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    {scoringCardCount} scoring {scoringCardCount === 1 ? "card" : "cards"}
+                    {scoringCardCount} scoring{" "}
+                    {scoringCardCount === 1 ? "card" : "cards"}
                   </p>
                 </div>
                 <span className="shrink-0 font-semibold text-sky-300">

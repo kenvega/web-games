@@ -1,7 +1,6 @@
 import {
-  displayNameSchema,
+  createRoomInputSchema,
   gameActionInputSchema,
-  gameIdSchema,
   guestIdSchema,
   joinRoomInputSchema,
   MAX_PLAYERS,
@@ -10,6 +9,7 @@ import {
   roomCodeSchema,
   roomCommandInputSchema,
   sendChatMessageInputSchema,
+  updateRoomSettingsInputSchema,
   type CommandError,
   type CommandResult,
   type PublicRoomState,
@@ -50,7 +50,10 @@ function ok<T>(data: T): CommandResult<T> {
   };
 }
 
-function fail(code: CommandError["code"], message: string): CommandResult<never> {
+function fail(
+  code: CommandError["code"],
+  message: string
+): CommandResult<never> {
   return {
     ok: false,
     error: {
@@ -95,17 +98,10 @@ export class RoomManager {
     guestId: string;
     displayName: string;
     socketId: string;
-    extraLivesEnabled?: boolean;
+    settings: unknown;
   }): CommandResult<{ roomCode: string; state: PublicRoomState }> {
-    const gameIdResult = gameIdSchema.safeParse(input.gameId);
-    const guestIdResult = guestIdSchema.safeParse(input.guestId);
-    const displayNameResult = displayNameSchema.safeParse(input.displayName);
-
-    if (
-      !gameIdResult.success ||
-      !guestIdResult.success ||
-      !displayNameResult.success
-    ) {
+    const parsedInput = createRoomInputSchema.safeParse(input);
+    if (!parsedInput.success) {
       return fail(
         "INVALID_INPUT",
         "Select a valid game and enter a valid display name."
@@ -115,24 +111,25 @@ export class RoomManager {
     const now = this.now();
     const code = generateRoomCode(new Set(this.rooms.keys()), this.codeFactory);
     const player: Player = {
-      id: guestIdResult.data,
-      displayName: displayNameResult.data,
+      id: parsedInput.data.guestId,
+      displayName: parsedInput.data.displayName,
       connected: true,
-      score: 0,
       joinedAt: now,
       socketId: input.socketId
     };
     const room: Room = {
       code,
-      gameId: gameIdResult.data,
+      gameId: parsedInput.data.gameId,
       hostPlayerId: player.id,
       phase: "waiting",
       players: {
         [player.id]: player
       },
       chatMessages: [],
-      gameState: null,
-      extraLivesEnabled: input.extraLivesEnabled === true,
+      game: {
+        settings: parsedInput.data.settings,
+        state: null
+      },
       version: 0,
       createdAt: now,
       updatedAt: now
@@ -195,7 +192,6 @@ export class RoomManager {
         id: parsedInput.data.guestId,
         displayName: parsedInput.data.displayName,
         connected: true,
-        score: 0,
         joinedAt: this.now(),
         socketId: input.socketId
       };
@@ -278,13 +274,8 @@ export class RoomManager {
         );
       }
 
-      for (const player of Object.values(room.players)) {
-        player.score = 0;
-      }
-
       room.phase = "playing";
-      room.gameState = this.gameModule.start(room);
-      this.syncPlayerScores(room);
+      room.game.state = this.gameModule.start(room);
       return ok({
         state: this.commit(room)
       });
@@ -329,11 +320,8 @@ export class RoomManager {
       return fail("ROUND_NOT_ACTIVE", "The match is not finished yet.");
     }
 
-    for (const player of Object.values(room.players)) {
-      player.score = 0;
-    }
     room.phase = "waiting";
-    room.gameState = null;
+    room.game.state = null;
 
     return ok({
       state: this.commit(room)
@@ -343,11 +331,10 @@ export class RoomManager {
   updateRoomSettings(input: {
     roomCode: string;
     guestId: string;
-    extraLivesEnabled: boolean;
+    gameId: string;
+    settings: unknown;
   }): CommandResult<RoomStateResult> {
-    const parsedInput = roomCommandInputSchema.safeParse({
-      roomCode: input.roomCode
-    });
+    const parsedInput = updateRoomSettingsInputSchema.safeParse(input);
     const guestIdResult = guestIdSchema.safeParse(input.guestId);
     if (!parsedInput.success || !guestIdResult.success) {
       return fail("INVALID_INPUT", "The settings request is invalid.");
@@ -359,6 +346,10 @@ export class RoomManager {
         "ROOM_NOT_FOUND",
         "This room no longer exists. Create a new room to continue."
       );
+    }
+
+    if (room.gameId !== parsedInput.data.gameId) {
+      return fail("INVALID_INPUT", "The settings do not match this game.");
     }
 
     const membershipError = this.validateHost(room, guestIdResult.data);
@@ -373,7 +364,7 @@ export class RoomManager {
       );
     }
 
-    room.extraLivesEnabled = input.extraLivesEnabled === true;
+    room.game.settings = parsedInput.data.settings;
 
     return ok({
       state: this.commit(room)
@@ -391,9 +382,7 @@ export class RoomManager {
     });
     const guestIdResult = guestIdSchema.safeParse(input.guestId);
     if (!parsedInput.success || !guestIdResult.success) {
-      const issue = parsedInput.success
-        ? null
-        : parsedInput.error.issues.at(0);
+      const issue = parsedInput.success ? null : parsedInput.error.issues.at(0);
       return fail(
         issue?.code === "too_big" ? "MESSAGE_TOO_LONG" : "INVALID_INPUT",
         issue?.message ?? "Enter a valid message."
@@ -455,7 +444,7 @@ export class RoomManager {
       return fail("NOT_IN_ROOM", "You are not in this room.");
     }
 
-    if (room.phase !== "playing" || room.gameState === null) {
+    if (room.phase !== "playing" || room.game.state === null) {
       return fail("ROUND_NOT_ACTIVE", "There is no active game.");
     }
 
@@ -470,12 +459,10 @@ export class RoomManager {
       return fail(result.errorCode, result.message);
     }
 
-    room.gameState = result.nextState;
+    room.game.state = result.nextState;
     if (result.nextState.status === "finished") {
       room.phase = "finished";
     }
-    this.syncPlayerScores(room);
-
     return ok({
       state: this.commit(room)
     });
@@ -497,12 +484,10 @@ export class RoomManager {
       return null;
     }
 
-    room.gameState = nextGameState;
+    room.game.state = nextGameState;
     if (nextGameState.status === "finished") {
       room.phase = "finished";
     }
-    this.syncPlayerScores(room);
-
     return {
       state: this.commit(room)
     };
@@ -524,12 +509,10 @@ export class RoomManager {
       return null;
     }
 
-    room.gameState = nextGameState;
+    room.game.state = nextGameState;
     if (nextGameState.status === "finished") {
       room.phase = "finished";
     }
-    this.syncPlayerScores(room);
-
     return {
       state: this.commit(room)
     };
@@ -554,11 +537,10 @@ export class RoomManager {
     player.socketId = null;
     const nextGameState = this.gameModule.handleDisconnectedActivePlayer(room);
     if (nextGameState !== null) {
-      room.gameState = nextGameState;
+      room.game.state = nextGameState;
       if (nextGameState.status === "finished") {
         room.phase = "finished";
       }
-      this.syncPlayerScores(room);
     }
 
     return this.commit(room);
@@ -600,13 +582,13 @@ export class RoomManager {
     if (!hostLeft && room.phase !== "waiting") {
       leavingPlayer.connected = false;
       leavingPlayer.socketId = null;
-      const nextGameState = this.gameModule.handleDisconnectedActivePlayer(room);
+      const nextGameState =
+        this.gameModule.handleDisconnectedActivePlayer(room);
       if (nextGameState !== null) {
-        room.gameState = nextGameState;
+        room.game.state = nextGameState;
         if (nextGameState.status === "finished") {
           room.phase = "finished";
         }
-        this.syncPlayerScores(room);
       }
 
       return {
@@ -714,31 +696,21 @@ export class RoomManager {
           id: player.id,
           displayName: player.displayName,
           connected: player.connected,
-          score: room.phase === "finished" ? player.score : 0,
           joinedAt: player.joinedAt
         })),
       chatMessages: room.chatMessages,
-      gameState:
-        room.gameState === null
-          ? null
-          : this.gameModule.toPublicState(room.gameState),
-      extraLivesEnabled: room.extraLivesEnabled,
+      game: {
+        settings: room.game.settings,
+        state:
+          room.game.state === null
+            ? null
+            : this.gameModule.toPublicState(room.game.state)
+      },
       version: room.version
     };
   }
 
   private getConnectedPlayers(room: Room): Player[] {
     return Object.values(room.players).filter((player) => player.connected);
-  }
-
-  private syncPlayerScores(room: Room): void {
-    if (room.gameState === null) {
-      return;
-    }
-
-    const scores = this.gameModule.getPlayerScores(room.gameState);
-    for (const player of Object.values(room.players)) {
-      player.score = scores[player.id] ?? player.score;
-    }
   }
 }

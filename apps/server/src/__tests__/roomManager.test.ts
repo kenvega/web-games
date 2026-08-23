@@ -64,7 +64,9 @@ function createRoom(manager: RoomManager, extraLivesEnabled = false) {
       guestId: aliceId,
       displayName: "Alice",
       socketId: "socket-a",
-      extraLivesEnabled
+      settings: {
+        extraLivesEnabled
+      }
     })
   );
 }
@@ -100,7 +102,10 @@ describe("room codes", () => {
   it("generates a non-conflicting room code", () => {
     const existingCodes = new Set(["23456789AB"]);
     const candidates = ["23456789AB", "23456789AC"];
-    const code = generateRoomCode(existingCodes, () => candidates.shift() ?? "");
+    const code = generateRoomCode(
+      existingCodes,
+      () => candidates.shift() ?? ""
+    );
 
     expect(code).toBe("23456789AC");
   });
@@ -116,7 +121,14 @@ describe("RoomManager", () => {
     expect(created.state.hostPlayerId).toBe(aliceId);
     expect(created.state.players).toHaveLength(1);
     expect(created.state.players[0]?.displayName).toBe("Alice");
+    expect(created.state.players[0]).not.toHaveProperty("score");
     expect(created.state.phase).toBe("waiting");
+    expect(created.state.game).toEqual({
+      settings: {
+        extraLivesEnabled: false
+      },
+      state: null
+    });
     expect(created.state.version).toBe(1);
   });
 
@@ -128,7 +140,9 @@ describe("RoomManager", () => {
       guestId: aliceId,
       displayName: "Alice",
       socketId: "socket-a",
-      extraLivesEnabled: false
+      settings: {
+        extraLivesEnabled: false
+      }
     });
 
     expectError(result, "INVALID_INPUT");
@@ -270,7 +284,6 @@ describe("RoomManager", () => {
     );
 
     expect(rejoined.state.players[0]?.connected).toBe(true);
-    expect(rejoined.state.players[0]?.score).toBe(0);
   });
 
   it("increments room versions for accepted mutations", () => {
@@ -316,11 +329,11 @@ describe("RoomManager", () => {
     );
 
     expect(start.state.phase).toBe("playing");
-    expect(start.state.gameState?.status).toBe("playing");
-    expect(start.state.gameState?.turnPhase).toBe("awaiting-draw");
-    expect(start.state.gameState?.deckCount).toBe(110);
-    expect(start.state.gameState?.currentPlayerId).toBe(aliceId);
-    expect(start.state.gameState?.players).toHaveLength(2);
+    expect(start.state.game.state?.status).toBe("playing");
+    expect(start.state.game.state?.turnPhase).toBe("awaiting-draw");
+    expect(start.state.game.state?.deckCount).toBe(110);
+    expect(start.state.game.state?.currentPlayerId).toBe(aliceId);
+    expect(start.state.game.state?.players).toHaveLength(2);
   });
 
   it("draws one of four face-down cards and leaves the other choices in the deck", () => {
@@ -334,7 +347,7 @@ describe("RoomManager", () => {
       })
     );
 
-    expect(started.state.gameState?.drawChoiceCount).toBe(4);
+    expect(started.state.game.state?.drawChoiceCount).toBe(4);
 
     const pickedFourth = expectOk(
       manager.handleGameAction({
@@ -343,14 +356,14 @@ describe("RoomManager", () => {
         action: { type: "draw-card", choiceIndex: 3 }
       })
     );
-    const alice = pickedFourth.state.gameState?.players.find(
+    const alice = pickedFourth.state.game.state?.players.find(
       (player) => player.playerId === aliceId
     );
 
     expect(alice?.activeCards[9]).toBe(1);
     expect(alice?.activeCards[2]).toBe(0);
-    expect(pickedFourth.state.gameState?.deckCount).toBe(3);
-    expect(pickedFourth.state.gameState?.drawChoiceCount).toBe(3);
+    expect(pickedFourth.state.game.state?.deckCount).toBe(3);
+    expect(pickedFourth.state.game.state?.drawChoiceCount).toBe(3);
 
     expectError(
       manager.handleGameAction({
@@ -382,9 +395,9 @@ describe("RoomManager", () => {
         action: { type: "draw-card", choiceIndex: 0 }
       })
     );
-    expect(pickedRemaining.state.gameState?.deckCount).toBe(0);
+    expect(pickedRemaining.state.game.state?.deckCount).toBe(0);
     expect(
-      pickedRemaining.state.gameState?.players.find(
+      pickedRemaining.state.game.state?.players.find(
         (player) => player.playerId === aliceId
       )?.securedCardCount
     ).toBe(4);
@@ -410,7 +423,7 @@ describe("RoomManager", () => {
         }
       })
     );
-    expect(state.state.gameState?.turnPhase).toBe("awaiting-decision");
+    expect(state.state.game.state?.turnPhase).toBe("awaiting-decision");
 
     state = expectOk(
       manager.handleGameAction({
@@ -421,12 +434,12 @@ describe("RoomManager", () => {
         }
       })
     );
-    expect(state.state.gameState?.currentPlayerId).toBe(bobId);
+    expect(state.state.game.state?.currentPlayerId).toBe(bobId);
     expect(
-      state.state.gameState?.players.find((player) => player.playerId === aliceId)
-        ?.activeCount
+      state.state.game.state?.players.find(
+        (player) => player.playerId === aliceId
+      )?.activeCount
     ).toBe(1);
-    expect(state.state.players.find((player) => player.id === aliceId)?.score).toBe(0);
 
     state = expectOk(
       manager.handleGameAction({
@@ -437,8 +450,8 @@ describe("RoomManager", () => {
         }
       })
     );
-    expect(state.state.gameState?.turnPhase).toBe("awaiting-steal");
-    expect(state.state.gameState?.pendingSteal?.totalCount).toBe(1);
+    expect(state.state.game.state?.turnPhase).toBe("awaiting-steal");
+    expect(state.state.game.state?.pendingSteal?.totalCount).toBe(1);
 
     state = expectOk(
       manager.handleGameAction({
@@ -451,12 +464,14 @@ describe("RoomManager", () => {
       })
     );
     expect(
-      state.state.gameState?.players.find((player) => player.playerId === aliceId)
-        ?.activeCount
+      state.state.game.state?.players.find(
+        (player) => player.playerId === aliceId
+      )?.activeCount
     ).toBe(0);
     expect(
-      state.state.gameState?.players.find((player) => player.playerId === bobId)
-        ?.activeCount
+      state.state.game.state?.players.find(
+        (player) => player.playerId === bobId
+      )?.activeCount
     ).toBe(2);
   });
 
@@ -488,10 +503,9 @@ describe("RoomManager", () => {
 
     const state = manager.getPublicState("23456789AB");
     expect(
-      state?.gameState?.players.find((player) => player.playerId === aliceId)
+      state?.game.state?.players.find((player) => player.playerId === aliceId)
         ?.securedCardCount
     ).toBe(1);
-    expect(state?.players.find((player) => player.id === aliceId)?.score).toBe(0);
   });
 
   it("does not bust when a steal creates duplicates", () => {
@@ -540,14 +554,14 @@ describe("RoomManager", () => {
         action: { type: "resolve-steal", steal: true }
       })
     );
-    expect(steal.state.gameState?.turnPhase).toBe("awaiting-decision");
-    expect(steal.state.gameState?.pendingBust).toBeNull();
+    expect(steal.state.game.state?.turnPhase).toBe("awaiting-decision");
+    expect(steal.state.game.state?.pendingBust).toBeNull();
     expect(
-      steal.state.gameState?.players.find(
+      steal.state.game.state?.players.find(
         (player) => player.playerId === bobId
       )?.activeCards[1]
     ).toBe(3);
-    expect(steal.state.gameState?.discardCount).toBe(0);
+    expect(steal.state.game.state?.discardCount).toBe(0);
   });
 
   it("does not bust when drawing a duplicate as the third active card", () => {
@@ -576,12 +590,12 @@ describe("RoomManager", () => {
     }
 
     const state = manager.getPublicState("23456789AB");
-    expect(state?.gameState?.currentPlayerId).toBe(aliceId);
-    expect(state?.gameState?.turnPhase).toBe("awaiting-decision");
-    expect(state?.gameState?.pendingBust).toBeNull();
-    expect(state?.gameState?.discardCount).toBe(0);
+    expect(state?.game.state?.currentPlayerId).toBe(aliceId);
+    expect(state?.game.state?.turnPhase).toBe("awaiting-decision");
+    expect(state?.game.state?.pendingBust).toBeNull();
+    expect(state?.game.state?.discardCount).toBe(0);
     expect(
-      state?.gameState?.players.find((player) => player.playerId === aliceId)
+      state?.game.state?.players.find((player) => player.playerId === aliceId)
         ?.activeCount
     ).toBe(3);
   });
@@ -613,15 +627,15 @@ describe("RoomManager", () => {
     }
 
     const state = manager.getPublicState("23456789AB");
-    expect(state?.gameState?.currentPlayerId).toBe(aliceId);
-    expect(state?.gameState?.turnPhase).toBe("revealing-bust");
-    expect(state?.gameState?.pendingBust).toEqual({
+    expect(state?.game.state?.currentPlayerId).toBe(aliceId);
+    expect(state?.game.state?.turnPhase).toBe("revealing-bust");
+    expect(state?.game.state?.pendingBust).toEqual({
       playerId: aliceId,
       cardValue: 2
     });
-    expect(state?.gameState?.discardCount).toBe(0);
+    expect(state?.game.state?.discardCount).toBe(0);
     expect(
-      state?.gameState?.players.find((player) => player.playerId === aliceId)
+      state?.game.state?.players.find((player) => player.playerId === aliceId)
         ?.activeCount
     ).toBe(4);
     expectError(
@@ -634,14 +648,13 @@ describe("RoomManager", () => {
     );
 
     const resolved = manager.resolvePendingBust("23456789AB");
-    expect(resolved?.state.gameState?.currentPlayerId).toBe(bobId);
-    expect(resolved?.state.gameState?.discardCount).toBe(4);
+    expect(resolved?.state.game.state?.currentPlayerId).toBe(bobId);
+    expect(resolved?.state.game.state?.discardCount).toBe(4);
     expect(
-      resolved?.state.gameState?.players.find(
+      resolved?.state.game.state?.players.find(
         (player) => player.playerId === aliceId
       )?.activeCount
     ).toBe(0);
-    expect(resolved?.state.players.find((player) => player.id === aliceId)?.score).toBe(0);
   });
 
   it("grants extra lives for each new run of three consecutive cards", () => {
@@ -673,7 +686,7 @@ describe("RoomManager", () => {
     // After 3, 4, 6, 7 no run of three consecutive values exists yet.
     let alice = manager
       .getPublicState("23456789AB")
-      ?.gameState?.players.find((player) => player.playerId === aliceId);
+      ?.game.state?.players.find((player) => player.playerId === aliceId);
     expect(alice?.extraLives).toBe(0);
 
     // Drawing the 5 completes 3-4-5, 4-5-6 and 5-6-7 at once: three lives.
@@ -684,8 +697,8 @@ describe("RoomManager", () => {
         action: { type: "draw-card" }
       })
     );
-    expect(drewFive.state.gameState?.turnPhase).toBe("awaiting-decision");
-    alice = drewFive.state.gameState?.players.find(
+    expect(drewFive.state.game.state?.turnPhase).toBe("awaiting-decision");
+    alice = drewFive.state.game.state?.players.find(
       (player) => player.playerId === aliceId
     );
     expect(alice?.extraLives).toBe(3);
@@ -718,7 +731,7 @@ describe("RoomManager", () => {
 
     let alice = manager
       .getPublicState("23456789AB")
-      ?.gameState?.players.find((player) => player.playerId === aliceId);
+      ?.game.state?.players.find((player) => player.playerId === aliceId);
     expect(alice?.extraLives).toBe(1);
 
     // Drawing a duplicate 3 with three active cards would normally bust, but the
@@ -731,10 +744,10 @@ describe("RoomManager", () => {
         action: { type: "draw-card" }
       })
     );
-    expect(survived.state.gameState?.turnPhase).toBe("awaiting-decision");
-    expect(survived.state.gameState?.pendingBust).toBeNull();
-    expect(survived.state.gameState?.discardCount).toBe(0);
-    alice = survived.state.gameState?.players.find(
+    expect(survived.state.game.state?.turnPhase).toBe("awaiting-decision");
+    expect(survived.state.game.state?.pendingBust).toBeNull();
+    expect(survived.state.game.state?.discardCount).toBe(0);
+    alice = survived.state.game.state?.players.find(
       (player) => player.playerId === aliceId
     );
     expect(alice?.extraLives).toBe(0);
@@ -764,7 +777,7 @@ describe("RoomManager", () => {
 
     let alice = manager
       .getPublicState("23456789AB")
-      ?.gameState?.players.find((player) => player.playerId === aliceId);
+      ?.game.state?.players.find((player) => player.playerId === aliceId);
     expect(alice?.extraLives).toBe(1);
 
     const stopped = expectOk(
@@ -774,10 +787,10 @@ describe("RoomManager", () => {
         action: { type: "stop-turn" }
       })
     );
-    alice = stopped.state.gameState?.players.find(
+    alice = stopped.state.game.state?.players.find(
       (player) => player.playerId === aliceId
     );
-    expect(stopped.state.gameState?.currentPlayerId).toBe(bobId);
+    expect(stopped.state.game.state?.currentPlayerId).toBe(bobId);
     expect(alice?.extraLives).toBe(0);
     expect(alice?.activeCount).toBe(3);
     expect(alice?.securedCardCount).toBe(0);
@@ -799,10 +812,10 @@ describe("RoomManager", () => {
       })
     );
 
-    alice = backToAlice.state.gameState?.players.find(
+    alice = backToAlice.state.game.state?.players.find(
       (player) => player.playerId === aliceId
     );
-    expect(backToAlice.state.gameState?.currentPlayerId).toBe(aliceId);
+    expect(backToAlice.state.game.state?.currentPlayerId).toBe(aliceId);
     expect(alice?.extraLives).toBe(0);
     expect(alice?.activeCount).toBe(0);
     expect(alice?.securedCardCount).toBe(3);
@@ -836,7 +849,7 @@ describe("RoomManager", () => {
     // 3-4-5 would grant a life if the rule were on; with it off there is none.
     let alice = manager
       .getPublicState("23456789AB")
-      ?.gameState?.players.find((player) => player.playerId === aliceId);
+      ?.game.state?.players.find((player) => player.playerId === aliceId);
     expect(alice?.extraLives).toBe(0);
 
     // Drawing the duplicate 3 busts because there is no life to shield it.
@@ -847,8 +860,8 @@ describe("RoomManager", () => {
         action: { type: "draw-card" }
       })
     );
-    expect(busted.state.gameState?.turnPhase).toBe("revealing-bust");
-    alice = busted.state.gameState?.players.find(
+    expect(busted.state.game.state?.turnPhase).toBe("revealing-bust");
+    alice = busted.state.game.state?.players.find(
       (player) => player.playerId === aliceId
     );
     expect(alice?.extraLives).toBe(0);
@@ -857,24 +870,30 @@ describe("RoomManager", () => {
   it("lets the host toggle the extra-lives rule before a game starts", () => {
     const { manager } = createManager();
     const created = createRoom(manager);
-    expect(created.state.extraLivesEnabled).toBe(false);
+    expect(created.state.game.settings.extraLivesEnabled).toBe(false);
     joinBob(manager);
 
     const enabled = expectOk(
       manager.updateRoomSettings({
         roomCode: "23456789AB",
         guestId: aliceId,
-        extraLivesEnabled: true
+        gameId: CARD_BANK_GAME_ID,
+        settings: {
+          extraLivesEnabled: true
+        }
       })
     );
-    expect(enabled.state.extraLivesEnabled).toBe(true);
+    expect(enabled.state.game.settings.extraLivesEnabled).toBe(true);
 
     // Non-host cannot change it.
     expectError(
       manager.updateRoomSettings({
         roomCode: "23456789AB",
         guestId: bobId,
-        extraLivesEnabled: false
+        gameId: CARD_BANK_GAME_ID,
+        settings: {
+          extraLivesEnabled: false
+        }
       }),
       "NOT_ROOM_HOST"
     );
@@ -890,7 +909,10 @@ describe("RoomManager", () => {
       manager.updateRoomSettings({
         roomCode: "23456789AB",
         guestId: aliceId,
-        extraLivesEnabled: false
+        gameId: CARD_BANK_GAME_ID,
+        settings: {
+          extraLivesEnabled: false
+        }
       }),
       "GAME_ALREADY_STARTED"
     );
@@ -951,20 +973,28 @@ describe("RoomManager", () => {
     );
 
     expect(finalState.state.phase).toBe("finished");
-    expect(finalState.state.gameState?.status).toBe("finished");
-    expect(finalState.state.players.find((player) => player.id === bobId)?.score).toBe(2);
-    expect(finalState.state.players.find((player) => player.id === aliceId)?.score).toBe(2);
+    expect(finalState.state.game.state?.status).toBe("finished");
     expect(
-      finalState.state.gameState?.players.find(
+      finalState.state.game.state?.finalStandings?.find(
+        (standing) => standing.playerId === bobId
+      )?.score
+    ).toBe(2);
+    expect(
+      finalState.state.game.state?.finalStandings?.find(
+        (standing) => standing.playerId === aliceId
+      )?.score
+    ).toBe(2);
+    expect(
+      finalState.state.game.state?.players.find(
         (player) => player.playerId === bobId
       )?.securedCardCount
     ).toBe(2);
     expect(
-      finalState.state.gameState?.players.find(
+      finalState.state.game.state?.players.find(
         (player) => player.playerId === aliceId
       )?.securedCardCount
     ).toBe(1);
-    expect(finalState.state.gameState?.winnerPlayerIds).toEqual([bobId]);
+    expect(finalState.state.game.state?.winnerPlayerIds).toEqual([bobId]);
   });
 
   it("resolves a steal on the last deck card before final scoring", () => {
@@ -1007,8 +1037,8 @@ describe("RoomManager", () => {
         action: { type: "draw-card" }
       })
     );
-    expect(drawResult.state.gameState?.deckCount).toBe(0);
-    expect(drawResult.state.gameState?.turnPhase).toBe("awaiting-steal");
+    expect(drawResult.state.game.state?.deckCount).toBe(0);
+    expect(drawResult.state.game.state?.turnPhase).toBe("awaiting-steal");
     expect(drawResult.state.phase).toBe("playing");
 
     // Bob steals Alice's 3 — enters "ending" phase so the steal is
@@ -1022,17 +1052,17 @@ describe("RoomManager", () => {
     );
 
     expect(stealResult.state.phase).toBe("playing");
-    expect(stealResult.state.gameState?.turnPhase).toBe("ending");
-    expect(stealResult.state.gameState?.status).toBe("playing");
+    expect(stealResult.state.game.state?.turnPhase).toBe("ending");
+    expect(stealResult.state.game.state?.status).toBe("playing");
 
     // Bob's active area should show the stolen cards (his 3 + Alice's 3)
-    const bobActive = stealResult.state.gameState?.players.find(
+    const bobActive = stealResult.state.game.state?.players.find(
       (player) => player.playerId === bobId
     );
     expect(bobActive?.activeCount).toBe(2);
 
     // Alice's active area should be empty (her 3 was stolen)
-    const aliceActive = stealResult.state.gameState?.players.find(
+    const aliceActive = stealResult.state.game.state?.players.find(
       (player) => player.playerId === aliceId
     );
     expect(aliceActive?.activeCount).toBe(0);
@@ -1041,21 +1071,21 @@ describe("RoomManager", () => {
     const finalState = manager.resolveEnding("23456789AB");
 
     expect(finalState?.state.phase).toBe("finished");
-    expect(finalState?.state.gameState?.status).toBe("finished");
+    expect(finalState?.state.game.state?.status).toBe("finished");
 
     // Bob has both cards (two 3s = 6 points)
-    const bobScore = finalState?.state.players.find(
-      (player) => player.id === bobId
+    const bobScore = finalState?.state.game.state?.finalStandings?.find(
+      (standing) => standing.playerId === bobId
     )?.score;
     expect(bobScore).toBe(6);
 
     // Alice has 0 (her 3 was stolen)
-    const aliceScore = finalState?.state.players.find(
-      (player) => player.id === aliceId
+    const aliceScore = finalState?.state.game.state?.finalStandings?.find(
+      (standing) => standing.playerId === aliceId
     )?.score;
     expect(aliceScore).toBe(0);
 
-    expect(finalState?.state.gameState?.winnerPlayerIds).toEqual([bobId]);
+    expect(finalState?.state.game.state?.winnerPlayerIds).toEqual([bobId]);
   });
 
   it("auto-stops a disconnected active player", () => {
@@ -1083,10 +1113,11 @@ describe("RoomManager", () => {
       socketId: "socket-a"
     });
 
-    expect(disconnected?.gameState?.currentPlayerId).toBe(bobId);
+    expect(disconnected?.game.state?.currentPlayerId).toBe(bobId);
     expect(
-      disconnected?.gameState?.players.find((player) => player.playerId === aliceId)
-        ?.activeCount
+      disconnected?.game.state?.players.find(
+        (player) => player.playerId === aliceId
+      )?.activeCount
     ).toBe(1);
   });
 });

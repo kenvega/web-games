@@ -11,15 +11,12 @@ export const SUPPORTED_GAME_IDS = [CARD_BANK_GAME_ID] as const;
 
 export type GameId = (typeof SUPPORTED_GAME_IDS)[number];
 
-export const CARD_BANK_CARD_VALUES = [
-  1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-] as const;
+export const CARD_BANK_CARD_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 export type CardBankCardValue = (typeof CARD_BANK_CARD_VALUES)[number];
 
 export const CARD_BANK_DRAW_CHOICE_INDEXES = [0, 1, 2, 3] as const;
-export const CARD_BANK_DRAW_CHOICE_COUNT =
-  CARD_BANK_DRAW_CHOICE_INDEXES.length;
+export const CARD_BANK_DRAW_CHOICE_COUNT = CARD_BANK_DRAW_CHOICE_INDEXES.length;
 
 export type CardBankDrawChoiceIndex =
   (typeof CARD_BANK_DRAW_CHOICE_INDEXES)[number];
@@ -109,11 +106,14 @@ export type PublicCardBankGameState = {
   winnerPlayerIds: string[];
 };
 
+export type CardBankSettings = {
+  extraLivesEnabled: boolean;
+};
+
 export type PublicPlayer = {
   id: string;
   displayName: string;
   connected: boolean;
-  score: number;
   joinedAt: number;
 };
 
@@ -125,17 +125,26 @@ export type PublicChatMessage = {
   createdAt: number;
 };
 
-export type PublicRoomState = {
+export type PublicRoomBase<TGameId extends GameId> = {
   code: string;
-  gameId: GameId;
+  gameId: TGameId;
   phase: RoomPhase;
   hostPlayerId: string;
   players: PublicPlayer[];
   chatMessages: PublicChatMessage[];
-  gameState: PublicCardBankGameState | null;
-  extraLivesEnabled: boolean;
   version: number;
 };
+
+export type PublicCardBankRoomState = PublicRoomBase<
+  typeof CARD_BANK_GAME_ID
+> & {
+  game: {
+    settings: CardBankSettings;
+    state: PublicCardBankGameState | null;
+  };
+};
+
+export type PublicRoomState = PublicCardBankRoomState;
 
 export type CommandErrorCode =
   | "INVALID_INPUT"
@@ -170,15 +179,16 @@ export type CommandResult<T = null> =
     };
 
 export type CreateRoomInput = {
-  gameId: GameId;
+  gameId: typeof CARD_BANK_GAME_ID;
   guestId: string;
   displayName: string;
-  extraLivesEnabled: boolean;
+  settings: CardBankSettings;
 };
 
 export type UpdateRoomSettingsInput = {
   roomCode: string;
-  extraLivesEnabled: boolean;
+  gameId: typeof CARD_BANK_GAME_ID;
+  settings: CardBankSettings;
 };
 
 export type JoinRoomInput = {

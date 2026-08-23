@@ -156,12 +156,7 @@ export function RoomPage() {
     }
 
     void joinCurrentRoom(displayName);
-  }, [
-    displayName,
-    joinCurrentRoom,
-    needsDisplayNameConfirmation,
-    roomCode
-  ]);
+  }, [displayName, joinCurrentRoom, needsDisplayNameConfirmation, roomCode]);
 
   useEffect(() => {
     const handleState = (nextRoom: PublicRoomState) => applyRoomState(nextRoom);
@@ -270,13 +265,16 @@ export function RoomPage() {
   const handleUpdateSettings = async (
     nextExtraLivesEnabled: boolean
   ): Promise<string | null> => {
-    if (roomCode === null) {
+    if (roomCode === null || room === null) {
       return "Enter a valid room code.";
     }
 
     const result = await updateRoomSettingsCommand(socket, {
       roomCode,
-      extraLivesEnabled: nextExtraLivesEnabled
+      gameId: room.gameId,
+      settings: {
+        extraLivesEnabled: nextExtraLivesEnabled
+      }
     });
     if (!result.ok) {
       return result.error.message;
@@ -305,7 +303,7 @@ export function RoomPage() {
 
   const [sidebarTab, setSidebarTab] = useState<"rules" | "history">("rules");
   const bankingHistory = useBankingHistory(
-    room?.gameState ?? null,
+    room?.game.state ?? null,
     room?.players ?? [],
     room?.version ?? 0
   );
@@ -395,10 +393,14 @@ export function RoomPage() {
   }
 
   const currentPlayer = room.players.find((player) => player.id === guestId);
-  const hostPlayer = room.players.find((player) => player.id === room.hostPlayerId);
+  const hostPlayer = room.players.find(
+    (player) => player.id === room.hostPlayerId
+  );
   const isHost = room.hostPlayerId === guestId;
   const connected = currentPlayer?.connected ?? false;
-  const connectedPlayerCount = room.players.filter((player) => player.connected).length;
+  const connectedPlayerCount = room.players.filter(
+    (player) => player.connected
+  ).length;
   const hostDisconnected = hostPlayer !== undefined && !hostPlayer.connected;
 
   return (
@@ -465,7 +467,7 @@ export function RoomPage() {
             </div>
           ) : null}
 
-          {(hostDisconnected || pageMessage !== null) ? (
+          {hostDisconnected || pageMessage !== null ? (
             <div className="rounded-md border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-100 lg:col-span-2 xl:col-span-3">
               {hostDisconnected ? "Host disconnected. " : null}
               {pageMessage}
@@ -715,7 +717,7 @@ function RuleToggle({
         }`}
       >
         <input
-          checked={room.extraLivesEnabled}
+          checked={room.game.settings.extraLivesEnabled}
           className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
           disabled={!editable || isSubmitting}
           onChange={(event) => void handleToggle(event.target.checked)}
@@ -731,7 +733,9 @@ function RuleToggle({
         </span>
       </label>
       {!isHost ? (
-        <p className="text-xs text-slate-500">Only the host can change rules.</p>
+        <p className="text-xs text-slate-500">
+          Only the host can change rules.
+        </p>
       ) : room.phase === "playing" ? (
         <p className="text-xs text-slate-500">
           Rules are locked while a game is in progress.
@@ -866,7 +870,13 @@ function LobbyContent({
     <section className="grid content-start gap-5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
       <div className="flex flex-wrap items-center gap-3">
         <ConnectionBadge
-          status={connectionStatus as "connected" | "connecting" | "reconnecting" | "disconnected"}
+          status={
+            connectionStatus as
+              | "connected"
+              | "connecting"
+              | "reconnecting"
+              | "disconnected"
+          }
           tone="dark"
         />
         <ShareButton roomCode={room.code} tone="dark" />

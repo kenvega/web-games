@@ -15,7 +15,10 @@ import {
 } from "@multiplayer-blueprint/shared";
 import { AddressInfo } from "node:net";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { io as createClient, type Socket as ClientSocket } from "socket.io-client";
+import {
+  io as createClient,
+  type Socket as ClientSocket
+} from "socket.io-client";
 import { createApplication, type ApplicationInstance } from "../app.js";
 import { RoomManager } from "../rooms/roomManager.js";
 
@@ -173,7 +176,9 @@ describe("Socket.IO multiplayer flow", () => {
       gameId: CARD_BANK_GAME_ID,
       guestId: aliceId,
       displayName: "Alice",
-      extraLivesEnabled: false
+      settings: {
+        extraLivesEnabled: false
+      }
     });
     expect(created.ok).toBe(true);
     if (!created.ok) {
@@ -219,13 +224,13 @@ describe("Socket.IO multiplayer flow", () => {
 
     const playingStatePromise = waitForState(
       bob,
-      (state) => state.gameState?.turnPhase === "awaiting-draw"
+      (state) => state.game.state?.turnPhase === "awaiting-draw"
     );
     const started = await startRoom(alice, { roomCode });
     expect(started.ok).toBe(true);
     const playingState = await playingStatePromise;
     expect(playingState.phase).toBe("playing");
-    expect(playingState.gameState?.currentPlayerId).toBe(aliceId);
+    expect(playingState.game.state?.currentPlayerId).toBe(aliceId);
 
     const bobEarlyDraw = await sendAction(bob, {
       roomCode,
@@ -237,7 +242,7 @@ describe("Socket.IO multiplayer flow", () => {
 
     const aliceDrawStatePromise = waitForState(
       bob,
-      (state) => state.gameState?.turnPhase === "awaiting-decision"
+      (state) => state.game.state?.turnPhase === "awaiting-decision"
     );
     const aliceDraw = await sendAction(alice, {
       roomCode,
@@ -248,14 +253,14 @@ describe("Socket.IO multiplayer flow", () => {
     expect(aliceDraw.ok).toBe(true);
     const aliceDrawState = await aliceDrawStatePromise;
     expect(
-      aliceDrawState.gameState?.players.find(
+      aliceDrawState.game.state?.players.find(
         (player) => player.playerId === aliceId
       )?.activeCount
     ).toBe(1);
 
     const bobTurnStatePromise = waitForState(
       bob,
-      (state) => state.gameState?.currentPlayerId === bobId
+      (state) => state.game.state?.currentPlayerId === bobId
     );
     const stop = await sendAction(alice, {
       roomCode,
@@ -274,8 +279,8 @@ describe("Socket.IO multiplayer flow", () => {
     bob.disconnect();
     const disconnectedState = await disconnectedStatePromise;
     expect(
-      disconnectedState.players.find((player) => player.id === bobId)?.score
-    ).toBeDefined();
+      disconnectedState.players.find((player) => player.id === bobId)?.connected
+    ).toBe(false);
 
     const bobReconnected = createTestClient();
     await waitForConnect(bobReconnected);
@@ -304,7 +309,9 @@ describe("Socket.IO multiplayer flow", () => {
       gameId: CARD_BANK_GAME_ID,
       guestId: aliceId,
       displayName: "Alice",
-      extraLivesEnabled: false
+      settings: {
+        extraLivesEnabled: false
+      }
     });
     expect(created.ok).toBe(true);
     if (!created.ok) {
@@ -336,13 +343,12 @@ describe("Socket.IO multiplayer flow", () => {
 
     const revealPromise = waitForState(
       bob,
-      (state) => state.gameState?.turnPhase === "revealing-bust"
+      (state) => state.game.state?.turnPhase === "revealing-bust"
     );
     const resolvedPromise = waitForState(
       bob,
       (state) =>
-        state.phase === "finished" &&
-        state.gameState.discardCount === 4
+        state.phase === "finished" && state.game.state?.discardCount === 4
     );
     const bustDraw = await sendAction(alice, {
       roomCode,
@@ -353,18 +359,19 @@ describe("Socket.IO multiplayer flow", () => {
     expect(bustDraw.ok).toBe(true);
 
     const revealState = await revealPromise;
-    expect(revealState.gameState?.pendingBust).toEqual({
+    expect(revealState.game.state?.pendingBust).toEqual({
       playerId: aliceId,
       cardValue: 2
     });
     expect(
-      revealState.gameState?.players.find((player) => player.playerId === aliceId)
-        ?.activeCount
+      revealState.game.state?.players.find(
+        (player) => player.playerId === aliceId
+      )?.activeCount
     ).toBe(4);
 
     const resolvedState = await resolvedPromise;
     expect(
-      resolvedState.gameState?.players.find(
+      resolvedState.game.state?.players.find(
         (player) => player.playerId === aliceId
       )?.activeCount
     ).toBe(0);

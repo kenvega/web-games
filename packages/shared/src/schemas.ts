@@ -24,6 +24,10 @@ export const guestIdSchema = z.string().uuid();
 
 export const gameIdSchema = z.enum(SUPPORTED_GAME_IDS);
 
+export const cardBankSettingsSchema = z.object({
+  extraLivesEnabled: z.boolean()
+});
+
 export const roomCodeSchema = z
   .string()
   .trim()
@@ -43,12 +47,13 @@ export const createRoomInputSchema = z.object({
   gameId: gameIdSchema,
   guestId: guestIdSchema,
   displayName: displayNameSchema,
-  extraLivesEnabled: z.boolean()
+  settings: cardBankSettingsSchema
 });
 
 export const updateRoomSettingsInputSchema = z.object({
   roomCode: roomCodeSchema,
-  extraLivesEnabled: z.boolean()
+  gameId: gameIdSchema,
+  settings: cardBankSettingsSchema
 });
 
 export const joinRoomInputSchema = z.object({
@@ -70,12 +75,7 @@ export const cardBankGameActionSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("draw-card"),
     choiceIndex: z
-      .union([
-        z.literal(0),
-        z.literal(1),
-        z.literal(2),
-        z.literal(3)
-      ])
+      .union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)])
       .optional()
   }),
   z.object({

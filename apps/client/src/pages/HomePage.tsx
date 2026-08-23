@@ -10,7 +10,11 @@ import { Button } from "../components/Button.js";
 import { ConnectionBadge } from "../components/ConnectionBadge.js";
 import { TextInput } from "../components/TextInput.js";
 import { useSocket } from "../hooks/SocketProvider.js";
-import { getGuestId, getStoredDisplayName, storeDisplayName } from "../lib/guestIdentity.js";
+import {
+  getGuestId,
+  getStoredDisplayName,
+  storeDisplayName
+} from "../lib/guestIdentity.js";
 import { createRoomCommand } from "../lib/socketCommands.js";
 
 export function HomePage() {
@@ -27,7 +31,9 @@ export function HomePage() {
   const validateAndStoreName = (): string | null => {
     const parsedName = displayNameSchema.safeParse(displayName);
     if (!parsedName.success) {
-      setNameError(parsedName.error.issues[0]?.message ?? "Enter a display name.");
+      setNameError(
+        parsedName.error.issues[0]?.message ?? "Enter a display name."
+      );
       return null;
     }
 
@@ -50,7 +56,9 @@ export function HomePage() {
         gameId: CARD_BANK_GAME_ID,
         guestId: getGuestId(),
         displayName: storedName,
-        extraLivesEnabled
+        settings: {
+          extraLivesEnabled
+        }
       });
 
       if (!result.ok) {
@@ -124,7 +132,9 @@ export function HomePage() {
                   error={roomCodeError}
                   label="Room code"
                   maxLength={10}
-                  onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
+                  onChange={(event) =>
+                    setRoomCode(event.target.value.toUpperCase())
+                  }
                   placeholder="K7M2Q9PX4T"
                   tone="dark"
                   value={roomCode}

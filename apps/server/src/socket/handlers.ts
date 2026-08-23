@@ -100,7 +100,7 @@ export function registerSocketHandlers(
   };
 
   const scheduleBustResolution = (state: RoomStateResult["state"]): void => {
-    if (state.gameState?.turnPhase !== "revealing-bust") {
+    if (state.game.state?.turnPhase !== "revealing-bust") {
       return;
     }
 
@@ -123,7 +123,7 @@ export function registerSocketHandlers(
   };
 
   const scheduleEndingResolution = (state: RoomStateResult["state"]): void => {
-    if (state.gameState?.turnPhase !== "ending") {
+    if (state.game.state?.turnPhase !== "ending") {
       return;
     }
 
@@ -158,7 +158,10 @@ export function registerSocketHandlers(
     });
 
     if (result.closedRoomCode !== null) {
-      closeRoom(result.closedRoomCode, result.message ?? "The room was closed.");
+      closeRoom(
+        result.closedRoomCode,
+        result.message ?? "The room was closed."
+      );
     } else if (result.state !== null) {
       io.to(result.state.code).emit("room:state", result.state);
     }
@@ -198,7 +201,7 @@ export function registerSocketHandlers(
           guestId: input.guestId,
           displayName: input.displayName,
           socketId: socket.id,
-          extraLivesEnabled: input.extraLivesEnabled
+          settings: input.settings
         });
 
         if (!result.ok) {
@@ -270,7 +273,10 @@ export function registerSocketHandlers(
         });
 
         if (result.closedRoomCode !== null) {
-          closeRoom(result.closedRoomCode, result.message ?? "The room was closed.");
+          closeRoom(
+            result.closedRoomCode,
+            result.message ?? "The room was closed."
+          );
         } else if (result.state !== null) {
           io.to(result.state.code).emit("room:state", result.state);
         }
@@ -350,7 +356,8 @@ export function registerSocketHandlers(
         const result = roomManager.updateRoomSettings({
           roomCode: input.roomCode,
           guestId,
-          extraLivesEnabled: input.extraLivesEnabled
+          gameId: input.gameId,
+          settings: input.settings
         });
 
         if (!result.ok) {
