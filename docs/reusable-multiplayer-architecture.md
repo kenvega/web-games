@@ -82,8 +82,9 @@ room state, routes, logs, and future persistence may depend on it.
    its own settings and actions.
 5. **Game timers. Complete.** Game modules own their scheduled transitions,
    including delays, timer handles, resolution rules, and cancellation.
-6. **Client room boundary. Pending.** `RoomPage` still combines generic room
-   session behavior with Card Banking UI, settings, rules, and history.
+6. **Client room boundary. Complete.** A reusable room-session hook and room
+   shell own multiplayer behavior and shared UI. `RoomPage` selects a
+   game-owned room renderer using the server-provided `gameId`.
 7. **Game entry pages. Pending.** `HomePage` combines reusable create/join
    behavior with Card Banking branding and settings.
 
@@ -155,16 +156,24 @@ Pending timers are keyed by room code inside the game module. The module's
 cleanup hook cancels them when a room closes or the server shuts down. Generic
 room and socket code must not inspect a game's phases or define its delays.
 
-## Intended client shape
+## Client room boundary
 
-The client should eventually have:
+The reusable `useRoomSession` hook owns joining, leaving, reconnecting,
+receiving versioned state, display-name confirmation, chat commands, shared
+room commands, and game-action transport. It accepts a room code and has no
+Card Banking imports or knowledge of a game's settings and action contents.
 
-- A room-session hook for joining, leaving, reconnecting, receiving versioned
-  state, sending chat, and sending game actions.
-- A room shell for connection status, invitations, presence, chat, and common
-  mobile panels.
-- A game renderer selected by `room.gameId`.
-- Game-owned components for the board, settings, rules, history, and branding.
+`RoomShell` owns the shared in-room frame: connection and host-disconnection
+messages, room code and invitation controls, leave controls, chat, and common
+mobile panels. Game renderers provide branding, room-menu content, and the
+central lobby or board content through explicit component properties.
+
+The universal `RoomPage` waits for authoritative room state, then selects a
+game-owned room renderer by `room.gameId`. Card Banking's room renderer,
+settings, instructions, banking history, card components, and board all live
+under `client/src/game/card-bank`. Adding another game requires another typed
+renderer and another explicit case in the room-page selection switch; it does
+not require duplicating socket listeners or reconnection logic.
 
 A likely route structure is:
 

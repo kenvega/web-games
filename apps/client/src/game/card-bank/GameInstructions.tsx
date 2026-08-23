@@ -34,8 +34,8 @@ export function GameInstructions() {
         <div>
           <p className="font-semibold text-slate-100">Winning:</p>
           <p className="mt-1 text-slate-400">
-            The game ends when the deck runs out. Highest total from banked cards
-            wins.
+            The game ends when the deck runs out. Highest total from banked
+            cards wins.
           </p>
         </div>
       </div>

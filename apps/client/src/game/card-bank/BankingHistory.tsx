@@ -41,10 +41,7 @@ export function useBankingHistory(
       return;
     }
 
-    if (
-      previousStatusRef.current === "finished" &&
-      gs.status === "playing"
-    ) {
+    if (previousStatusRef.current === "finished" && gs.status === "playing") {
       previousCardsRef.current = new Map();
       previousSecuredRef.current = new Map();
       setEvents([]);
@@ -63,10 +60,7 @@ export function useBankingHistory(
       const prevActiveCount =
         prevCards === undefined
           ? 0
-          : CARD_BANK_CARD_VALUES.reduce(
-              (sum, v) => sum + prevCards[v],
-              0
-            );
+          : CARD_BANK_CARD_VALUES.reduce((sum, v) => sum + prevCards[v], 0);
 
       if (
         prevCards !== undefined &&

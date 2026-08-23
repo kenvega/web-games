@@ -27,7 +27,7 @@ import {
   type CSSProperties,
   type ReactNode
 } from "react";
-import { GroupedCardTile } from "../../components/GroupedCardTile.js";
+import { GroupedCardTile } from "./GroupedCardTile.js";
 
 type PlayerLookup = Map<string, PublicPlayer>;
 type PlayerState = PublicCardBankGameState["players"][number];
