@@ -7,6 +7,7 @@ import {
   type RoomStateResult
 } from "@multiplayer-blueprint/shared";
 import { describe, expect, it } from "vitest";
+import { createGameRegistry } from "../game/gameRegistry.js";
 import { ABANDONED_ROOM_TTL_MS, RoomManager } from "../rooms/roomManager.js";
 import { generateRoomCode } from "../rooms/roomCodes.js";
 
@@ -43,8 +44,12 @@ function createManager(
   let now = nowValue;
   const manager = new RoomManager({
     now: () => now,
-    rng: () => 0,
-    ...(deckFactory === undefined ? {} : { deckFactory }),
+    gameRegistry: createGameRegistry({
+      [CARD_BANK_GAME_ID]: {
+        rng: () => 0,
+        ...(deckFactory === undefined ? {} : { deckFactory })
+      }
+    }),
     codeFactory: () => "23456789AB"
   });
 

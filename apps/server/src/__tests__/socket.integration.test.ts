@@ -20,6 +20,7 @@ import {
   type Socket as ClientSocket
 } from "socket.io-client";
 import { createApplication, type ApplicationInstance } from "../app.js";
+import { createGameRegistry } from "../game/gameRegistry.js";
 import { RoomManager } from "../rooms/roomManager.js";
 
 const aliceId = "11111111-1111-4111-8111-111111111111";
@@ -139,8 +140,12 @@ function sendAction(
 beforeEach(async () => {
   application = createApplication({
     roomManager: new RoomManager({
-      rng: () => 0,
-      deckFactory: () => [2, 4, 6, 2]
+      gameRegistry: createGameRegistry({
+        [CARD_BANK_GAME_ID]: {
+          rng: () => 0,
+          deckFactory: () => [2, 4, 6, 2]
+        }
+      })
     }),
     cleanupIntervalMs: 60_000,
     bustRevealMs: 20

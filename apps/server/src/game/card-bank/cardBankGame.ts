@@ -11,10 +11,7 @@ import {
   type PublicCardBankPendingSteal,
   type PublicCardBankStanding
 } from "@multiplayer-blueprint/shared";
-import type {
-  GameActionResult,
-  CardBankGameModuleContract
-} from "../GameModule.js";
+import type { GameActionResult, GameModule } from "../GameModule.js";
 import type { Room } from "../../rooms/types.js";
 
 type CardBankPlayerState = {
@@ -193,7 +190,14 @@ function compareStandings(
   return 0;
 }
 
-export class CardBankGameModule implements CardBankGameModuleContract<CardBankGameState> {
+type CardBankGameModuleContract = GameModule<
+  Room,
+  CardBankGameState,
+  CardBankGameAction,
+  PublicCardBankGameState
+>;
+
+export class CardBankGameModule implements CardBankGameModuleContract {
   private readonly rng: () => number;
   private readonly deckFactory: (() => CardBankCardValue[]) | null;
 
@@ -202,11 +206,8 @@ export class CardBankGameModule implements CardBankGameModuleContract<CardBankGa
     this.deckFactory = options.deckFactory ?? null;
   }
 
-  createInitialState(room: Room): CardBankGameState {
-    return this.start(room);
-  }
-
-  start(room: Room): CardBankGameState {
+  start(room: Room, now: number): CardBankGameState {
+    void now;
     const turnOrder = Object.values(room.players)
       .sort((left, right) => left.joinedAt - right.joinedAt)
       .map((player) => player.id);
@@ -374,8 +375,8 @@ export class CardBankGameModule implements CardBankGameModuleContract<CardBankGa
     return this.finishGame(state);
   }
 
-  dispose(): void {
-    return;
+  dispose(roomCode: string): void {
+    void roomCode;
   }
 
   private drawCard(

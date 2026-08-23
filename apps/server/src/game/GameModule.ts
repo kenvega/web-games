@@ -1,9 +1,4 @@
-import type {
-  CommandErrorCode,
-  CardBankGameAction,
-  PublicCardBankGameState
-} from "@multiplayer-blueprint/shared";
-import type { Room } from "../rooms/types.js";
+import type { CommandErrorCode } from "@multiplayer-blueprint/shared";
 
 export type GameActionResult<TState> =
   | {
@@ -16,13 +11,11 @@ export type GameActionResult<TState> =
       message: string;
     };
 
-export interface GameModule<TState, TAction, TPublicState> {
-  createInitialState(room: Room): TState;
-
-  start(room: Room, now: number): TState;
+export interface GameModule<TRoom, TState, TAction, TPublicState> {
+  start(room: TRoom, now: number): TState;
 
   handleAction(input: {
-    room: Room;
+    room: TRoom;
     playerId: string;
     action: TAction;
     now: number;
@@ -32,9 +25,3 @@ export interface GameModule<TState, TAction, TPublicState> {
 
   dispose?(roomCode: string): void;
 }
-
-export type CardBankGameModuleContract<TState> = GameModule<
-  TState,
-  CardBankGameAction,
-  PublicCardBankGameState
->;

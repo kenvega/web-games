@@ -75,8 +75,8 @@ room state, routes, logs, and future persistence may depend on it.
 2. **Shared room state. Complete.** The shared room fields live in
    `PublicRoomBase`. Card Banking owns its settings and state under
    `room.game`. Generic players no longer carry a numeric score.
-3. **Room manager game selection. Pending.** `RoomManager` still constructs a
-   `CardBankGameModule` directly instead of resolving a module by `gameId`.
+3. **Room manager game selection. Complete.** `RoomManager` resolves game
+   behavior from the game registry using the room's `gameId`.
 4. **Socket action validation. Pending.** The shared `game:action` schema
    currently accepts only Card Banking actions.
 5. **Game timers. Pending.** Bust-reveal and ending timers still live in the
@@ -113,18 +113,29 @@ standings. `PublicPlayer` contains identity and presence only.
 
 ## Intended server shape
 
-The server should eventually use a small, explicit game registry:
+The server uses a small, explicit game registry:
 
 ```text
 gameId -> game module
 ```
 
-A game module should own its state creation, action schema, action handling,
-public-state projection, lifecycle hooks, and game-specific timers. The room
-service should own membership and lifecycle checks that apply to every game.
+A game module owns state creation, action handling, public-state projection,
+and its room cleanup hook. Action schema selection and game-specific timers
+still need to move into the game modules in later steps. The room service owns
+membership and lifecycle checks that apply to every game.
 
 A static registry is preferred over a dynamic plugin system. It keeps supported
 games visible in the repository and makes invalid game IDs fail predictably.
+
+`createGameRegistry` constructs one module instance for each supported game.
+The module instance contains behavior and injected dependencies. Each room
+continues to hold its own settings and state. `RoomManager` accepts a registry,
+which lets tests provide deterministic game dependencies without adding
+game-specific constructor options to the room manager.
+
+To register another game, add its module type to `GameModuleMap` and construct
+it in `createGameRegistry`. The compiler then requires the registry to cover
+every supported `GameId`.
 
 ## Intended client shape
 

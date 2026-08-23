@@ -5,7 +5,6 @@ import {
   joinRoomInputSchema,
   MAX_PLAYERS,
   MIN_PLAYERS,
-  type CardBankCardValue,
   roomCodeSchema,
   roomCommandInputSchema,
   sendChatMessageInputSchema,
@@ -17,7 +16,7 @@ import {
   type SendChatMessageResult
 } from "@multiplayer-blueprint/shared";
 import { createChatMessage, appendChatMessage } from "../chat/chatService.js";
-import { CardBankGameModule } from "../game/card-bank/cardBankGame.js";
+import { createGameRegistry, type GameRegistry } from "../game/gameRegistry.js";
 import { defaultRoomCodeFactory, generateRoomCode } from "./roomCodes.js";
 import type { Player, Room } from "./types.js";
 
@@ -28,8 +27,7 @@ type Clock = () => number;
 type RoomManagerOptions = {
   codeFactory?: () => string;
   now?: Clock;
-  rng?: () => number;
-  deckFactory?: () => CardBankCardValue[];
+  gameRegistry?: GameRegistry;
 };
 
 type JoinRoomResult = {
@@ -67,17 +65,12 @@ export class RoomManager {
   private readonly rooms = new Map<string, Room>();
   private readonly codeFactory: () => string;
   private readonly now: Clock;
-  private readonly gameModule: CardBankGameModule;
+  private readonly gameRegistry: GameRegistry;
 
   constructor(options: RoomManagerOptions = {}) {
     this.codeFactory = options.codeFactory ?? defaultRoomCodeFactory;
     this.now = options.now ?? Date.now;
-    this.gameModule = new CardBankGameModule({
-      ...(options.rng === undefined ? {} : { rng: options.rng }),
-      ...(options.deckFactory === undefined
-        ? {}
-        : { deckFactory: options.deckFactory })
-    });
+    this.gameRegistry = options.gameRegistry ?? createGameRegistry();
   }
 
   getRoom(code: string): Room | null {
@@ -275,7 +268,7 @@ export class RoomManager {
       }
 
       room.phase = "playing";
-      room.game.state = this.gameModule.start(room);
+      room.game.state = this.getGameModule(room).start(room, this.now());
       return ok({
         state: this.commit(room)
       });
@@ -448,7 +441,7 @@ export class RoomManager {
       return fail("ROUND_NOT_ACTIVE", "There is no active game.");
     }
 
-    const result = this.gameModule.handleAction({
+    const result = this.getGameModule(room).handleAction({
       room,
       playerId: player.id,
       action: parsedInput.data.action,
@@ -479,7 +472,7 @@ export class RoomManager {
       return null;
     }
 
-    const nextGameState = this.gameModule.resolvePendingBust(room);
+    const nextGameState = this.getGameModule(room).resolvePendingBust(room);
     if (nextGameState === null) {
       return null;
     }
@@ -504,7 +497,7 @@ export class RoomManager {
       return null;
     }
 
-    const nextGameState = this.gameModule.resolveEnding(room);
+    const nextGameState = this.getGameModule(room).resolveEnding(room);
     if (nextGameState === null) {
       return null;
     }
@@ -535,7 +528,8 @@ export class RoomManager {
 
     player.connected = false;
     player.socketId = null;
-    const nextGameState = this.gameModule.handleDisconnectedActivePlayer(room);
+    const nextGameState =
+      this.getGameModule(room).handleDisconnectedActivePlayer(room);
     if (nextGameState !== null) {
       room.game.state = nextGameState;
       if (nextGameState.status === "finished") {
@@ -583,7 +577,7 @@ export class RoomManager {
       leavingPlayer.connected = false;
       leavingPlayer.socketId = null;
       const nextGameState =
-        this.gameModule.handleDisconnectedActivePlayer(room);
+        this.getGameModule(room).handleDisconnectedActivePlayer(room);
       if (nextGameState !== null) {
         room.game.state = nextGameState;
         if (nextGameState.status === "finished") {
@@ -674,7 +668,12 @@ export class RoomManager {
   }
 
   private deleteRoom(roomCode: string): void {
-    this.gameModule.dispose();
+    const room = this.rooms.get(roomCode);
+    if (room === undefined) {
+      return;
+    }
+
+    this.getGameModule(room).dispose(roomCode);
     this.rooms.delete(roomCode);
   }
 
@@ -704,7 +703,7 @@ export class RoomManager {
         state:
           room.game.state === null
             ? null
-            : this.gameModule.toPublicState(room.game.state)
+            : this.getGameModule(room).toPublicState(room.game.state)
       },
       version: room.version
     };
@@ -712,5 +711,9 @@ export class RoomManager {
 
   private getConnectedPlayers(room: Room): Player[] {
     return Object.values(room.players).filter((player) => player.connected);
+  }
+
+  private getGameModule(room: Room) {
+    return this.gameRegistry.get(room.gameId);
   }
 }
