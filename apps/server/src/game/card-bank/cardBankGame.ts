@@ -61,6 +61,16 @@ export type CardBankGameState = {
 export type CardBankGameOptions = {
   rng?: () => number;
   deckFactory?: () => CardBankCardValue[];
+  bustRevealMs?: number;
+  endingDelayMs?: number;
+};
+
+const DEFAULT_BUST_REVEAL_MS = 2500;
+const DEFAULT_ENDING_DELAY_MS = 1500;
+
+type CardBankScheduledTransition = {
+  phase: "revealing-bust" | "ending";
+  timer: NodeJS.Timeout;
 };
 
 function createEmptyCounts(): CardBankCardCounts {
@@ -207,10 +217,18 @@ export class CardBankGameModule implements CardBankGameModuleContract {
 
   private readonly rng: () => number;
   private readonly deckFactory: (() => CardBankCardValue[]) | null;
+  private readonly bustRevealMs: number;
+  private readonly endingDelayMs: number;
+  private readonly scheduledTransitions = new Map<
+    string,
+    CardBankScheduledTransition
+  >();
 
   constructor(options: CardBankGameOptions = {}) {
     this.rng = options.rng ?? Math.random;
     this.deckFactory = options.deckFactory ?? null;
+    this.bustRevealMs = options.bustRevealMs ?? DEFAULT_BUST_REVEAL_MS;
+    this.endingDelayMs = options.endingDelayMs ?? DEFAULT_ENDING_DELAY_MS;
   }
 
   start(room: Room, now: number): CardBankGameState {
@@ -291,6 +309,54 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     }
   }
 
+  syncScheduledTransition(input: {
+    room: Room;
+    onTransition: (nextState: CardBankGameState) => void;
+  }): void {
+    const state = input.room.game.state;
+    const phase =
+      state?.status === "playing" &&
+      (state.turnPhase === "revealing-bust" || state.turnPhase === "ending")
+        ? state.turnPhase
+        : null;
+    const existingTransition = this.scheduledTransitions.get(input.room.code);
+
+    if (phase === null) {
+      this.clearScheduledTransition(input.room.code);
+      return;
+    }
+
+    if (existingTransition?.phase === phase) {
+      return;
+    }
+
+    this.clearScheduledTransition(input.room.code);
+    const delayMs =
+      phase === "revealing-bust" ? this.bustRevealMs : this.endingDelayMs;
+    const timer = setTimeout(() => {
+      const scheduledTransition = this.scheduledTransitions.get(
+        input.room.code
+      );
+      if (scheduledTransition?.timer !== timer) {
+        return;
+      }
+
+      this.scheduledTransitions.delete(input.room.code);
+      const nextState =
+        phase === "revealing-bust"
+          ? this.resolvePendingBust(input.room)
+          : this.resolveEnding(input.room);
+      if (nextState !== null) {
+        input.onTransition(nextState);
+      }
+    }, delayMs);
+    timer.unref?.();
+    this.scheduledTransitions.set(input.room.code, {
+      phase,
+      timer
+    });
+  }
+
   handleDisconnectedActivePlayer(room: Room): CardBankGameState | null {
     const state = room.game.state;
     if (state === null || state.status === "finished") {
@@ -355,7 +421,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     };
   }
 
-  resolvePendingBust(room: Room): CardBankGameState | null {
+  private resolvePendingBust(room: Room): CardBankGameState | null {
     const state = room.game.state;
     if (
       state === null ||
@@ -369,7 +435,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     return this.resolveBust(room, state, state.pendingBust.playerId);
   }
 
-  resolveEnding(room: Room): CardBankGameState | null {
+  private resolveEnding(room: Room): CardBankGameState | null {
     const state = room.game.state;
     if (
       state === null ||
@@ -383,7 +449,17 @@ export class CardBankGameModule implements CardBankGameModuleContract {
   }
 
   dispose(roomCode: string): void {
-    void roomCode;
+    this.clearScheduledTransition(roomCode);
+  }
+
+  private clearScheduledTransition(roomCode: string): void {
+    const scheduledTransition = this.scheduledTransitions.get(roomCode);
+    if (scheduledTransition === undefined) {
+      return;
+    }
+
+    clearTimeout(scheduledTransition.timer);
+    this.scheduledTransitions.delete(roomCode);
   }
 
   private drawCard(

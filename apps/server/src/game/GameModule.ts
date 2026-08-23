@@ -25,7 +25,12 @@ export interface GameModule<TRoom, TSettings, TState, TAction, TPublicState> {
     now: number;
   }): GameActionResult<TState>;
 
+  syncScheduledTransition(input: {
+    room: TRoom;
+    onTransition: (nextState: TState) => void;
+  }): void;
+
   toPublicState(state: TState): TPublicState;
 
-  dispose?(roomCode: string): void;
+  dispose(roomCode: string): void;
 }

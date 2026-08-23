@@ -41,6 +41,8 @@ type LeaveRoomResult = {
   message: string | null;
 };
 
+type ScheduledTransitionListener = (result: RoomStateResult) => void;
+
 function ok<T>(data: T): CommandResult<T> {
   return {
     ok: true,
@@ -66,6 +68,9 @@ export class RoomManager {
   private readonly codeFactory: () => string;
   private readonly now: Clock;
   private readonly gameRegistry: GameRegistry;
+  private readonly scheduledTransitionListeners =
+    new Set<ScheduledTransitionListener>();
+  private stopped = false;
 
   constructor(options: RoomManagerOptions = {}) {
     this.codeFactory = options.codeFactory ?? defaultRoomCodeFactory;
@@ -84,6 +89,21 @@ export class RoomManager {
   getPublicState(code: string): PublicRoomState | null {
     const room = this.rooms.get(code);
     return room === undefined ? null : this.toPublicState(room);
+  }
+
+  onScheduledTransition(listener: ScheduledTransitionListener): () => void {
+    this.scheduledTransitionListeners.add(listener);
+    return () => {
+      this.scheduledTransitionListeners.delete(listener);
+    };
+  }
+
+  stop(): void {
+    this.stopped = true;
+    for (const room of this.rooms.values()) {
+      this.getGameModule(room).dispose(room.code);
+    }
+    this.scheduledTransitionListeners.clear();
   }
 
   createRoom(input: {
@@ -484,56 +504,6 @@ export class RoomManager {
     });
   }
 
-  resolvePendingBust(roomCode: string): RoomStateResult | null {
-    const parsedRoomCode = roomCodeSchema.safeParse(roomCode);
-    if (!parsedRoomCode.success) {
-      return null;
-    }
-
-    const room = this.rooms.get(parsedRoomCode.data);
-    if (room === undefined || room.phase !== "playing") {
-      return null;
-    }
-
-    const nextGameState = this.getGameModule(room).resolvePendingBust(room);
-    if (nextGameState === null) {
-      return null;
-    }
-
-    room.game.state = nextGameState;
-    if (nextGameState.status === "finished") {
-      room.phase = "finished";
-    }
-    return {
-      state: this.commit(room)
-    };
-  }
-
-  resolveEnding(roomCode: string): RoomStateResult | null {
-    const parsedRoomCode = roomCodeSchema.safeParse(roomCode);
-    if (!parsedRoomCode.success) {
-      return null;
-    }
-
-    const room = this.rooms.get(parsedRoomCode.data);
-    if (room === undefined || room.phase !== "playing") {
-      return null;
-    }
-
-    const nextGameState = this.getGameModule(room).resolveEnding(room);
-    if (nextGameState === null) {
-      return null;
-    }
-
-    room.game.state = nextGameState;
-    if (nextGameState.status === "finished") {
-      room.phase = "finished";
-    }
-    return {
-      state: this.commit(room)
-    };
-  }
-
   disconnectSocket(input: {
     roomCode: string;
     guestId: string;
@@ -703,7 +673,37 @@ export class RoomManager {
   private commit(room: Room): PublicRoomState {
     room.version += 1;
     room.updatedAt = this.now();
-    return this.toPublicState(room);
+    const state = this.toPublicState(room);
+    this.syncScheduledTransition(room);
+    return state;
+  }
+
+  private syncScheduledTransition(room: Room): void {
+    if (this.stopped) {
+      this.getGameModule(room).dispose(room.code);
+      return;
+    }
+
+    this.getGameModule(room).syncScheduledTransition({
+      room,
+      onTransition: (nextState) => {
+        if (this.rooms.get(room.code) !== room) {
+          return;
+        }
+
+        room.game.state = nextState;
+        if (nextState.status === "finished") {
+          room.phase = "finished";
+        }
+
+        const result = {
+          state: this.commit(room)
+        };
+        for (const listener of this.scheduledTransitionListeners) {
+          listener(result);
+        }
+      }
+    });
   }
 
   private toPublicState(room: Room): PublicRoomState {

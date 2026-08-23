@@ -143,12 +143,13 @@ beforeEach(async () => {
       gameRegistry: createGameRegistry({
         [CARD_BANK_GAME_ID]: {
           rng: () => 0,
-          deckFactory: () => [2, 4, 6, 2]
+          deckFactory: () => [2, 4, 6, 2],
+          bustRevealMs: 20,
+          endingDelayMs: 20
         }
       })
     }),
-    cleanupIntervalMs: 60_000,
-    bustRevealMs: 20
+    cleanupIntervalMs: 60_000
   });
 
   await new Promise<void>((resolve) => {

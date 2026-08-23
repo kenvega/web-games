@@ -80,8 +80,8 @@ room state, routes, logs, and future persistence may depend on it.
 4. **Game payload validation. Complete.** Generic command schemas validate
    room and identity envelopes. The registry-selected game module validates
    its own settings and actions.
-5. **Game timers. Pending.** Bust-reveal and ending timers still live in the
-   otherwise reusable socket handler.
+5. **Game timers. Complete.** Game modules own their scheduled transitions,
+   including delays, timer handles, resolution rules, and cancellation.
 6. **Client room boundary. Pending.** `RoomPage` still combines generic room
    session behavior with Card Banking UI, settings, rules, and history.
 7. **Game entry pages. Pending.** `HomePage` combines reusable create/join
@@ -121,10 +121,9 @@ gameId -> game module
 ```
 
 A game module owns its settings and action schemas, state creation, action
-handling, public-state projection, and room cleanup hook. Game-specific timers
-still need to move into the game modules in a later step. The room service owns
-command-envelope validation plus membership and lifecycle checks that apply to
-every game.
+handling, scheduled transitions, public-state projection, and room cleanup
+hook. The room service owns command-envelope validation plus membership and
+lifecycle checks that apply to every game.
 
 A static registry is preferred over a dynamic plugin system. It keeps supported
 games visible in the repository and makes invalid game IDs fail predictably.
@@ -144,6 +143,17 @@ treat `settings` and `action` as opaque payloads. After resolving a module by
 the validated `gameId` (or by the room's stored `gameId`), `RoomManager` passes
 the payload to that module's `settingsSchema` or `actionSchema`. The generic
 room service must not import a concrete game's payload schema.
+
+After each committed room change, `RoomManager` gives the selected module an
+opportunity to synchronize a scheduled transition. Card Banking uses that hook
+for its bust-reveal and ending delays. When a timer fires, the module produces
+the next game state; `RoomManager` verifies that the room still exists, commits
+the state, and publishes a generic transition notification. The socket handler
+subscribes to that notification only to broadcast room state and game events.
+
+Pending timers are keyed by room code inside the game module. The module's
+cleanup hook cancels them when a room closes or the server shuts down. Generic
+room and socket code must not inspect a game's phases or define its delays.
 
 ## Intended client shape
 

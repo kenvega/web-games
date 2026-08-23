@@ -6,7 +6,7 @@ import {
   type CommandResult,
   type RoomStateResult
 } from "@multiplayer-blueprint/shared";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createGameRegistry } from "../game/gameRegistry.js";
 import { ABANDONED_ROOM_TTL_MS, RoomManager } from "../rooms/roomManager.js";
 import { generateRoomCode } from "../rooms/roomCodes.js";
@@ -39,7 +39,11 @@ function expectError<T>(result: CommandResult<T>, code: string): void {
 
 function createManager(
   nowValue = 1000,
-  deckFactory?: () => CardBankCardValue[]
+  deckFactory?: () => CardBankCardValue[],
+  timerOptions: {
+    bustRevealMs?: number;
+    endingDelayMs?: number;
+  } = {}
 ) {
   let now = nowValue;
   const manager = new RoomManager({
@@ -47,6 +51,7 @@ function createManager(
     gameRegistry: createGameRegistry({
       [CARD_BANK_GAME_ID]: {
         rng: () => 0,
+        ...timerOptions,
         ...(deckFactory === undefined ? {} : { deckFactory })
       }
     }),
@@ -61,6 +66,10 @@ function createManager(
     getNow: () => now
   };
 }
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 function createRoom(manager: RoomManager, extraLivesEnabled = false) {
   return expectOk(
@@ -646,8 +655,13 @@ describe("RoomManager", () => {
     ).toBe(3);
   });
 
-  it("busts when drawing a duplicate after already having three active cards", () => {
-    const { manager } = createManager(1000, () => [2, 4, 6, 2, 5]);
+  it("resolves a bust after the game module's reveal delay", async () => {
+    vi.useFakeTimers();
+    const { manager } = createManager(1000, () => [2, 4, 6, 2, 5], {
+      bustRevealMs: 20
+    });
+    const transitions: RoomStateResult[] = [];
+    manager.onScheduledTransition((result) => transitions.push(result));
     createRoom(manager);
     joinBob(manager);
     expectOk(
@@ -692,12 +706,17 @@ describe("RoomManager", () => {
       }),
       "INVALID_TURN_PHASE"
     );
+    expect(vi.getTimerCount()).toBe(1);
 
-    const resolved = manager.resolvePendingBust("23456789AB");
-    expect(resolved?.state.game.state?.currentPlayerId).toBe(bobId);
-    expect(resolved?.state.game.state?.discardCount).toBe(4);
+    await vi.advanceTimersByTimeAsync(20);
+
+    const resolved = manager.getPublicState("23456789AB");
+    expect(vi.getTimerCount()).toBe(0);
+    expect(transitions).toHaveLength(1);
+    expect(resolved?.game.state?.currentPlayerId).toBe(bobId);
+    expect(resolved?.game.state?.discardCount).toBe(4);
     expect(
-      resolved?.state.game.state?.players.find(
+      resolved?.game.state?.players.find(
         (player) => player.playerId === aliceId
       )?.activeCount
     ).toBe(0);
@@ -1058,11 +1077,14 @@ describe("RoomManager", () => {
     expect(finalState.state.game.state?.winnerPlayerIds).toEqual([bobId]);
   });
 
-  it("resolves a steal on the last deck card before final scoring", () => {
+  it("resolves a last-card steal after the game module's ending delay", async () => {
+    vi.useFakeTimers();
     // Deck: [3, 3] — Alice draws 3, stops. Bob draws 3 (last card),
     // steal is offered because Alice has a 3. Bob steals, then the game
     // ends. Bob should have both cards (score 6), Alice should have 0.
-    const { manager } = createManager(1000, () => [3, 3]);
+    const { manager } = createManager(1000, () => [3, 3], {
+      endingDelayMs: 20
+    });
     createRoom(manager);
     joinBob(manager);
     expectOk(
@@ -1115,6 +1137,7 @@ describe("RoomManager", () => {
     expect(stealResult.state.phase).toBe("playing");
     expect(stealResult.state.game.state?.turnPhase).toBe("ending");
     expect(stealResult.state.game.state?.status).toBe("playing");
+    expect(vi.getTimerCount()).toBe(1);
 
     // Bob's active area should show the stolen cards (his 3 + Alice's 3)
     const bobActive = stealResult.state.game.state?.players.find(
@@ -1128,25 +1151,27 @@ describe("RoomManager", () => {
     );
     expect(aliceActive?.activeCount).toBe(0);
 
-    // Server resolves the ending — game finishes, cards are banked
-    const finalState = manager.resolveEnding("23456789AB");
+    // The game module resolves the ending — the game finishes and cards bank.
+    await vi.advanceTimersByTimeAsync(20);
+    const finalState = manager.getPublicState("23456789AB");
 
-    expect(finalState?.state.phase).toBe("finished");
-    expect(finalState?.state.game.state?.status).toBe("finished");
+    expect(vi.getTimerCount()).toBe(0);
+    expect(finalState?.phase).toBe("finished");
+    expect(finalState?.game.state?.status).toBe("finished");
 
     // Bob has both cards (two 3s = 6 points)
-    const bobScore = finalState?.state.game.state?.finalStandings?.find(
+    const bobScore = finalState?.game.state?.finalStandings?.find(
       (standing) => standing.playerId === bobId
     )?.score;
     expect(bobScore).toBe(6);
 
     // Alice has 0 (her 3 was stolen)
-    const aliceScore = finalState?.state.game.state?.finalStandings?.find(
+    const aliceScore = finalState?.game.state?.finalStandings?.find(
       (standing) => standing.playerId === aliceId
     )?.score;
     expect(aliceScore).toBe(0);
 
-    expect(finalState?.state.game.state?.winnerPlayerIds).toEqual([bobId]);
+    expect(finalState?.game.state?.winnerPlayerIds).toEqual([bobId]);
   });
 
   it("auto-stops a disconnected active player", () => {
