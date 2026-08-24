@@ -3,6 +3,10 @@
 For the implementation sequence, use the
 [Adding a game checklist](./adding-a-game.md).
 
+**Status:** the reusable foundation is ready for a second production game. The
+repository currently ships Card Banking and keeps one non-production game
+fixture as a contract proof.
+
 ## Purpose
 
 This repository is intended to host multiple small multiplayer games while
@@ -72,7 +76,7 @@ Adding a future game begins by adding its stable ID to the supported list.
 Changing an existing ID should be treated as a compatibility change because
 room state, routes, logs, and future persistence may depend on it.
 
-## Current extraction status
+## Completed extraction
 
 1. **Game identity. Complete.** Rooms explicitly carry a validated `gameId`.
 2. **Shared room state. Complete.** The shared room fields live in
@@ -106,6 +110,9 @@ room state, routes, logs, and future persistence may depend on it.
 11. **Client style ownership. Complete.** Global CSS contains only application
     foundations and reusable utilities. Card Banking animations live beside
     its renderer and use game-prefixed selectors.
+12. **Documentation. Complete.** The README, documentation index, architecture
+    guide, adding-a-game checklist, and general/game task lists describe the
+    finished ownership model and its explicit extension points.
 
 Each extraction preserves a working Card Banking game and includes verification
 for the reusable contract it introduces.
@@ -132,10 +139,10 @@ settings, actions, constants, public state, and public room type. The root
 each supported ID with those game-owned types, then derives the public room,
 command, and error unions exported to clients and the server.
 
-`PublicRoomState` is a discriminated room type. When another game is added, it
-should add another room type keyed by its `gameId`, then join that type to the
-`PublicRoomState` union. Do not weaken game settings or state to `unknown` or a
-generic string-keyed object.
+`PublicRoomState` is a discriminated room type derived from `GameContractMap`.
+When another game is added, its map entry supplies the room type keyed by its
+`gameId`; the exported room and command unions update from that map. Do not
+weaken game settings or state to `unknown` or a generic string-keyed object.
 
 Scores belong to the game state. Card Banking publishes them through final
 standings. `PublicPlayer` contains identity and presence only.
@@ -146,7 +153,7 @@ state and a concrete `RoomBase` specialization; `apps/server/src/rooms/types.ts`
 is only the explicit union of those registered room types. A game module works
 with its own room type rather than the complete cross-game union.
 
-## Intended server shape
+## Server game boundary
 
 The server uses a small, explicit game registry:
 
@@ -213,8 +220,7 @@ another game's rule cases.
 `CoreCommandErrorCode` contains failures produced by reusable input, room,
 membership, lifecycle, chat, and transport behavior. `INVALID_ROOM_PHASE` is
 the common precondition failure for commands such as acting before play or
-restarting before a match is finished; it replaces the older turn-oriented
-`ROUND_NOT_ACTIVE` name.
+restarting before a match is finished.
 
 Game folders own domain failures. Card Banking defines `NOT_YOUR_TURN`,
 `INVALID_GAME_ACTION`, and `INVALID_TURN_PHASE`; the test-only first-response
@@ -303,8 +309,8 @@ The route structure is:
 /room/:roomCode            universal invitation destination
 ```
 
-The universal room route should render the appropriate game only after reading
-the server-provided `gameId`.
+The universal room route renders the appropriate game only after reading the
+server-provided `gameId`.
 
 ## Real-time behavior
 
@@ -316,6 +322,25 @@ Full authoritative room-state broadcasts are appropriate for occasional or
 moderate-frequency actions. A future movement-heavy game may add throttled
 game-specific transient events and periodic snapshots without moving that
 traffic into the generic room API.
+
+## Readiness for another production game
+
+The reusable transport, room lifecycle, identity, invitation, presence, chat,
+reconnection, command acknowledgement, versioning, and room shell do not need
+to be copied for another game. The shared and server contracts have also been
+checked with a differently shaped, non-turn-based test game.
+
+A production game still requires explicit composition changes:
+
+- Add its supported ID and shared `GameContractMap` entry.
+- Add its internal room type and server module to the room union and registry.
+- Add its catalog metadata, entry renderer, and room renderer to the client
+  selection boundaries.
+- Add its rules, presentation, tests, and documentation in game-owned folders.
+
+These explicit edits make the supported set easy to audit and let the compiler
+report an incomplete integration. They should not be replaced with runtime
+plugin loading unless the product later has a concrete need for it.
 
 ## Design rules for future changes
 

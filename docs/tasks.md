@@ -2,6 +2,9 @@
 
 Tasks for the game catalog and reusable multiplayer application. See
 [Card Banking tasks](./games/card-bank/tasks.md) for that game's backlog.
+Completed architecture work is recorded in the
+[reusable multiplayer architecture](./reusable-multiplayer-architecture.md),
+not duplicated in this product backlog.
 
 ## Todo
 

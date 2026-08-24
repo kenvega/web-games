@@ -1,7 +1,8 @@
 # Card Banking tasks
 
 Tasks specific to Card Banking. See [General tasks](../../tasks.md) for work
-shared by the whole application.
+shared by the whole application and the [documentation index](../../README.md)
+for architecture and game guides.
 
 ## Todo
 

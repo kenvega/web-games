@@ -12,7 +12,8 @@ It provides guest players, temporary rooms, shareable room links, real-time lobb
 - Typed Socket.IO event contracts shared by client and server.
 - In-memory room storage.
 - One Render Web Service deployment.
-- Automated room-manager and Socket.IO integration tests.
+- Type-checked game-contract proofs plus room, game-rule, registry, and
+  Socket.IO integration tests.
 
 ## What It Deliberately Excludes
 
@@ -141,17 +142,27 @@ If the host disconnects, the host role remains assigned to that player. Other pl
 
 ## Included Game
 
-The included game is Card Banking. Its rules are documented in
+The first production game is Card Banking. Its rules are documented in
 [`docs/games/card-bank/rules.md`](docs/games/card-bank/rules.md).
+
+A small first-response game exists only as a server test fixture. It verifies
+that a game with different settings, actions, state, player limits, errors, and
+non-turn-based conflict resolution fits the contracts; it is not available in
+the catalog or production registry.
 
 ## Adding Games
 
-Generic multiplayer infrastructure lives in:
+Reusable multiplayer infrastructure lives in:
 
 - `apps/server/src/rooms`
 - `apps/server/src/socket`
 - `apps/server/src/chat`
-- `packages/shared/src`
+- `apps/client/src/hooks`
+- `apps/client/src/rooms`
+- `apps/client/src/chat`
+- `packages/shared/src/multiplayer.ts`
+- `packages/shared/src/events.ts`
+- `packages/shared/src/schemas.ts`
 
 Card Banking server logic lives in:
 
@@ -161,11 +172,25 @@ Card Banking React UI lives in:
 
 - `apps/client/src/game/card-bank`
 
-Rooms now carry an explicit game ID so this repository can add games without
-replacing Card Banking. See the
+Rooms carry an explicit game ID, and shared contracts correlate that ID with
+the game's settings, actions, public room state, command inputs, and errors.
+The server selects a typed module from a static registry; the client selects
+typed entry and room renderers at explicit page boundaries.
+
+The multiplayer foundation is ready for another game without replacing Card
+Banking. Adding one still requires deliberate entries in the supported-ID and
+contract maps, server registry and room union, and client catalog and renderer
+switches. Those are intentional composition points, not plugin discovery.
+
+See the
 [reusable multiplayer architecture](docs/reusable-multiplayer-architecture.md)
 for the boundary and the [adding a game checklist](docs/adding-a-game.md) for
 the implementation sequence.
+
+## Documentation
+
+The [documentation index](docs/README.md) separates current architecture and
+backlog references from the preserved initial implementation plan.
 
 ## Shared Event Contracts
 

@@ -7,6 +7,7 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
 ## 1. Define the game boundary
 
 - [ ] Choose a stable kebab-case `gameId`. Treat it as a compatibility value.
+- [ ] Create `docs/games/<game-id>/` for rules and game-specific planning.
 - [ ] Define players, settings, actions, start/finish rules, disconnection
       behavior, and any delayed transitions.
 - [ ] Define how simultaneous actions are resolved. The server stays
@@ -23,10 +24,9 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
 - [ ] Define game-owned domain error codes and include them in the game's
       `GameContractMap` entry. Reuse core codes only for common room or
       transport failures.
-- [ ] Add the game-owned public room type to the `PublicRoomState` composition
-      union in `packages/shared/src/types.ts`, discriminated by `gameId`.
-- [ ] Expand create, settings, and action commands as discriminated unions that
-      preserve the relationship between `gameId` and its payload.
+- [ ] Add one entry to `GameContractMap` in `packages/shared/src/types.ts` for
+      settings, actions, public room state, command inputs, and domain errors.
+      The exported room and command unions are derived from this map.
 - [ ] Keep generic schemas limited to transport envelopes. Add socket events
       only when the generic action/state pipeline is genuinely insufficient.
 
@@ -37,7 +37,8 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
       timing inside that folder.
 - [ ] Implement the `GameModule` contract: schemas, player limits, start,
       action handling, disconnection behavior, scheduled transitions,
-      finish detection, public projection, and cleanup.
+      finish detection, public projection, cleanup, and its permitted error
+      code type.
 - [ ] Reject invalid actions with domain errors. Never trust client-computed
       state, scores, winners, or timestamps.
 - [ ] Register the module in `GameModuleMap` and `createGameRegistry`.
@@ -92,7 +93,9 @@ npm run build
 ## 6. Run an isolation audit
 
 - [ ] Search reusable directories for the game's ID, actions, and state fields.
-- [ ] Allow game imports only at registry, renderer, and catalog boundaries.
+- [ ] Allow concrete game imports only at explicit composition or selection
+      boundaries: shared ID/contract exports, server registry/room union, and
+      client catalog/page switches.
 - [ ] Confirm generic room/player types still describe only multiplayer data.
 - [ ] Confirm socket handlers, `RoomShell`, and `useRoomSession` contain no
       game rules, phases, scoring, or timers.
