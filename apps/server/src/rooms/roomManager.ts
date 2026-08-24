@@ -338,7 +338,7 @@ export class RoomManager {
     }
 
     if (room.phase !== "finished") {
-      return fail("ROUND_NOT_ACTIVE", "The match is not finished yet.");
+      return fail("INVALID_ROOM_PHASE", "The match is not finished yet.");
     }
 
     room.phase = "waiting";
@@ -473,7 +473,7 @@ export class RoomManager {
     }
 
     if (room.phase !== "playing" || room.game.state === null) {
-      return fail("ROUND_NOT_ACTIVE", "There is no active game.");
+      return fail("INVALID_ROOM_PHASE", "There is no active game.");
     }
 
     const gameModule = this.getGameModule(room);

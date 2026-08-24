@@ -8,6 +8,7 @@ import {
   cardBankSettingsSchema,
   type CardBankCardCounts,
   type CardBankCardValue,
+  type CardBankCommandErrorCode,
   type CardBankDrawChoiceIndex,
   type CardBankGameAction,
   type CardBankSettings,
@@ -177,7 +178,15 @@ type CardBankGameModuleContract = GameModule<
   CardBankSettings,
   CardBankGameState,
   CardBankGameAction,
-  PublicCardBankGameState
+  PublicCardBankGameState,
+  CardBankActionErrorCode
+>;
+
+type CardBankActionErrorCode = CardBankCommandErrorCode | "INVALID_ROOM_PHASE";
+
+type CardBankActionResult = GameActionResult<
+  CardBankGameState,
+  CardBankActionErrorCode
 >;
 
 export class CardBankGameModule implements CardBankGameModuleContract {
@@ -248,12 +257,12 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     playerId: string;
     action: CardBankGameAction;
     now: number;
-  }): GameActionResult<CardBankGameState> {
+  }): CardBankActionResult {
     const state = input.room.game.state;
     if (state === null || state.status === "finished") {
       return {
         accepted: false,
-        errorCode: "ROUND_NOT_ACTIVE",
+        errorCode: "INVALID_ROOM_PHASE",
         message: "There is no active game."
       };
     }
@@ -448,7 +457,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     room: CardBankRoom,
     state: CardBankGameState,
     choiceIndex: CardBankDrawChoiceIndex
-  ): GameActionResult<CardBankGameState> {
+  ): CardBankActionResult {
     if (
       state.turnPhase !== "awaiting-draw" &&
       state.turnPhase !== "awaiting-decision"
@@ -464,7 +473,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     if (currentPlayerId === null) {
       return {
         accepted: false,
-        errorCode: "ROUND_NOT_ACTIVE",
+        errorCode: "INVALID_ROOM_PHASE",
         message: "There is no active player."
       };
     }
@@ -574,7 +583,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     room: CardBankRoom,
     state: CardBankGameState,
     steal: boolean
-  ): GameActionResult<CardBankGameState> {
+  ): CardBankActionResult {
     if (state.turnPhase !== "awaiting-steal" || state.pendingSteal === null) {
       return {
         accepted: false,
@@ -587,7 +596,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     if (currentPlayerId === null) {
       return {
         accepted: false,
-        errorCode: "ROUND_NOT_ACTIVE",
+        errorCode: "INVALID_ROOM_PHASE",
         message: "There is no active player."
       };
     }
@@ -691,7 +700,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
   private stopTurn(
     room: CardBankRoom,
     state: CardBankGameState
-  ): GameActionResult<CardBankGameState> {
+  ): CardBankActionResult {
     if (state.turnPhase !== "awaiting-decision") {
       return {
         accepted: false,

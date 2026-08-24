@@ -10,6 +10,7 @@ import {
   TestFirstResponseGameModule,
   type PublicTestFirstResponseRoom,
   type TestFirstResponseAction,
+  type TestFirstResponseCommandErrorCode,
   type TestFirstResponseCreateRoomInput,
   type TestFirstResponseGameActionInput,
   type TestFirstResponseRoom,
@@ -25,7 +26,7 @@ type TestGameContractMap = GameContractMap & {
     createRoomInput: TestFirstResponseCreateRoomInput;
     updateRoomSettingsInput: TestFirstResponseUpdateRoomSettingsInput;
     gameActionInput: TestFirstResponseGameActionInput;
-    errorCode: "INVALID_GAME_ACTION";
+    errorCode: TestFirstResponseCommandErrorCode;
   };
 };
 
@@ -91,7 +92,10 @@ describe("second game contract proof", () => {
       },
       now: 1001
     });
-    expect(invalidClaim.accepted).toBe(false);
+    expect(invalidClaim).toMatchObject({
+      accepted: false,
+      errorCode: "CLAIM_NOT_AVAILABLE"
+    });
 
     const winningClaim = module.handleAction({
       room,
@@ -125,6 +129,9 @@ describe("second game contract proof", () => {
       },
       now: 1003
     });
-    expect(lateClaim.accepted).toBe(false);
+    expect(lateClaim).toMatchObject({
+      accepted: false,
+      errorCode: "CLAIM_NOT_AVAILABLE"
+    });
   });
 });

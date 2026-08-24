@@ -208,6 +208,29 @@ describe("RoomManager", () => {
     );
   });
 
+  it("reports lifecycle commands used during the wrong room phase", () => {
+    const { manager } = createManager();
+    createRoom(manager);
+
+    expectError(
+      manager.restartRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      }),
+      "INVALID_ROOM_PHASE"
+    );
+    expectError(
+      manager.handleGameAction({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        action: {
+          type: "anything"
+        }
+      }),
+      "INVALID_ROOM_PHASE"
+    );
+  });
+
   it("rejects new joins once gameplay has started", () => {
     const { manager } = createManager();
     createRoom(manager);

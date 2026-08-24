@@ -20,6 +20,9 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
       to `SUPPORTED_GAME_IDS` in `packages/shared/src/gameIds.ts`.
 - [ ] Define settings, actions, public state, and runtime schemas in a
       game-owned shared folder, following `packages/shared/src/game/card-bank`.
+- [ ] Define game-owned domain error codes and include them in the game's
+      `GameContractMap` entry. Reuse core codes only for common room or
+      transport failures.
 - [ ] Add the game-owned public room type to the `PublicRoomState` composition
       union in `packages/shared/src/types.ts`, discriminated by `gameId`.
 - [ ] Expand create, settings, and action commands as discriminated unions that

@@ -19,6 +19,8 @@ export type TestFirstResponseAction = {
   value: number;
 };
 
+export type TestFirstResponseCommandErrorCode = "CLAIM_NOT_AVAILABLE";
+
 export type TestFirstResponseState = {
   status: "playing" | "finished";
   target: number;
@@ -70,7 +72,8 @@ export class TestFirstResponseGameModule implements GameModule<
   TestFirstResponseSettings,
   TestFirstResponseState,
   TestFirstResponseAction,
-  PublicTestFirstResponseState
+  PublicTestFirstResponseState,
+  TestFirstResponseCommandErrorCode
 > {
   readonly settingsSchema = testFirstResponseSettingsSchema;
   readonly actionSchema = testFirstResponseActionSchema;
@@ -93,7 +96,10 @@ export class TestFirstResponseGameModule implements GameModule<
     playerId: string;
     action: TestFirstResponseAction;
     now: number;
-  }): GameActionResult<TestFirstResponseState> {
+  }): GameActionResult<
+    TestFirstResponseState,
+    TestFirstResponseCommandErrorCode
+  > {
     const state = input.room.game.state;
     if (
       state === null ||
@@ -102,7 +108,7 @@ export class TestFirstResponseGameModule implements GameModule<
     ) {
       return {
         accepted: false,
-        errorCode: "INVALID_GAME_ACTION",
+        errorCode: "CLAIM_NOT_AVAILABLE",
         message: "The claim is not valid."
       };
     }

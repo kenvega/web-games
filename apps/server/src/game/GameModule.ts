@@ -1,14 +1,13 @@
-import type { CommandErrorCode } from "@multiplayer-blueprint/shared";
 import type { ZodType } from "zod";
 
-export type GameActionResult<TState> =
+export type GameActionResult<TState, TErrorCode extends string> =
   | {
       accepted: true;
       nextState: TState;
     }
   | {
       accepted: false;
-      errorCode: CommandErrorCode;
+      errorCode: TErrorCode;
       message: string;
     };
 
@@ -17,7 +16,14 @@ export type GamePlayerLimits = Readonly<{
   max: number;
 }>;
 
-export interface GameModule<TRoom, TSettings, TState, TAction, TPublicState> {
+export interface GameModule<
+  TRoom,
+  TSettings,
+  TState,
+  TAction,
+  TPublicState,
+  TErrorCode extends string
+> {
   readonly settingsSchema: ZodType<TSettings>;
   readonly actionSchema: ZodType<TAction>;
   readonly playerLimits: GamePlayerLimits;
@@ -29,7 +35,7 @@ export interface GameModule<TRoom, TSettings, TState, TAction, TPublicState> {
     playerId: string;
     action: TAction;
     now: number;
-  }): GameActionResult<TState>;
+  }): GameActionResult<TState, TErrorCode>;
 
   handlePlayerDisconnected(input: {
     room: TRoom;

@@ -99,6 +99,10 @@ room state, routes, logs, and future persistence may depend on it.
    `roomManager.test.ts`; Card Banking settings, actions, timers, scoring, and
    disconnection rules live with its server module tests; Socket.IO coverage
    remains a small end-to-end multiplayer path.
+10. **Error ownership. Complete.** Reusable room and transport failures use
+    core error codes, while each game owns its domain failures. Game modules
+    declare their permitted error-code type instead of borrowing another
+    game's codes.
 
 Each extraction preserves a working Card Banking game and includes verification
 for the reusable contract it introduces.
@@ -200,6 +204,24 @@ Tests follow the same ownership boundary as production code:
 Future games should keep their rule tests beside their server module. Generic
 room tests should assert multiplayer lifecycle behavior rather than accumulate
 another game's rule cases.
+
+## Error ownership
+
+`CoreCommandErrorCode` contains failures produced by reusable input, room,
+membership, lifecycle, chat, and transport behavior. `INVALID_ROOM_PHASE` is
+the common precondition failure for commands such as acting before play or
+restarting before a match is finished; it replaces the older turn-oriented
+`ROUND_NOT_ACTIVE` name.
+
+Game folders own domain failures. Card Banking defines `NOT_YOUR_TURN`,
+`INVALID_GAME_ACTION`, and `INVALID_TURN_PHASE`; the test-only first-response
+game defines `CLAIM_NOT_AVAILABLE`. `GameContractMap` composes supported-game
+domain codes into the public `CommandErrorCode` union.
+
+The server `GameModule` contract is generic over its error-code type. A module
+therefore declares the reusable lifecycle and game-owned domain errors it can
+actually return. Reusable room and socket code may forward those errors, but it
+must not define or interpret a concrete game's domain failures.
 
 The generic create-room, update-settings, and game-action schemas deliberately
 treat `settings` and `action` as opaque payloads. After resolving a module by
