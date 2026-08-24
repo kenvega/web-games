@@ -103,6 +103,9 @@ room state, routes, logs, and future persistence may depend on it.
     core error codes, while each game owns its domain failures. Game modules
     declare their permitted error-code type instead of borrowing another
     game's codes.
+11. **Client style ownership. Complete.** Global CSS contains only application
+    foundations and reusable utilities. Card Banking animations live beside
+    its renderer and use game-prefixed selectors.
 
 Each extraction preserves a working Card Banking game and includes verification
 for the reusable contract it introduces.
@@ -263,6 +266,13 @@ settings, instructions, banking history, card components, and board all live
 under `client/src/game/card-bank`. Adding another game requires another typed
 renderer and another explicit case in the room-page selection switch; it does
 not require duplicating socket listeners or reconnection logic.
+
+Game-owned CSS follows the same boundary. `apps/client/src/styles.css` contains
+Tailwind directives, document defaults, and reusable utilities such as the
+themed scrollbar. Card Banking's animation keyframes and `cb-*` selectors live
+in `game/card-bank/cardBank.css`, imported by its game renderer. Future game
+styles should stay in their game folder and use a stable game-specific prefix
+when global selectors or keyframes are necessary.
 
 ## Game catalog and entry boundary
 

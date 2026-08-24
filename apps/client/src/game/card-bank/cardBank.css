@@ -1,0 +1,172 @@
+/* Flash an animated border on a card the moment it is drawn or stolen. */
+@keyframes cb-card-flash {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(110, 231, 183, 0),
+      0 8px 18px rgba(0, 0, 0, 0.25);
+  }
+  15% {
+    box-shadow:
+      0 0 0 3px rgba(110, 231, 183, 0.95),
+      0 0 16px 3px rgba(110, 231, 183, 0.55),
+      0 8px 18px rgba(0, 0, 0, 0.25);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(110, 231, 183, 0),
+      0 8px 18px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.cb-card-flash {
+  animation: cb-card-flash 1.1s ease-out;
+}
+
+/* Press a selected face-down choice toward the table while the server reveals
+   it in the player's active area. */
+@keyframes cb-choice-pick {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  45% {
+    transform: translateY(0.25rem) scale(0.94);
+    box-shadow: 0 0 20px rgba(110, 231, 183, 0.55);
+  }
+}
+
+.cb-choice-pick {
+  animation: cb-choice-pick 0.45s ease-in-out infinite;
+}
+
+/* Flash the extra-lives badge border whenever the count changes. */
+@keyframes cb-lives-flash {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+  20% {
+    box-shadow:
+      0 0 0 3px rgba(251, 113, 133, 0.85),
+      0 0 14px 2px rgba(251, 113, 133, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+}
+
+.cb-lives-flash {
+  animation: cb-lives-flash 1.1s ease-out;
+}
+
+/* Pop and fade the extra-lives badge out when the last life is spent. */
+@keyframes cb-lives-leave {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.12);
+    box-shadow:
+      0 0 0 3px rgba(251, 113, 133, 0.8),
+      0 0 14px 2px rgba(251, 113, 133, 0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+}
+
+.cb-lives-leave {
+  animation: cb-lives-leave 0.5s ease-in forwards;
+}
+
+/* Gather secured cards into a pile in the middle of the active area, then
+   launch the pile as one toward the score counter (top-right). --cb-converge-x/y
+   are set per card so the scattered grid positions pull into a single point
+   before the launch. Applied per card with a staggered delay so the gather
+   and the launch both read as a cascade rather than a single snap. */
+@keyframes cb-secure-fly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0));
+  }
+  35% {
+    opacity: 1;
+    transform: translate(var(--cb-converge-x, 0%), var(--cb-converge-y, 0%))
+      scale(0.8) rotate(0deg);
+    filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0));
+  }
+  55% {
+    opacity: 1;
+    transform: translate(var(--cb-converge-x, 0%), var(--cb-converge-y, 0%))
+      scale(0.95) rotate(-3deg);
+    filter: drop-shadow(0 0 12px rgba(250, 204, 21, 0.85));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(
+        calc(var(--cb-converge-x, 0%) + 55%),
+        calc(var(--cb-converge-y, 0%) - 80%)
+      )
+      scale(0.2) rotate(8deg);
+    filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0));
+  }
+}
+
+.cb-secure-fly {
+  animation: cb-secure-fly 0.65s cubic-bezier(0.3, 0, 0.4, 1) forwards;
+}
+
+/* Pulse the score counter as the secured cards land, so the badge itself
+   reacts instead of just incrementing silently. */
+@keyframes cb-secure-receive {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(250, 204, 21, 0);
+  }
+  45% {
+    transform: scale(1.3);
+    box-shadow: 0 0 14px 2px rgba(250, 204, 21, 0.65);
+  }
+}
+
+.cb-secure-receive {
+  animation: cb-secure-receive 0.4s ease-out;
+}
+
+/* Drop a busted card, letting it drift sideways and tumble as it falls.
+   --cb-drift and --cb-rot vary per card so the pile scatters. */
+@keyframes cb-bust-fall {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  15% {
+    transform: translate(0, -10%) rotate(calc(var(--cb-rot, 0deg) * 0.25));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--cb-drift, 0%), 75%) rotate(var(--cb-rot, 0deg));
+  }
+}
+
+.cb-bust-fall {
+  animation: cb-bust-fall 0.55s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-card-flash,
+  .cb-choice-pick,
+  .cb-lives-flash,
+  .cb-lives-leave,
+  .cb-secure-fly,
+  .cb-secure-receive,
+  .cb-bust-fall {
+    animation: none;
+  }
+}

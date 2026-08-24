@@ -27,6 +27,7 @@ import {
   type CSSProperties,
   type ReactNode
 } from "react";
+import "./cardBank.css";
 import { GroupedCardTile } from "./GroupedCardTile.js";
 
 type PlayerLookup = Map<string, PublicPlayer>;

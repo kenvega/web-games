@@ -59,6 +59,9 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
 - [ ] Build the in-room renderer with `RoomShell` and `useRoomSession`.
 - [ ] Keep game UI and presentation in its folder. Reuse socket, reconnect,
       invitation, presence, chat, identity, and version infrastructure.
+- [ ] Keep game-owned CSS beside the renderer and prefix global selectors or
+      keyframes with the game ID; leave only application-wide foundations and
+      reusable utilities in the global stylesheet.
 
 ## 5. Verify behavior
 
