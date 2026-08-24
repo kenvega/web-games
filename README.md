@@ -2,7 +2,7 @@
 
 A reusable full-stack scaffold for small, private, browser-based multiplayer games.
 
-It provides guest players, temporary rooms, shareable room links, real-time lobby presence, host controls, room chat, server-authoritative actions, reconnect support, and a small “First to React” demonstration game.
+It provides guest players, temporary rooms, shareable room links, real-time lobby presence, host controls, room chat, server-authoritative actions, reconnect support, and Card Banking as the first game built on the reusable foundation.
 
 ## What It Includes
 
@@ -142,7 +142,7 @@ If the host disconnects, the host role remains assigned to that player. Other pl
 ## Included Game
 
 The included game is Card Banking. Its rules are documented in
-`docs/game-rules.md`.
+[`docs/games/card-bank/rules.md`](docs/games/card-bank/rules.md).
 
 ## Adding Games
 
