@@ -1,5 +1,4 @@
 import type {
-  GameId,
   PublicChatMessage,
   PublicPlayer,
   RoomPhase
@@ -9,7 +8,7 @@ export type Player = PublicPlayer & {
   socketId: string | null;
 };
 
-export type RoomBase<TGameId extends GameId, TSettings, TState> = {
+export type RoomBase<TGameId extends string, TSettings, TState> = {
   code: string;
   gameId: TGameId;
   hostPlayerId: string;

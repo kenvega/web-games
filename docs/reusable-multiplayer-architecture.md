@@ -91,6 +91,10 @@ room state, routes, logs, and future persistence may depend on it.
 7. **Game entry pages. Complete.** The main route is a reusable game catalog
    and room-code join surface. Game-specific creation UI lives behind
    `/games/:gameId`.
+8. **Second-game contract proof. Complete.** A test-only first-response game
+   defines a separate shared contract and server module, coexists with Card
+   Banking in a typed registry, and verifies a first-valid-response rule. It is
+   deliberately absent from the production game IDs, catalog, and routes.
 
 Each extraction preserves a working Card Banking game and includes verification
 for the reusable contract it introduces.
@@ -158,6 +162,20 @@ game-specific constructor options to the room manager.
 To register another game, add its module type to `GameModuleMap` and construct
 it in `createGameRegistry`. The compiler then requires the registry to cover
 every supported `GameId`.
+
+The registry class itself is generic over its module map. The production
+factory still returns the closed `GameModuleMap`, while
+`apps/server/src/__tests__/fixtures/firstResponseGame.ts` builds a two-game
+registry without pretending that its fixture is a supported application game.
+The shared `PublicRoomBase` and command-input helpers, plus the server
+`RoomBase`, therefore accept any literal string ID; the production
+`GameContractMap`, `PublicRoomState`, schemas, and registry factory remain the
+places that restrict runtime behavior to supported IDs.
+
+Server type checking includes test sources through `tsconfig.test.json`. This
+makes the fixture a compile-time proof as well as a runtime test: its settings,
+actions, internal room, public room, command inputs, and module implementation
+must continue to satisfy the intended extension contracts.
 
 The generic create-room, update-settings, and game-action schemas deliberately
 treat `settings` and `action` as opaque payloads. After resolving a module by

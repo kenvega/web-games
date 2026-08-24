@@ -1,5 +1,3 @@
-import type { GameId } from "./gameIds.js";
-
 export const ROOM_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 export const ROOM_CODE_LENGTH = 10;
 export const MAX_CHAT_MESSAGES = 100;
@@ -25,7 +23,7 @@ export type PublicChatMessage = {
   createdAt: number;
 };
 
-export type PublicRoomBase<TGameId extends GameId> = {
+export type PublicRoomBase<TGameId extends string> = {
   code: string;
   gameId: TGameId;
   phase: RoomPhase;
@@ -48,14 +46,14 @@ export type CoreCommandErrorCode =
   | "MESSAGE_TOO_LONG"
   | "UNEXPECTED_ERROR";
 
-export type CreateRoomInputFor<TGameId extends GameId, TSettings> = {
+export type CreateRoomInputFor<TGameId extends string, TSettings> = {
   gameId: TGameId;
   guestId: string;
   displayName: string;
   settings: TSettings;
 };
 
-export type UpdateRoomSettingsInputFor<TGameId extends GameId, TSettings> = {
+export type UpdateRoomSettingsInputFor<TGameId extends string, TSettings> = {
   roomCode: string;
   gameId: TGameId;
   settings: TSettings;

@@ -8,7 +8,7 @@
     "build": "tsc -b",
     "start": "node dist/server.js",
     "test": "vitest run --config vitest.config.ts",
-    "typecheck": "tsc -b --pretty false"
+    "typecheck": "tsc -b --pretty false && tsc -p tsconfig.test.json --pretty false"
   },
   "dependencies": {
     "@multiplayer-blueprint/shared": "file:../../packages/shared",

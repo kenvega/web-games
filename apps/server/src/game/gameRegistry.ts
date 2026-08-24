@@ -1,4 +1,4 @@
-import { CARD_BANK_GAME_ID, type GameId } from "@multiplayer-blueprint/shared";
+import { CARD_BANK_GAME_ID } from "@multiplayer-blueprint/shared";
 import {
   CardBankGameModule,
   type CardBankGameOptions
@@ -12,17 +12,17 @@ export type GameRegistryOptions = {
   [CARD_BANK_GAME_ID]?: CardBankGameOptions;
 };
 
-export class GameRegistry {
-  constructor(private readonly modules: GameModuleMap) {}
+export class GameRegistry<TModules extends object = GameModuleMap> {
+  constructor(private readonly modules: TModules) {}
 
-  get<TGameId extends GameId>(gameId: TGameId): GameModuleMap[TGameId] {
+  get<TGameId extends keyof TModules>(gameId: TGameId): TModules[TGameId] {
     return this.modules[gameId];
   }
 }
 
 export function createGameRegistry(
   options: GameRegistryOptions = {}
-): GameRegistry {
+): GameRegistry<GameModuleMap> {
   return new GameRegistry({
     [CARD_BANK_GAME_ID]: new CardBankGameModule(options[CARD_BANK_GAME_ID])
   });
