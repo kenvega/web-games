@@ -113,8 +113,9 @@ Shared contract ownership follows the same boundary as the applications:
 command-envelope primitives; `packages/shared/src/gameIds.ts` composes the
 supported IDs; and each `packages/shared/src/game/<game-id>` folder owns its
 settings, actions, constants, public state, and public room type. The root
-`packages/shared/src/types.ts` composes the supported games into the public
-room, command, and error unions exported to clients and the server.
+`packages/shared/src/types.ts` contains a `GameContractMap` that correlates
+each supported ID with those game-owned types, then derives the public room,
+command, and error unions exported to clients and the server.
 
 `PublicRoomState` is a discriminated room type. When another game is added, it
 should add another room type keyed by its `gameId`, then join that type to the
@@ -181,6 +182,11 @@ The reusable `useRoomSession` hook owns joining, leaving, reconnecting,
 receiving versioned state, display-name confirmation, chat commands, shared
 room commands, and game-action transport. It accepts a room code and has no
 Card Banking imports or knowledge of a game's settings and action contents.
+Its settings and action functions take a `gameId` plus the corresponding
+payload from `GameContractMap`; the universal `RoomPage` supplies that ID only
+after narrowing the authoritative room union. A game renderer therefore
+receives its exact action and settings types without teaching the session hook
+about the game.
 
 `RoomShell` owns the shared in-room frame: connection and host-disconnection
 messages, room code and invitation controls, leave controls, chat, and common

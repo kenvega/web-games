@@ -1,23 +1,50 @@
-import type {
-  CardBankCommandErrorCode,
-  CardBankCreateRoomInput,
-  CardBankGameActionInput,
-  CardBankUpdateRoomSettingsInput,
-  PublicCardBankRoomState
+import {
+  CARD_BANK_GAME_ID,
+  type CardBankCommandErrorCode,
+  type CardBankCreateRoomInput,
+  type CardBankGameAction,
+  type CardBankGameActionInput,
+  type CardBankSettings,
+  type CardBankUpdateRoomSettingsInput,
+  type PublicCardBankRoomState
 } from "./game/card-bank/types.js";
+import type { GameId } from "./gameIds.js";
 import type { CoreCommandErrorCode, PublicChatMessage } from "./multiplayer.js";
 
 export * from "./game/card-bank/types.js";
 export * from "./gameIds.js";
 export * from "./multiplayer.js";
 
-// These composition types are unions of every supported game's contract.
-// Add one union member here when registering another game.
-export type PublicRoomState = PublicCardBankRoomState;
-export type CreateRoomInput = CardBankCreateRoomInput;
-export type UpdateRoomSettingsInput = CardBankUpdateRoomSettingsInput;
-export type GameActionInput = CardBankGameActionInput;
-export type CommandErrorCode = CoreCommandErrorCode | CardBankCommandErrorCode;
+// This is the shared composition map for every supported game. Adding a game
+// ID requires a corresponding entry, preserving the relationship between that
+// ID and its settings, actions, room state, commands, and domain errors.
+export type GameContractMap = {
+  [CARD_BANK_GAME_ID]: {
+    settings: CardBankSettings;
+    action: CardBankGameAction;
+    publicRoom: PublicCardBankRoomState;
+    createRoomInput: CardBankCreateRoomInput;
+    updateRoomSettingsInput: CardBankUpdateRoomSettingsInput;
+    gameActionInput: CardBankGameActionInput;
+    errorCode: CardBankCommandErrorCode;
+  };
+};
+
+export type GameSettings<TGameId extends GameId> =
+  GameContractMap[TGameId]["settings"];
+export type GameAction<TGameId extends GameId> =
+  GameContractMap[TGameId]["action"];
+export type PublicGameRoom<TGameId extends GameId> =
+  GameContractMap[TGameId]["publicRoom"];
+
+export type PublicRoomState = PublicGameRoom<GameId>;
+export type CreateRoomInput = GameContractMap[GameId]["createRoomInput"];
+export type UpdateRoomSettingsInput =
+  GameContractMap[GameId]["updateRoomSettingsInput"];
+export type GameActionInput = GameContractMap[GameId]["gameActionInput"];
+export type CommandErrorCode =
+  | CoreCommandErrorCode
+  | GameContractMap[GameId]["errorCode"];
 
 export type CommandError = {
   code: CommandErrorCode;

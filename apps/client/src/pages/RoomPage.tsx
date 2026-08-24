@@ -98,12 +98,16 @@ export function RoomPage() {
           connectionStatus={session.connectionStatus}
           currentPlayerId={session.guestId}
           message={session.message}
-          onAction={session.sendGameAction}
+          onAction={(action) =>
+            session.sendGameAction(CARD_BANK_GAME_ID, action)
+          }
           onLeave={handleLeave}
           onRestart={session.restart}
           onSendChatMessage={session.sendChatMessage}
           onStart={session.start}
-          onUpdateSettings={session.updateSettings}
+          onUpdateSettings={(settings) =>
+            session.updateSettings(CARD_BANK_GAME_ID, settings)
+          }
           room={session.room}
         />
       );

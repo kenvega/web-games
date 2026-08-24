@@ -1,9 +1,10 @@
 import {
   displayNameSchema,
   roomCodeSchema,
-  type GameActionInput,
-  type PublicRoomState,
-  type UpdateRoomSettingsInput
+  type GameAction,
+  type GameId,
+  type GameSettings,
+  type PublicRoomState
 } from "@multiplayer-blueprint/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -40,16 +41,21 @@ export type RoomSession = {
   leave: () => Promise<void>;
   start: () => Promise<string | null>;
   restart: () => Promise<string | null>;
-  updateSettings: (
-    settings: UpdateRoomSettingsInput["settings"]
+  updateSettings: <TGameId extends GameId>(
+    gameId: TGameId,
+    settings: GameSettings<TGameId>
   ) => Promise<string | null>;
   sendChatMessage: (text: string) => Promise<string | null>;
-  sendGameAction: (action: GameActionInput["action"]) => Promise<string | null>;
+  sendGameAction: <TGameId extends GameId>(
+    gameId: TGameId,
+    action: GameAction<TGameId>
+  ) => Promise<string | null>;
 };
 
 const missingRoomMessage =
   "This room no longer exists. Create a new room to continue.";
 const invalidRoomMessage = "Enter a valid room code.";
+const mismatchedGameMessage = "This command does not match the room's game.";
 
 export function useRoomSession(routeRoomCode?: string): RoomSession {
   const { socket, status: connectionStatus, ensureConnected } = useSocket();
@@ -255,16 +261,20 @@ export function useRoomSession(routeRoomCode?: string): RoomSession {
   }, [applyRoomState, roomCode, socket]);
 
   const updateSettings = useCallback(
-    async (
-      settings: UpdateRoomSettingsInput["settings"]
+    async <TGameId extends GameId>(
+      gameId: TGameId,
+      settings: GameSettings<TGameId>
     ): Promise<string | null> => {
       if (roomCode === null || room === null) {
         return invalidRoomMessage;
       }
+      if (room.gameId !== gameId) {
+        return mismatchedGameMessage;
+      }
 
       const result = await updateRoomSettingsCommand(socket, {
         roomCode,
-        gameId: room.gameId,
+        gameId,
         settings
       });
       if (!result.ok) {
@@ -298,9 +308,15 @@ export function useRoomSession(routeRoomCode?: string): RoomSession {
   );
 
   const sendGameAction = useCallback(
-    async (action: GameActionInput["action"]): Promise<string | null> => {
-      if (roomCode === null) {
+    async <TGameId extends GameId>(
+      gameId: TGameId,
+      action: GameAction<TGameId>
+    ): Promise<string | null> => {
+      if (roomCode === null || room === null) {
         return invalidRoomMessage;
+      }
+      if (room.gameId !== gameId) {
+        return mismatchedGameMessage;
       }
 
       const result = await sendGameActionCommand(socket, {
@@ -314,7 +330,7 @@ export function useRoomSession(routeRoomCode?: string): RoomSession {
       applyRoomState(result.data.state);
       return null;
     },
-    [applyRoomState, roomCode, socket]
+    [applyRoomState, room, roomCode, socket]
   );
 
   return {

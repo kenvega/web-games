@@ -7,8 +7,8 @@ import {
   type CardBankDrawChoiceIndex,
   type CardBankGameAction,
   type PublicCardBankGameState,
-  type PublicPlayer,
-  type PublicRoomState
+  type PublicCardBankRoomState,
+  type PublicPlayer
 } from "@multiplayer-blueprint/shared";
 import {
   AlertTriangle,
@@ -139,7 +139,7 @@ export function CardBankGame({
   onAction,
   onRestart
 }: {
-  room: PublicRoomState;
+  room: PublicCardBankRoomState;
   currentPlayerId: string;
   connected: boolean;
   onAction: (action: CardBankGameAction) => Promise<string | null>;

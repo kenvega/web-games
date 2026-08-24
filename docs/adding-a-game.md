@@ -51,6 +51,8 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
 - [ ] Add typed catalog metadata in `game/gameCatalog.ts`.
 - [ ] Add the entry renderer to `GameEntryPage` and the room renderer to
       `RoomPage`.
+- [ ] After `RoomPage` narrows the authoritative `room.gameId`, bind the
+      renderer's typed settings and action callbacks through `useRoomSession`.
 - [ ] Build the in-room renderer with `RoomShell` and `useRoomSession`.
 - [ ] Keep game UI and presentation in its folder. Reuse socket, reconnect,
       invitation, presence, chat, identity, and version infrastructure.
