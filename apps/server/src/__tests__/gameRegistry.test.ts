@@ -1,4 +1,8 @@
-import { CARD_BANK_GAME_ID } from "@multiplayer-blueprint/shared";
+import {
+  CARD_BANK_GAME_ID,
+  CARD_BANK_MAX_PLAYERS,
+  CARD_BANK_MIN_PLAYERS
+} from "@multiplayer-blueprint/shared";
 import { describe, expect, it } from "vitest";
 import { CardBankGameModule } from "../game/card-bank/cardBankGame.js";
 import { GameRegistry, createGameRegistry } from "../game/gameRegistry.js";
@@ -21,7 +25,7 @@ describe("GameRegistry", () => {
     );
   });
 
-  it("exposes the registered game's settings and action schemas", () => {
+  it("exposes the registered game's schemas and player limits", () => {
     const cardBankModule = createGameRegistry().get(CARD_BANK_GAME_ID);
 
     expect(
@@ -40,5 +44,9 @@ describe("GameRegistry", () => {
     expect(
       cardBankModule.actionSchema.safeParse({ type: "unknown-action" }).success
     ).toBe(false);
+    expect(cardBankModule.playerLimits).toEqual({
+      min: CARD_BANK_MIN_PLAYERS,
+      max: CARD_BANK_MAX_PLAYERS
+    });
   });
 });

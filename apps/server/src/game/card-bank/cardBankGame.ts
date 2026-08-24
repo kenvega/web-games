@@ -2,6 +2,8 @@ import {
   CARD_BANK_CARD_COUNTS,
   CARD_BANK_CARD_VALUES,
   CARD_BANK_DRAW_CHOICE_COUNT,
+  CARD_BANK_MAX_PLAYERS,
+  CARD_BANK_MIN_PLAYERS,
   cardBankGameActionSchema,
   cardBankSettingsSchema,
   type CardBankCardCounts,
@@ -15,48 +17,15 @@ import {
   type PublicCardBankStanding
 } from "@multiplayer-blueprint/shared";
 import type { GameActionResult, GameModule } from "../GameModule.js";
-import type { Room } from "../../rooms/types.js";
+import type {
+  CardBankGameState,
+  CardBankPendingBust,
+  CardBankPendingSteal,
+  CardBankPlayerState,
+  CardBankRoom
+} from "./types.js";
 
-type CardBankPlayerState = {
-  playerId: string;
-  activeCards: CardBankCardCounts;
-  bankedCards: CardBankCardCounts;
-  extraLives: number;
-};
-
-type CardBankPendingSteal = {
-  drawnValue: CardBankCardValue;
-  candidates: {
-    playerId: string;
-    count: number;
-  }[];
-};
-
-type CardBankPendingBust = {
-  playerId: string;
-  cardValue: CardBankCardValue;
-};
-
-export type CardBankGameState = {
-  status: "playing" | "finished";
-  extraLivesEnabled: boolean;
-  turnPhase:
-    | "awaiting-draw"
-    | "awaiting-steal"
-    | "awaiting-decision"
-    | "revealing-bust"
-    | "ending"
-    | "finished";
-  deck: CardBankCardValue[];
-  discard: CardBankCardValue[];
-  turnOrder: string[];
-  currentPlayerIndex: number;
-  players: Record<string, CardBankPlayerState>;
-  pendingSteal: CardBankPendingSteal | null;
-  pendingBust: CardBankPendingBust | null;
-  finalStandings: PublicCardBankStanding[] | null;
-  winnerPlayerIds: string[];
-};
+export type { CardBankGameState, CardBankRoom } from "./types.js";
 
 export type CardBankGameOptions = {
   rng?: () => number;
@@ -204,7 +173,7 @@ function compareStandings(
 }
 
 type CardBankGameModuleContract = GameModule<
-  Room,
+  CardBankRoom,
   CardBankSettings,
   CardBankGameState,
   CardBankGameAction,
@@ -214,6 +183,10 @@ type CardBankGameModuleContract = GameModule<
 export class CardBankGameModule implements CardBankGameModuleContract {
   readonly settingsSchema = cardBankSettingsSchema;
   readonly actionSchema = cardBankGameActionSchema;
+  readonly playerLimits = {
+    min: CARD_BANK_MIN_PLAYERS,
+    max: CARD_BANK_MAX_PLAYERS
+  } as const;
 
   private readonly rng: () => number;
   private readonly deckFactory: (() => CardBankCardValue[]) | null;
@@ -231,7 +204,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     this.endingDelayMs = options.endingDelayMs ?? DEFAULT_ENDING_DELAY_MS;
   }
 
-  start(room: Room, now: number): CardBankGameState {
+  start(room: CardBankRoom, now: number): CardBankGameState {
     void now;
     const turnOrder = Object.values(room.players)
       .sort((left, right) => left.joinedAt - right.joinedAt)
@@ -271,7 +244,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
   }
 
   handleAction(input: {
-    room: Room;
+    room: CardBankRoom;
     playerId: string;
     action: CardBankGameAction;
     now: number;
@@ -310,7 +283,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
   }
 
   syncScheduledTransition(input: {
-    room: Room;
+    room: CardBankRoom;
     onTransition: (nextState: CardBankGameState) => void;
   }): void {
     const state = input.room.game.state;
@@ -357,18 +330,23 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     });
   }
 
-  handleDisconnectedActivePlayer(room: Room): CardBankGameState | null {
-    const state = room.game.state;
+  handlePlayerDisconnected(input: {
+    room: CardBankRoom;
+    playerId: string;
+    now: number;
+  }): CardBankGameState | null {
+    void input.now;
+    const state = input.room.game.state;
     if (state === null || state.status === "finished") {
       return null;
     }
 
     const currentPlayerId = this.getCurrentPlayerId(state);
-    if (currentPlayerId === null) {
+    if (currentPlayerId === null || currentPlayerId !== input.playerId) {
       return null;
     }
 
-    const currentPlayer = room.players[currentPlayerId];
+    const currentPlayer = input.room.players[currentPlayerId];
     if (currentPlayer === undefined || currentPlayer.connected) {
       return null;
     }
@@ -381,7 +359,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
       return state;
     }
 
-    return this.advanceTurn(room, {
+    return this.advanceTurn(input.room, {
       ...state,
       pendingSteal: null,
       pendingBust: null,
@@ -421,7 +399,11 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     };
   }
 
-  private resolvePendingBust(room: Room): CardBankGameState | null {
+  isFinished(state: CardBankGameState): boolean {
+    return state.status === "finished";
+  }
+
+  private resolvePendingBust(room: CardBankRoom): CardBankGameState | null {
     const state = room.game.state;
     if (
       state === null ||
@@ -435,7 +417,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     return this.resolveBust(room, state, state.pendingBust.playerId);
   }
 
-  private resolveEnding(room: Room): CardBankGameState | null {
+  private resolveEnding(room: CardBankRoom): CardBankGameState | null {
     const state = room.game.state;
     if (
       state === null ||
@@ -463,7 +445,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
   }
 
   private drawCard(
-    room: Room,
+    room: CardBankRoom,
     state: CardBankGameState,
     choiceIndex: CardBankDrawChoiceIndex
   ): GameActionResult<CardBankGameState> {
@@ -589,7 +571,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
   }
 
   private resolveSteal(
-    room: Room,
+    room: CardBankRoom,
     state: CardBankGameState,
     steal: boolean
   ): GameActionResult<CardBankGameState> {
@@ -707,7 +689,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
   }
 
   private stopTurn(
-    room: Room,
+    room: CardBankRoom,
     state: CardBankGameState
   ): GameActionResult<CardBankGameState> {
     if (state.turnPhase !== "awaiting-decision") {
@@ -741,7 +723,7 @@ export class CardBankGameModule implements CardBankGameModuleContract {
   }
 
   private resolveBust(
-    room: Room,
+    room: CardBankRoom,
     state: CardBankGameState,
     playerId: string
   ): CardBankGameState {
@@ -770,7 +752,10 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     return this.advanceTurn(room, nextState);
   }
 
-  private advanceTurn(room: Room, state: CardBankGameState): CardBankGameState {
+  private advanceTurn(
+    room: CardBankRoom,
+    state: CardBankGameState
+  ): CardBankGameState {
     if (state.turnOrder.length === 0) {
       return state;
     }

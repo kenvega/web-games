@@ -30,16 +30,16 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
 ## 3. Implement the server module
 
 - [ ] Create `apps/server/src/game/<game-id>/`.
-- [ ] Keep private state, rules, scoring, and timing inside that folder.
-- [ ] Implement the `GameModule` contract: schemas, start, action handling,
-      scheduled transitions, public projection, and cleanup.
-- [ ] Implement the game's active-player disconnection behavior used by
-      `RoomManager`.
+- [ ] Keep private state, the `RoomBase` specialization, rules, scoring, and
+      timing inside that folder.
+- [ ] Implement the `GameModule` contract: schemas, player limits, start,
+      action handling, disconnection behavior, scheduled transitions,
+      finish detection, public projection, and cleanup.
 - [ ] Reject invalid actions with domain errors. Never trust client-computed
       state, scores, winners, or timestamps.
 - [ ] Register the module in `GameModuleMap` and `createGameRegistry`.
-- [ ] Add the game's internal room type to the `Room` discriminated union in
-      `apps/server/src/rooms/types.ts`.
+- [ ] Add the game-owned internal room type to the `Room` discriminated union
+      in `apps/server/src/rooms/types.ts`.
 
 ## 4. Implement the client entry and renderer
 

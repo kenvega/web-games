@@ -124,6 +124,12 @@ generic string-keyed object.
 Scores belong to the game state. Card Banking publishes them through final
 standings. `PublicPlayer` contains identity and presence only.
 
+The server mirrors this ownership. `apps/server/src/rooms/roomBase.ts` defines
+the reusable internal room fields. Each server game folder owns its private
+state and a concrete `RoomBase` specialization; `apps/server/src/rooms/types.ts`
+is only the explicit union of those registered room types. A game module works
+with its own room type rather than the complete cross-game union.
+
 ## Intended server shape
 
 The server uses a small, explicit game registry:
@@ -132,10 +138,12 @@ The server uses a small, explicit game registry:
 gameId -> game module
 ```
 
-A game module owns its settings and action schemas, state creation, action
-handling, scheduled transitions, public-state projection, and room cleanup
-hook. The room service owns command-envelope validation plus membership and
-lifecycle checks that apply to every game.
+A game module owns its settings and action schemas, player limits, state
+creation, action handling, reactions to player disconnection, scheduled
+transitions, finish detection, public-state projection, and room cleanup hook.
+The room service owns command-envelope validation plus membership and lifecycle
+checks that apply to every game. It asks the selected module for these decisions
+instead of reading fields from a game's private state.
 
 A static registry is preferred over a dynamic plugin system. It keeps supported
 games visible in the repository and makes invalid game IDs fail predictably.

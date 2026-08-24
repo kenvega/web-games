@@ -3,8 +3,6 @@ import {
   gameActionInputSchema,
   guestIdSchema,
   joinRoomInputSchema,
-  MAX_PLAYERS,
-  MIN_PLAYERS,
   roomCodeSchema,
   roomCommandInputSchema,
   sendChatMessageInputSchema,
@@ -189,9 +187,10 @@ export class RoomManager {
       return fail("GAME_ALREADY_STARTED", "This game has already started.");
     }
 
+    const maximumPlayers = this.getGameModule(room).playerLimits.max;
     if (
       existingPlayer === undefined &&
-      Object.keys(room.players).length >= MAX_PLAYERS
+      Object.keys(room.players).length >= maximumPlayers
     ) {
       return fail("ROOM_FULL", "This room is full.");
     }
@@ -288,15 +287,16 @@ export class RoomManager {
     }
 
     if (room.phase === "waiting") {
-      if (this.getConnectedPlayers(room).length < MIN_PLAYERS) {
+      const minimumPlayers = this.getGameModule(room).playerLimits.min;
+      if (this.getConnectedPlayers(room).length < minimumPlayers) {
         return fail(
           "NOT_ENOUGH_PLAYERS",
-          `At least ${MIN_PLAYERS} connected players are required to start.`
+          `At least ${minimumPlayers} connected players are required to start.`
         );
       }
 
       room.phase = "playing";
-      room.game.state = this.getGameModule(room).start(room, this.now());
+      this.setGameState(room, this.getGameModule(room).start(room, this.now()));
       return ok({
         state: this.commit(room)
       });
@@ -495,10 +495,7 @@ export class RoomManager {
       return fail(result.errorCode, result.message);
     }
 
-    room.game.state = result.nextState;
-    if (result.nextState.status === "finished") {
-      room.phase = "finished";
-    }
+    this.setGameState(room, result.nextState);
     return ok({
       state: this.commit(room)
     });
@@ -521,13 +518,13 @@ export class RoomManager {
 
     player.connected = false;
     player.socketId = null;
-    const nextGameState =
-      this.getGameModule(room).handleDisconnectedActivePlayer(room);
+    const nextGameState = this.getGameModule(room).handlePlayerDisconnected({
+      room,
+      playerId: player.id,
+      now: this.now()
+    });
     if (nextGameState !== null) {
-      room.game.state = nextGameState;
-      if (nextGameState.status === "finished") {
-        room.phase = "finished";
-      }
+      this.setGameState(room, nextGameState);
     }
 
     return this.commit(room);
@@ -569,13 +566,13 @@ export class RoomManager {
     if (!hostLeft && room.phase !== "waiting") {
       leavingPlayer.connected = false;
       leavingPlayer.socketId = null;
-      const nextGameState =
-        this.getGameModule(room).handleDisconnectedActivePlayer(room);
+      const nextGameState = this.getGameModule(room).handlePlayerDisconnected({
+        room,
+        playerId: leavingPlayer.id,
+        now: this.now()
+      });
       if (nextGameState !== null) {
-        room.game.state = nextGameState;
-        if (nextGameState.status === "finished") {
-          room.phase = "finished";
-        }
+        this.setGameState(room, nextGameState);
       }
 
       return {
@@ -691,10 +688,7 @@ export class RoomManager {
           return;
         }
 
-        room.game.state = nextState;
-        if (nextState.status === "finished") {
-          room.phase = "finished";
-        }
+        this.setGameState(room, nextState);
 
         const result = {
           state: this.commit(room)
@@ -734,6 +728,16 @@ export class RoomManager {
 
   private getConnectedPlayers(room: Room): Player[] {
     return Object.values(room.players).filter((player) => player.connected);
+  }
+
+  private setGameState(
+    room: Room,
+    nextState: NonNullable<Room["game"]["state"]>
+  ): void {
+    room.game.state = nextState;
+    if (this.getGameModule(room).isFinished(nextState)) {
+      room.phase = "finished";
+    }
   }
 
   private getGameModule(room: Room) {
