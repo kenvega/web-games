@@ -95,6 +95,10 @@ room state, routes, logs, and future persistence may depend on it.
    defines a separate shared contract and server module, coexists with Card
    Banking in a typed registry, and verifies a first-valid-response rule. It is
    deliberately absent from the production game IDs, catalog, and routes.
+9. **Test ownership. Complete.** Reusable room lifecycle coverage remains in
+   `roomManager.test.ts`; Card Banking settings, actions, timers, scoring, and
+   disconnection rules live with its server module tests; Socket.IO coverage
+   remains a small end-to-end multiplayer path.
 
 Each extraction preserves a working Card Banking game and includes verification
 for the reusable contract it introduces.
@@ -175,7 +179,27 @@ places that restrict runtime behavior to supported IDs.
 Server type checking includes test sources through `tsconfig.test.json`. This
 makes the fixture a compile-time proof as well as a runtime test: its settings,
 actions, internal room, public room, command inputs, and module implementation
-must continue to satisfy the intended extension contracts.
+must continue to satisfy the intended extension contracts. The production
+server build excludes both test files and the `__tests__` fixture directory.
+
+## Test ownership
+
+Tests follow the same ownership boundary as production code:
+
+- `apps/server/src/__tests__/roomManager.test.ts` covers reusable room codes,
+  creation, membership, host permissions, player-limit delegation, chat,
+  reconnection, versioning, and cleanup.
+- `apps/server/src/game/card-bank/cardBankGame.test.ts` covers Card Banking
+  start state, actions, steals, busts, extra lives, settings, timers, scoring,
+  finishing, and active-player disconnection through the room service.
+- `apps/server/src/__tests__/secondGameContract.test.ts` is the test-only
+  second-game type and registry proof.
+- `apps/server/src/__tests__/socket.integration.test.ts` covers the complete
+  transport path without duplicating the full game-rule suite.
+
+Future games should keep their rule tests beside their server module. Generic
+room tests should assert multiplayer lifecycle behavior rather than accumulate
+another game's rule cases.
 
 The generic create-room, update-settings, and game-action schemas deliberately
 treat `settings` and `action` as opaque payloads. After resolving a module by

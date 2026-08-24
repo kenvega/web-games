@@ -59,6 +59,9 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
 
 ## 5. Verify behavior
 
+- [ ] Keep game-rule tests beside the server game module; add reusable room
+      lifecycle cases to `roomManager.test.ts` only when they apply to every
+      game.
 - [ ] Test settings and valid, malformed, unauthorized, stale, and conflicting
       actions through the registered module.
 - [ ] Test start, finish, restart, disconnection, cleanup, and scheduled

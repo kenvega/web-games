@@ -6,17 +6,10 @@
     "declarationMap": true,
     "outDir": "dist",
     "rootDir": "src",
-    "types": [
-      "node",
-      "vitest"
-    ]
+    "types": ["node", "vitest"]
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "src/**/*.test.ts"
-  ],
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/__tests__/**"],
   "references": [
     {
       "path": "../../packages/shared"
