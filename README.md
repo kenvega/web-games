@@ -173,7 +173,10 @@ The shared package defines the Socket.IO contract and runtime schemas:
 
 - `packages/shared/src/events.ts`
 - `packages/shared/src/schemas.ts`
-- `packages/shared/src/types.ts`
+- `packages/shared/src/multiplayer.ts` for reusable multiplayer contracts
+- `packages/shared/src/gameIds.ts` for the supported-game composition
+- `packages/shared/src/game/card-bank` for Card Banking contracts
+- `packages/shared/src/types.ts` for the public game unions
 
 The server validates every command with Zod. TypeScript types do not replace runtime validation.
 

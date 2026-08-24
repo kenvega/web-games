@@ -16,10 +16,12 @@ see [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md).
 
 ## 2. Add shared contracts
 
-- [ ] Add the ID to `SUPPORTED_GAME_IDS` in `packages/shared/src/types.ts`.
+- [ ] Export the stable game ID from the game's shared `types.ts`, then add it
+      to `SUPPORTED_GAME_IDS` in `packages/shared/src/gameIds.ts`.
 - [ ] Define settings, actions, public state, and runtime schemas in a
       game-owned shared folder, following `packages/shared/src/game/card-bank`.
-- [ ] Add the public room type to `PublicRoomState`, discriminated by `gameId`.
+- [ ] Add the game-owned public room type to the `PublicRoomState` composition
+      union in `packages/shared/src/types.ts`, discriminated by `gameId`.
 - [ ] Expand create, settings, and action commands as discriminated unions that
       preserve the relationship between `gameId` and its payload.
 - [ ] Keep generic schemas limited to transport envelopes. Add socket events

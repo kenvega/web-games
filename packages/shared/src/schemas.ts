@@ -3,9 +3,9 @@ import {
   CHAT_MESSAGE_MAX_LENGTH,
   DISPLAY_NAME_MAX_LENGTH,
   ROOM_CODE_ALPHABET,
-  ROOM_CODE_LENGTH,
-  SUPPORTED_GAME_IDS
-} from "./types.js";
+  ROOM_CODE_LENGTH
+} from "./multiplayer.js";
+import { SUPPORTED_GAME_IDS } from "./gameIds.js";
 
 const roomCodePattern = new RegExp(
   `^[${ROOM_CODE_ALPHABET}]{${ROOM_CODE_LENGTH}}$`

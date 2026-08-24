@@ -1,167 +1,30 @@
-export const ROOM_CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-export const ROOM_CODE_LENGTH = 10;
-export const MAX_CHAT_MESSAGES = 100;
-export const CHAT_MESSAGE_MAX_LENGTH = 200;
-export const DISPLAY_NAME_MAX_LENGTH = 24;
-export const MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 6;
+import type {
+  CardBankCommandErrorCode,
+  CardBankCreateRoomInput,
+  CardBankGameActionInput,
+  CardBankUpdateRoomSettingsInput,
+  PublicCardBankRoomState
+} from "./game/card-bank/types.js";
+import type { CoreCommandErrorCode, PublicChatMessage } from "./multiplayer.js";
 
-export const CARD_BANK_GAME_ID = "card-bank" as const;
-export const SUPPORTED_GAME_IDS = [CARD_BANK_GAME_ID] as const;
+export * from "./game/card-bank/types.js";
+export * from "./gameIds.js";
+export * from "./multiplayer.js";
 
-export type GameId = (typeof SUPPORTED_GAME_IDS)[number];
+// Compatibility aliases until player limits move behind the server game
+// module contract.
+export {
+  CARD_BANK_MAX_PLAYERS as MAX_PLAYERS,
+  CARD_BANK_MIN_PLAYERS as MIN_PLAYERS
+} from "./game/card-bank/types.js";
 
-export const CARD_BANK_CARD_VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
-
-export type CardBankCardValue = (typeof CARD_BANK_CARD_VALUES)[number];
-
-export const CARD_BANK_DRAW_CHOICE_INDEXES = [0, 1, 2, 3] as const;
-export const CARD_BANK_DRAW_CHOICE_COUNT = CARD_BANK_DRAW_CHOICE_INDEXES.length;
-
-export type CardBankDrawChoiceIndex =
-  (typeof CARD_BANK_DRAW_CHOICE_INDEXES)[number];
-
-export type CardBankCardCounts = Record<CardBankCardValue, number>;
-
-export const CARD_BANK_CARD_COUNTS: CardBankCardCounts = {
-  1: 13,
-  2: 13,
-  3: 13,
-  4: 13,
-  5: 13,
-  6: 9,
-  7: 9,
-  8: 9,
-  9: 9,
-  10: 9
-};
-
-export const CARD_BANK_CARD_COLORS: Record<CardBankCardValue, string> = {
-  1: "#4FB6E1",
-  2: "#6D4996",
-  3: "#DA4D3A",
-  4: "#B85E9D",
-  5: "#ACC53C",
-  6: "#E1852E",
-  7: "#F5E943",
-  8: "#3C57A3",
-  9: "#5AB5A9",
-  10: "#E1749C"
-};
-
-export type RoomCode = string;
-
-export type RoomPhase = "waiting" | "playing" | "finished";
-
-export type CardBankTurnPhase =
-  | "awaiting-draw"
-  | "awaiting-steal"
-  | "awaiting-decision"
-  | "revealing-bust"
-  | "ending"
-  | "finished";
-
-export type PublicCardBankPlayerState = {
-  playerId: string;
-  activeCards: CardBankCardCounts;
-  activeCount: number;
-  securedCardCount: number;
-  extraLives: number;
-};
-
-export type PublicCardBankStealCandidate = {
-  playerId: string;
-  count: number;
-};
-
-export type PublicCardBankPendingSteal = {
-  drawnValue: CardBankCardValue;
-  candidates: PublicCardBankStealCandidate[];
-  totalCount: number;
-};
-
-export type PublicCardBankPendingBust = {
-  playerId: string;
-  cardValue: CardBankCardValue;
-};
-
-export type PublicCardBankStanding = {
-  playerId: string;
-  rank: number;
-  score: number;
-  bankedCards: CardBankCardCounts;
-};
-
-export type PublicCardBankGameState = {
-  status: "playing" | "finished";
-  currentPlayerId: string | null;
-  turnPhase: CardBankTurnPhase;
-  deckCount: number;
-  drawChoiceCount: number;
-  discardCount: number;
-  players: PublicCardBankPlayerState[];
-  pendingSteal: PublicCardBankPendingSteal | null;
-  pendingBust: PublicCardBankPendingBust | null;
-  finalStandings: PublicCardBankStanding[] | null;
-  winnerPlayerIds: string[];
-};
-
-export type CardBankSettings = {
-  extraLivesEnabled: boolean;
-};
-
-export type PublicPlayer = {
-  id: string;
-  displayName: string;
-  connected: boolean;
-  joinedAt: number;
-};
-
-export type PublicChatMessage = {
-  id: string;
-  playerId: string;
-  displayName: string;
-  text: string;
-  createdAt: number;
-};
-
-export type PublicRoomBase<TGameId extends GameId> = {
-  code: string;
-  gameId: TGameId;
-  phase: RoomPhase;
-  hostPlayerId: string;
-  players: PublicPlayer[];
-  chatMessages: PublicChatMessage[];
-  version: number;
-};
-
-export type PublicCardBankRoomState = PublicRoomBase<
-  typeof CARD_BANK_GAME_ID
-> & {
-  game: {
-    settings: CardBankSettings;
-    state: PublicCardBankGameState | null;
-  };
-};
-
+// These composition types are unions of every supported game's contract.
+// Add one union member here when registering another game.
 export type PublicRoomState = PublicCardBankRoomState;
-
-export type CommandErrorCode =
-  | "INVALID_INPUT"
-  | "ROOM_NOT_FOUND"
-  | "ROOM_FULL"
-  | "GAME_ALREADY_STARTED"
-  | "NOT_ROOM_HOST"
-  | "NOT_IN_ROOM"
-  | "NOT_YOUR_TURN"
-  | "NOT_ENOUGH_PLAYERS"
-  | "PLAYER_ALREADY_CONNECTED"
-  | "INVALID_GAME_ACTION"
-  | "INVALID_TURN_PHASE"
-  | "ROUND_NOT_ACTIVE"
-  | "ACTION_ALREADY_CLAIMED"
-  | "MESSAGE_TOO_LONG"
-  | "UNEXPECTED_ERROR";
+export type CreateRoomInput = CardBankCreateRoomInput;
+export type UpdateRoomSettingsInput = CardBankUpdateRoomSettingsInput;
+export type GameActionInput = CardBankGameActionInput;
+export type CommandErrorCode = CoreCommandErrorCode | CardBankCommandErrorCode;
 
 export type CommandError = {
   code: CommandErrorCode;
@@ -178,52 +41,6 @@ export type CommandResult<T = null> =
       error: CommandError;
     };
 
-export type CreateRoomInput = {
-  gameId: typeof CARD_BANK_GAME_ID;
-  guestId: string;
-  displayName: string;
-  settings: CardBankSettings;
-};
-
-export type UpdateRoomSettingsInput = {
-  roomCode: string;
-  gameId: typeof CARD_BANK_GAME_ID;
-  settings: CardBankSettings;
-};
-
-export type JoinRoomInput = {
-  roomCode: string;
-  guestId: string;
-  displayName: string;
-};
-
-export type RoomCommandInput = {
-  roomCode: string;
-};
-
-export type SendChatMessageInput = {
-  roomCode: string;
-  text: string;
-};
-
-export type CardBankGameAction =
-  | {
-      type: "draw-card";
-      choiceIndex?: CardBankDrawChoiceIndex | undefined;
-    }
-  | {
-      type: "resolve-steal";
-      steal: boolean;
-    }
-  | {
-      type: "stop-turn";
-    };
-
-export type GameActionInput = {
-  roomCode: string;
-  action: CardBankGameAction;
-};
-
 export type CreateRoomResult = {
   roomCode: string;
   state: PublicRoomState;
@@ -236,16 +53,6 @@ export type RoomStateResult = {
 export type SendChatMessageResult = {
   message: PublicChatMessage;
   state: PublicRoomState;
-};
-
-export type RoomClosedPayload = {
-  roomCode: string;
-  message: string;
-};
-
-export type GameEventPayload = {
-  roomCode: string;
-  type: "game-updated" | "match-finished";
 };
 
 export type SocketErrorPayload = {

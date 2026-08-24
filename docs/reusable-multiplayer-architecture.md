@@ -108,6 +108,14 @@ room.game.state
 Room creation and settings commands use the same game-specific settings shape.
 For Card Banking that shape currently contains `extraLivesEnabled`.
 
+Shared contract ownership follows the same boundary as the applications:
+`packages/shared/src/multiplayer.ts` contains reusable room, player, chat, and
+command-envelope primitives; `packages/shared/src/gameIds.ts` composes the
+supported IDs; and each `packages/shared/src/game/<game-id>` folder owns its
+settings, actions, constants, public state, and public room type. The root
+`packages/shared/src/types.ts` composes the supported games into the public
+room, command, and error unions exported to clients and the server.
+
 `PublicRoomState` is a discriminated room type. When another game is added, it
 should add another room type keyed by its `gameId`, then join that type to the
 `PublicRoomState` union. Do not weaken game settings or state to `unknown` or a
