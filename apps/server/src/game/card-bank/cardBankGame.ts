@@ -376,6 +376,15 @@ export class CardBankGameModule implements CardBankGameModuleContract {
     });
   }
 
+  handlePlayerConnected(input: {
+    room: CardBankRoom;
+    playerId: string;
+    now: number;
+  }): CardBankGameState | null {
+    void input;
+    return null;
+  }
+
   toPublicState(state: CardBankGameState): PublicCardBankGameState {
     return {
       status: state.status,

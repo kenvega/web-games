@@ -198,6 +198,7 @@ export class RoomManager {
     let previousSocketId: string | null = null;
 
     if (existingPlayer !== undefined) {
+      const wasDisconnected = !existingPlayer.connected;
       previousSocketId =
         existingPlayer.connected && existingPlayer.socketId !== input.socketId
           ? existingPlayer.socketId
@@ -206,6 +207,9 @@ export class RoomManager {
       existingPlayer.socketId = input.socketId;
       if (room.phase === "waiting") {
         existingPlayer.displayName = parsedInput.data.displayName;
+      }
+      if (wasDisconnected) {
+        this.handlePlayerConnected(room, existingPlayer.id);
       }
     } else {
       room.players[parsedInput.data.guestId] = {
@@ -248,9 +252,13 @@ export class RoomManager {
       return fail("NOT_IN_ROOM", "You are not in this room.");
     }
 
-    if (!player.connected || player.socketId !== input.socketId) {
+    const wasDisconnected = !player.connected;
+    if (wasDisconnected || player.socketId !== input.socketId) {
       player.connected = true;
       player.socketId = input.socketId;
+      if (wasDisconnected) {
+        this.handlePlayerConnected(room, player.id);
+      }
       return ok({
         state: this.commit(room)
       });
@@ -728,6 +736,17 @@ export class RoomManager {
 
   private getConnectedPlayers(room: Room): Player[] {
     return Object.values(room.players).filter((player) => player.connected);
+  }
+
+  private handlePlayerConnected(room: Room, playerId: string): void {
+    const nextGameState = this.getGameModule(room).handlePlayerConnected({
+      room,
+      playerId,
+      now: this.now()
+    });
+    if (nextGameState !== null) {
+      this.setGameState(room, nextGameState);
+    }
   }
 
   private setGameState(

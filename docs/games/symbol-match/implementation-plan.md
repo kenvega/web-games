@@ -1,6 +1,6 @@
 # Symbol Match implementation plan
 
-**Status:** implementation in progress; Phase 1 is complete.
+**Status:** implementation in progress; Phases 1 and 2 are complete.
 
 This plan translates the approved [rules](./rules.md) and
 [technical design](./technical-design.md) into repository-specific work. Those
@@ -62,16 +62,19 @@ The existing `GameModule` contract provides `handlePlayerDisconnected` but no
 corresponding notification when an existing seated player reconnects. Symbol
 Match must restart its countdown only after both seats are connected.
 
-- [ ] Add a game-module `handlePlayerConnected` hook that may return an updated
+- [x] Add a game-module `handlePlayerConnected` hook that may return an updated
       game state or `null`.
-- [ ] Call it only when `joinRoom` or `requestState` changes an existing seated
+- [x] Call it only when `joinRoom` or `requestState` changes an existing seated
       player from disconnected to connected. Do not call it for an unrelated
       new player joining a waiting room.
-- [ ] Let Symbol Match use the hook to cancel the relevant grace outcome and
-      begin a fresh countdown when both players are present.
-- [ ] Give Card Banking and the test-only first-response module explicit no-op
+- [x] Preserve the connected player, authoritative clock, and updated room in
+      the callback input so the future Symbol Match module can cancel its grace
+      outcome and begin a fresh countdown when both players are present. The
+      game-specific transition remains part of Phase 4.
+- [x] Give Card Banking and the test-only first-response module explicit no-op
       implementations so their behavior cannot change accidentally.
-- [ ] Add reusable room-manager tests for hook invocation, duplicate-session
+- [x] Add reusable room-manager tests for hook invocation, returned-state
+      commits, duplicate-session
       replacement, and idempotent state requests.
 
 Do not add a Symbol Match condition to generic socket handlers or

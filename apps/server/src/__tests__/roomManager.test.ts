@@ -4,7 +4,7 @@ import {
   MAX_CHAT_MESSAGES,
   type CommandResult
 } from "@multiplayer-blueprint/shared";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createGameRegistry } from "../game/gameRegistry.js";
 import { ABANDONED_ROOM_TTL_MS, RoomManager } from "../rooms/roomManager.js";
 import { generateRoomCode } from "../rooms/roomCodes.js";
@@ -37,17 +37,19 @@ function expectError<T>(result: CommandResult<T>, code: string): void {
 
 function createManager(nowValue = 1000) {
   let now = nowValue;
+  const gameRegistry = createGameRegistry({
+    [CARD_BANK_GAME_ID]: {
+      rng: () => 0
+    }
+  });
   const manager = new RoomManager({
     now: () => now,
-    gameRegistry: createGameRegistry({
-      [CARD_BANK_GAME_ID]: {
-        rng: () => 0
-      }
-    }),
+    gameRegistry,
     codeFactory: () => "23456789AB"
   });
 
   return {
+    cardBankModule: gameRegistry.get(CARD_BANK_GAME_ID),
     manager,
     setNow: (nextNow: number) => {
       now = nextNow;
@@ -323,6 +325,163 @@ describe("RoomManager", () => {
     );
 
     expect(rejoined.state.players[0]?.connected).toBe(true);
+  });
+
+  it("notifies the game module only when a seated player reconnects", () => {
+    const { cardBankModule, manager, setNow } = createManager();
+    const handlePlayerConnected = vi.spyOn(
+      cardBankModule,
+      "handlePlayerConnected"
+    );
+    createRoom(manager);
+    joinBob(manager);
+
+    expect(handlePlayerConnected).not.toHaveBeenCalled();
+
+    manager.disconnectSocket({
+      roomCode: "23456789AB",
+      guestId: bobId,
+      socketId: "socket-b"
+    });
+    setNow(2_000);
+
+    expectOk(
+      manager.joinRoom({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        displayName: "Bob",
+        socketId: "socket-b2"
+      })
+    );
+
+    expect(handlePlayerConnected).toHaveBeenCalledOnce();
+    expect(handlePlayerConnected).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playerId: bobId,
+        now: 2_000,
+        room: expect.objectContaining({
+          code: "23456789AB",
+          players: expect.objectContaining({
+            [bobId]: expect.objectContaining({
+              connected: true,
+              socketId: "socket-b2"
+            })
+          })
+        })
+      })
+    );
+  });
+
+  it("does not treat duplicate-session replacement as a reconnect", () => {
+    const { cardBankModule, manager } = createManager();
+    const handlePlayerConnected = vi.spyOn(
+      cardBankModule,
+      "handlePlayerConnected"
+    );
+    createRoom(manager);
+    joinBob(manager);
+
+    const replacement = expectOk(
+      manager.joinRoom({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        displayName: "Bob",
+        socketId: "socket-b2"
+      })
+    );
+
+    expect(replacement.previousSocketId).toBe("socket-b");
+    expect(handlePlayerConnected).not.toHaveBeenCalled();
+    expect(
+      manager.disconnectSocket({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        socketId: "socket-b"
+      })
+    ).toBeNull();
+    expect(
+      manager
+        .getPublicState("23456789AB")
+        ?.players.find((player) => player.id === bobId)?.connected
+    ).toBe(true);
+  });
+
+  it("notifies once when requestState reconnects and is then idempotent", () => {
+    const { cardBankModule, manager, setNow } = createManager();
+    const handlePlayerConnected = vi.spyOn(
+      cardBankModule,
+      "handlePlayerConnected"
+    );
+    createRoom(manager);
+    manager.disconnectSocket({
+      roomCode: "23456789AB",
+      guestId: aliceId,
+      socketId: "socket-a"
+    });
+    setNow(3_000);
+
+    const reconnected = expectOk(
+      manager.requestState({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        socketId: "socket-a2"
+      })
+    );
+    const repeated = expectOk(
+      manager.requestState({
+        roomCode: "23456789AB",
+        guestId: aliceId,
+        socketId: "socket-a2"
+      })
+    );
+
+    expect(handlePlayerConnected).toHaveBeenCalledOnce();
+    expect(handlePlayerConnected).toHaveBeenCalledWith(
+      expect.objectContaining({
+        playerId: aliceId,
+        now: 3_000
+      })
+    );
+    expect(repeated.state.version).toBe(reconnected.state.version);
+  });
+
+  it("commits game state returned by the reconnect hook", () => {
+    const { cardBankModule, manager } = createManager();
+    createRoom(manager);
+    joinBob(manager);
+    expectOk(
+      manager.startRoom({
+        roomCode: "23456789AB",
+        guestId: aliceId
+      })
+    );
+    manager.disconnectSocket({
+      roomCode: "23456789AB",
+      guestId: bobId,
+      socketId: "socket-b"
+    });
+    vi.spyOn(cardBankModule, "handlePlayerConnected").mockImplementation(
+      ({ room }) => {
+        const state = room.game.state;
+        return state === null
+          ? null
+          : {
+              ...state,
+              currentPlayerIndex: 1
+            };
+      }
+    );
+
+    const reconnected = expectOk(
+      manager.joinRoom({
+        roomCode: "23456789AB",
+        guestId: bobId,
+        displayName: "Bob",
+        socketId: "socket-b2"
+      })
+    );
+
+    expect(reconnected.state.game.state?.currentPlayerId).toBe(bobId);
   });
 
   it("increments room versions for accepted mutations", () => {

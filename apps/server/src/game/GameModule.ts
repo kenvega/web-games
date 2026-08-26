@@ -43,6 +43,12 @@ export interface GameModule<
     now: number;
   }): TState | null;
 
+  handlePlayerConnected(input: {
+    room: TRoom;
+    playerId: string;
+    now: number;
+  }): TState | null;
+
   syncScheduledTransition(input: {
     room: TRoom;
     onTransition: (nextState: TState) => void;

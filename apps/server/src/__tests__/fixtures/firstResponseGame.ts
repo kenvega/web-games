@@ -127,6 +127,15 @@ export class TestFirstResponseGameModule implements GameModule<
     return null;
   }
 
+  handlePlayerConnected(input: {
+    room: TestFirstResponseRoom;
+    playerId: string;
+    now: number;
+  }): TestFirstResponseState | null {
+    void input;
+    return null;
+  }
+
   syncScheduledTransition(): void {}
 
   toPublicState(state: TestFirstResponseState): PublicTestFirstResponseState {
