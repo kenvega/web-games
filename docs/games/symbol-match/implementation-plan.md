@@ -1,6 +1,6 @@
 # Symbol Match implementation plan
 
-**Status:** implementation in progress; Phases 1 through 8 are complete.
+**Status:** implementation complete; Phases 1 through 9 are complete.
 
 This plan translates the approved [rules](./rules.md) and
 [technical design](./technical-design.md) into repository-specific work. Those
@@ -298,24 +298,24 @@ selectors and keyframes prefixed `sm-` or `symbol-match-`.
 
 ## Phase 9: full verification and isolation audit
 
-- [ ] Run `npm run lint`.
-- [ ] Run `npm run typecheck`.
-- [ ] Run `npm test`.
-- [ ] Run `npm run build`.
-- [ ] Smoke-test two independent browser sessions through catalog, room
+- [x] Run `npm run lint`.
+- [x] Run `npm run typecheck`.
+- [x] Run `npm test`.
+- [x] Run `npm run build`.
+- [x] Smoke-test two independent browser sessions through catalog, room
       creation, invitation join, countdown, correct/wrong races, disconnect,
       reconnect, finish, and rematch.
-- [ ] Test target scores 5, 7, and 10 on mobile and desktop.
-- [ ] Test rapid same-symbol double taps and rapid different-symbol taps on a
+- [x] Test target scores 5, 7, and 10 on mobile and desktop.
+- [x] Test rapid same-symbol double taps and rapid different-symbol taps on a
       touch device.
-- [ ] Test keyboard operation, focus visibility, reduced motion, and live
+- [x] Test keyboard operation, focus visibility, reduced motion, and live
       announcements.
-- [ ] Confirm Render still needs only its existing build/start workflow.
-- [ ] Confirm Card Banking behavior and styling remain unchanged.
-- [ ] Search reusable folders for Symbol Match phases, scores, card IDs, and
+- [x] Confirm Render still needs only its existing build/start workflow.
+- [x] Confirm Card Banking behavior and styling remain unchanged.
+- [x] Search reusable folders for Symbol Match phases, scores, card IDs, and
       timers. Concrete references are allowed only at shared contract,
       registry, room-union, catalog, and renderer-selection boundaries.
-- [ ] Verify socket handlers, generic room data, `useRoomSession`, and
+- [x] Verify socket handlers, generic room data, `useRoomSession`, and
       `RoomShell` contain no Symbol Match rules.
 
 ## Definition of done

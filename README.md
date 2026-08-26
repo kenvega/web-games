@@ -2,7 +2,7 @@
 
 A reusable full-stack scaffold for small, private, browser-based multiplayer games.
 
-It provides guest players, temporary rooms, shareable room links, real-time lobby presence, host controls, room chat, server-authoritative actions, reconnect support, and Card Banking as the first game built on the reusable foundation.
+It provides guest players, temporary rooms, shareable room links, real-time lobby presence, host controls, room chat, server-authoritative actions, reconnect support, and two games built on the reusable foundation: Card Banking and Symbol Match.
 
 ## What It Includes
 
@@ -140,10 +140,14 @@ If the same guest opens the same room from a second active socket, the new socke
 
 If the host disconnects, the host role remains assigned to that player. Other players cannot take host controls until the host reconnects.
 
-## Included Game
+## Included Games
 
-The first production game is Card Banking. Its rules are documented in
-[`docs/games/card-bank/rules.md`](docs/games/card-bank/rules.md).
+The production games are:
+
+- Card Banking, documented in
+  [`docs/games/card-bank/rules.md`](docs/games/card-bank/rules.md).
+- Symbol Match, documented in
+  [`docs/games/symbol-match/rules.md`](docs/games/symbol-match/rules.md).
 
 A small first-response game exists only as a server test fixture. It verifies
 that a game with different settings, actions, state, player limits, errors, and
@@ -172,15 +176,23 @@ Card Banking React UI lives in:
 
 - `apps/client/src/game/card-bank`
 
+Symbol Match server logic and committed deck artifacts live in:
+
+- `apps/server/src/game/symbol-match`
+
+Symbol Match React UI and original SVG assets live in:
+
+- `apps/client/src/game/symbol-match`
+
 Rooms carry an explicit game ID, and shared contracts correlate that ID with
 the game's settings, actions, public room state, command inputs, and errors.
 The server selects a typed module from a static registry; the client selects
 typed entry and room renderers at explicit page boundaries.
 
-The multiplayer foundation is ready for another game without replacing Card
-Banking. Adding one still requires deliberate entries in the supported-ID and
-contract maps, server registry and room union, and client catalog and renderer
-switches. Those are intentional composition points, not plugin discovery.
+The multiplayer foundation supports both games and remains ready for another.
+Adding one still requires deliberate entries in the supported-ID and contract
+maps, server registry and room union, and client catalog and renderer switches.
+Those are intentional composition points, not plugin discovery.
 
 See the
 [reusable multiplayer architecture](docs/reusable-multiplayer-architecture.md)
@@ -201,6 +213,7 @@ The shared package defines the Socket.IO contract and runtime schemas:
 - `packages/shared/src/multiplayer.ts` for reusable multiplayer contracts
 - `packages/shared/src/gameIds.ts` for the supported-game composition
 - `packages/shared/src/game/card-bank` for Card Banking contracts
+- `packages/shared/src/game/symbol-match` for Symbol Match contracts
 - `packages/shared/src/types.ts` for the public game unions
 
 The server validates every command with Zod. TypeScript types do not replace runtime validation.

@@ -3,7 +3,7 @@
 ## Active architecture guides
 
 - [Reusable multiplayer architecture](./reusable-multiplayer-architecture.md):
-  current ownership boundaries and readiness for another production game.
+  current ownership boundaries proven by two production games.
 - [Adding a game](./adding-a-game.md): implementation and verification
   checklist for registering another game.
 

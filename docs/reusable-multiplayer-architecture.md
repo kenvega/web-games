@@ -3,9 +3,9 @@
 For the implementation sequence, use the
 [Adding a game checklist](./adding-a-game.md).
 
-**Status:** the reusable foundation is ready for a second production game. The
-repository currently ships Card Banking and keeps one non-production game
-fixture as a contract proof.
+**Status:** the reusable foundation now supports two production games: Card
+Banking and Symbol Match. The repository also keeps one non-production game
+fixture as a smaller contract proof.
 
 ## Purpose
 
@@ -56,10 +56,11 @@ timing, scoring, settings, visuals, and reactions to player disconnection.
 Every room has an explicit `gameId`. A room must never rely on the currently
 rendered page or a server default to determine which game it represents.
 
-The currently supported identity is:
+The currently supported identities are:
 
 ```text
 card-bank
+symbol-match
 ```
 
 The shared package owns the validated list of supported IDs. `gameId` is
@@ -113,6 +114,10 @@ room state, routes, logs, and future persistence may depend on it.
 12. **Documentation. Complete.** The README, documentation index, architecture
     guide, adding-a-game checklist, and general/game task lists describe the
     finished ownership model and its explicit extension points.
+13. **Second production game. Complete.** Symbol Match reuses room identity,
+    presence, invitations, chat, reconnection, versioned state, and the shared
+    room shell while retaining its deck, race resolution, scoring, timers,
+    artwork, board, and reconnect rules inside game-owned folders.
 
 Each extraction preserves a working Card Banking game and includes verification
 for the reusable contract it introduces.
@@ -128,7 +133,7 @@ room.game.state
 ```
 
 Room creation and settings commands use the same game-specific settings shape.
-For Card Banking that shape currently contains `extraLivesEnabled`.
+Card Banking owns `extraLivesEnabled`; Symbol Match owns `targetScore`.
 
 Shared contract ownership follows the same boundary as the applications:
 `packages/shared/src/multiplayer.ts` contains reusable room, player, chat, and
@@ -145,7 +150,8 @@ When another game is added, its map entry supplies the room type keyed by its
 weaken game settings or state to `unknown` or a generic string-keyed object.
 
 Scores belong to the game state. Card Banking publishes them through final
-standings. `PublicPlayer` contains identity and presence only.
+standings, while Symbol Match publishes its current race scores.
+`PublicPlayer` contains identity and presence only.
 
 The server mirrors this ownership. `apps/server/src/rooms/roomBase.ts` defines
 the reusable internal room fields. Each server game folder owns its private
@@ -206,10 +212,16 @@ Tests follow the same ownership boundary as production code:
 - `apps/server/src/game/card-bank/cardBankGame.test.ts` covers Card Banking
   start state, actions, steals, busts, extra lives, settings, timers, scoring,
   finishing, and active-player disconnection through the room service.
+- `apps/server/src/game/symbol-match/symbolMatchGame.test.ts` covers Symbol
+  Match settings, races, scoring, deck exhaustion, timers, feedback,
+  disconnection outcomes, and rematches through its game module.
 - `apps/server/src/__tests__/secondGameContract.test.ts` is the test-only
   second-game type and registry proof.
 - `apps/server/src/__tests__/socket.integration.test.ts` covers the complete
   transport path without duplicating the full game-rule suite.
+- `apps/server/src/__tests__/symbolMatchSocket.integration.test.ts` covers the
+  complete two-client Symbol Match transport, reconnect, race, finish, and
+  rematch path.
 
 Future games should keep their rule tests beside their server module. Generic
 room tests should assert multiplayer lifecycle behavior rather than accumulate
@@ -223,9 +235,10 @@ the common precondition failure for commands such as acting before play or
 restarting before a match is finished.
 
 Game folders own domain failures. Card Banking defines `NOT_YOUR_TURN`,
-`INVALID_GAME_ACTION`, and `INVALID_TURN_PHASE`; the test-only first-response
-game defines `CLAIM_NOT_AVAILABLE`. `GameContractMap` composes supported-game
-domain codes into the public `CommandErrorCode` union.
+`INVALID_GAME_ACTION`, and `INVALID_TURN_PHASE`; Symbol Match defines its
+challenge, symbol, and duplicate-selection errors; and the test-only
+first-response game defines `CLAIM_NOT_AVAILABLE`. `GameContractMap` composes
+supported-game domain codes into the public `CommandErrorCode` union.
 
 The server `GameModule` contract is generic over its error-code type. A module
 therefore declares the reusable lifecycle and game-owned domain errors it can
@@ -267,18 +280,20 @@ mobile panels. Game renderers provide branding, room-menu content, and the
 central lobby or board content through explicit component properties.
 
 The universal `RoomPage` waits for authoritative room state, then selects a
-game-owned room renderer by `room.gameId`. Card Banking's room renderer,
-settings, instructions, banking history, card components, and board all live
-under `client/src/game/card-bank`. Adding another game requires another typed
-renderer and another explicit case in the room-page selection switch; it does
-not require duplicating socket listeners or reconnection logic.
+game-owned room renderer by `room.gameId`. Card Banking and Symbol Match keep
+their renderers, settings, instructions, components, boards, and animations in
+their respective folders under `client/src/game/`. Adding another game
+requires another typed renderer and another explicit case in the room-page
+selection switch; it does not require duplicating socket listeners or
+reconnection logic.
 
 Game-owned CSS follows the same boundary. `apps/client/src/styles.css` contains
 Tailwind directives, document defaults, and reusable utilities such as the
-themed scrollbar. Card Banking's animation keyframes and `cb-*` selectors live
-in `game/card-bank/cardBank.css`, imported by its game renderer. Future game
-styles should stay in their game folder and use a stable game-specific prefix
-when global selectors or keyframes are necessary.
+themed scrollbar. Card Banking's `cb-*` styles live in
+`game/card-bank/cardBank.css`, while Symbol Match's `sm-*` styles live in
+`game/symbol-match/symbolMatch.css`. Future game styles should stay in their
+game folder and use a stable game-specific prefix when global selectors or
+keyframes are necessary.
 
 ## Game catalog and entry boundary
 
@@ -295,10 +310,10 @@ create-room command, acknowledgement errors, and navigation to the created
 room.
 
 `GameEntryPage` validates the route's `gameId` and explicitly selects a
-game-owned entry renderer. Card Banking's entry renderer owns its branding,
-description, default settings, settings controls, and construction of its
-typed create-room payload. Adding another game requires a catalog entry, an
-entry-renderer case, and that game's own settings form; it does not require
+game-owned entry renderer. Each production game's entry renderer owns its
+branding, description, default settings, settings controls, and construction
+of its typed create-room payload. Adding another game requires a catalog entry,
+an entry-renderer case, and that game's own settings form; it does not require
 changing the reusable join or create transport.
 
 The route structure is:
