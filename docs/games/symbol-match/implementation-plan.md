@@ -198,22 +198,22 @@ Create `apps/server/src/game/symbol-match/` with private room/state types and a
 Create `symbolMatchGame.test.ts` beside the module and use injected RNG, clock,
 and short timers.
 
-- [ ] Cover start permissions, exact player count, settings, countdown, fixed
+- [x] Cover start permissions, exact player count, settings, countdown, fixed
       host/guest assignment, card consumption, and whole-card rotations.
-- [ ] Cover correct scoring, wrong scoring, repeated same-symbol suppression,
+- [x] Cover correct scoring, wrong scoring, repeated same-symbol suppression,
       different-symbol penalties, and wrong feedback that does not lock input.
-- [ ] Cover wrong-before-correct, correct-before-wrong, stale challenge IDs,
+- [x] Cover wrong-before-correct, correct-before-wrong, stale challenge IDs,
       malformed symbols, and simultaneous Socket.IO actions.
-- [ ] Cover target reached by correct and wrong answers, including their
+- [x] Cover target reached by correct and wrong answers, including their
       respective feedback delays.
-- [ ] Cover all exhaustion wins and ties, including a disconnect consuming the
+- [x] Cover all exhaustion wins and ties, including a disconnect consuming the
       last pair.
-- [ ] Cover every countdown/open/feedback/finished disconnect path, one-player
+- [x] Cover every countdown/open/feedback/finished disconnect path, one-player
       forfeit, two-player abandonment, first return, second return, and grace
       expiry.
-- [ ] Cover rematch setup, target changes, full deck restoration, new shuffle,
+- [x] Cover rematch setup, target changes, full deck restoration, new shuffle,
       and host-only Start.
-- [ ] Extend Socket.IO integration coverage with create, join, chat, start,
+- [x] Extend Socket.IO integration coverage with create, join, chat, start,
       selection, state broadcast, pause, reconnect countdown, finish, and
       rematch for `symbol-match`.
 

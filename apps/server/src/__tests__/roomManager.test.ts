@@ -2,6 +2,7 @@ import {
   CARD_BANK_GAME_ID,
   CHAT_MESSAGE_MAX_LENGTH,
   MAX_CHAT_MESSAGES,
+  SYMBOL_MATCH_GAME_ID,
   type CommandResult
 } from "@multiplayer-blueprint/shared";
 import { describe, expect, it, vi } from "vitest";
@@ -143,6 +144,23 @@ describe("RoomManager", () => {
       socketId: "socket-a",
       settings: {
         extraLivesEnabled: false
+      }
+    });
+
+    expectError(result, "INVALID_INPUT");
+    expect(manager.getRoomCount()).toBe(0);
+  });
+
+  it("keeps registered staged games disabled by default", () => {
+    const { manager } = createManager();
+
+    const result = manager.createRoom({
+      gameId: SYMBOL_MATCH_GAME_ID,
+      guestId: aliceId,
+      displayName: "Alice",
+      socketId: "socket-a",
+      settings: {
+        targetScore: 5
       }
     });
 

@@ -1,5 +1,6 @@
 import {
   createRoomInputSchema,
+  SUPPORTED_GAME_IDS,
   gameActionInputSchema,
   guestIdSchema,
   joinRoomInputSchema,
@@ -14,6 +15,7 @@ import {
   type RoomStateResult,
   type SendChatMessageResult
 } from "@multiplayer-blueprint/shared";
+import { z } from "zod";
 import { createChatMessage, appendChatMessage } from "../chat/chatService.js";
 import type { GameModule } from "../game/GameModule.js";
 import { createGameRegistry, type GameRegistry } from "../game/gameRegistry.js";
@@ -28,6 +30,7 @@ type RoomManagerOptions = {
   codeFactory?: () => string;
   now?: Clock;
   gameRegistry?: GameRegistry;
+  enabledGameIds?: readonly (keyof GameContractMap)[];
 };
 
 type JoinRoomResult = {
@@ -64,6 +67,14 @@ type RegisteredGameModule = GameModule<
   CommandError["code"]
 >;
 
+const registeredCreateRoomInputSchema = createRoomInputSchema.extend({
+  gameId: z.string().min(1)
+});
+const registeredUpdateRoomSettingsInputSchema =
+  updateRoomSettingsInputSchema.extend({
+    gameId: z.string().min(1)
+  });
+
 function ok<T>(data: T): CommandResult<T> {
   return {
     ok: true,
@@ -89,6 +100,7 @@ export class RoomManager {
   private readonly codeFactory: () => string;
   private readonly now: Clock;
   private readonly gameRegistry: GameRegistry;
+  private readonly enabledGameIds: ReadonlySet<keyof GameContractMap>;
   private readonly scheduledTransitionListeners =
     new Set<ScheduledTransitionListener>();
   private stopped = false;
@@ -97,6 +109,7 @@ export class RoomManager {
     this.codeFactory = options.codeFactory ?? defaultRoomCodeFactory;
     this.now = options.now ?? Date.now;
     this.gameRegistry = options.gameRegistry ?? createGameRegistry();
+    this.enabledGameIds = new Set(options.enabledGameIds ?? SUPPORTED_GAME_IDS);
   }
 
   getRoom(code: string): Room | null {
@@ -134,15 +147,19 @@ export class RoomManager {
     socketId: string;
     settings: unknown;
   }): CommandResult<{ roomCode: string; state: PublicRoomState }> {
-    const parsedInput = createRoomInputSchema.safeParse(input);
-    if (!parsedInput.success) {
+    const parsedInput = registeredCreateRoomInputSchema.safeParse(input);
+    if (
+      !parsedInput.success ||
+      !this.enabledGameIds.has(parsedInput.data.gameId as keyof GameContractMap)
+    ) {
       return fail(
         "INVALID_INPUT",
         "Select a valid game and enter a valid display name."
       );
     }
 
-    const gameModule = this.gameRegistry.get(parsedInput.data.gameId);
+    const gameId = parsedInput.data.gameId as keyof GameContractMap;
+    const gameModule = this.getGameModuleById(gameId);
     const settingsResult = gameModule.settingsSchema.safeParse(
       parsedInput.data.settings
     );
@@ -159,9 +176,9 @@ export class RoomManager {
       joinedAt: now,
       socketId: input.socketId
     };
-    const room: Room = {
+    const room = {
       code,
-      gameId: parsedInput.data.gameId,
+      gameId,
       hostPlayerId: player.id,
       phase: "waiting",
       players: {
@@ -175,7 +192,7 @@ export class RoomManager {
       version: 0,
       createdAt: now,
       updatedAt: now
-    };
+    } as RegisteredRoom as Room;
 
     this.rooms.set(code, room);
     const state = this.commit(room);
@@ -386,7 +403,8 @@ export class RoomManager {
     gameId: string;
     settings: unknown;
   }): CommandResult<RoomStateResult> {
-    const parsedInput = updateRoomSettingsInputSchema.safeParse(input);
+    const parsedInput =
+      registeredUpdateRoomSettingsInputSchema.safeParse(input);
     const guestIdResult = guestIdSchema.safeParse(input.guestId);
     if (!parsedInput.success || !guestIdResult.success) {
       return fail("INVALID_INPUT", "The settings request is invalid.");
@@ -794,8 +812,12 @@ export class RoomManager {
     // This is the sole type-erasure point for the registry. The Room union and
     // GameModuleMap are both keyed by the same gameId; callers therefore always
     // pass a room to its matching module.
-    return this.gameRegistry.get(
-      room.gameId
-    ) as unknown as RegisteredGameModule;
+    return this.getGameModuleById(room.gameId);
+  }
+
+  private getGameModuleById(
+    gameId: keyof GameContractMap
+  ): RegisteredGameModule {
+    return this.gameRegistry.get(gameId) as unknown as RegisteredGameModule;
   }
 }
