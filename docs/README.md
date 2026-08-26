@@ -16,6 +16,13 @@
 
 - [Card Banking rules](./games/card-bank/rules.md): gameplay rules and the
   implementation notes intentionally retained with them.
+- [Symbol Match rules](./games/symbol-match/rules.md): approved first-version
+  gameplay, scoring, lifecycle, and presentation rules.
+- [Symbol Match technical design](./games/symbol-match/technical-design.md):
+  approved lifecycle, state, race-resolution, card-generation, asset, and UI
+  design.
+- [Symbol Match implementation plan](./games/symbol-match/implementation-plan.md):
+  ordered repository changes, asset work, tests, and verification gates.
 
 Future games should use `docs/games/<game-id>/` for their rules and planning.
 
