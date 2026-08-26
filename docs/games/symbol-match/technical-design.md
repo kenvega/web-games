@@ -489,6 +489,10 @@ should follow the same artifact workflow as the logical deck:
 Production imports only the committed read-only layout data. Manual overrides
 must remain explicit so regeneration does not silently erase them.
 
+The committed layouts validate circular hit targets against a 280-pixel card
+diameter and a 44-pixel minimum pointer target. The client should preserve
+circular hit areas so its interaction geometry matches these artifact checks.
+
 Keep the approved authoring bounds together as named development constants:
 
 ```ts

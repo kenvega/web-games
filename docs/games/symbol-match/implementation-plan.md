@@ -1,6 +1,6 @@
 # Symbol Match implementation plan
 
-**Status:** implementation in progress; Phases 1 and 2 are complete.
+**Status:** implementation in progress; Phases 1 through 3 are complete.
 
 This plan translates the approved [rules](./rules.md) and
 [technical design](./technical-design.md) into repository-specific work. Those
@@ -85,11 +85,11 @@ Do not add a Symbol Match condition to generic socket handlers or
 Create a server-owned folder at
 `apps/server/src/game/symbol-match/artifacts/` containing:
 
-- [ ] a pure finite-projective-plane deck generator;
-- [ ] the committed 57-card deck literal;
-- [ ] a deterministic printed-layout generator;
-- [ ] the committed layouts for all 456 symbol occurrences; and
-- [ ] a stable version or fingerprint for each committed artifact.
+- [x] a pure finite-projective-plane deck generator;
+- [x] the committed 57-card deck literal;
+- [x] a deterministic printed-layout generator;
+- [x] the committed layouts for all 456 symbol occurrences; and
+- [x] a stable version or fingerprint for each committed artifact.
 
 The deck generator must always produce the same ordered construction. The
 layout generator must use a fixed development seed and the approved bounds:
@@ -104,17 +104,17 @@ and a fixed local rotation in `[0, 360)`. Invisible hit targets, not only the
 visible SVG boundaries, must fit without overlapping or crossing the circular
 card edge.
 
-- [ ] Provide an intentional development command that regenerates the two
+- [x] Provide an intentional development command that regenerates the two
       committed artifacts.
-- [ ] Never invoke either generator during production build, startup, room
+- [x] Never invoke either generator during production build, startup, room
       creation, match start, or challenge creation.
-- [ ] Assert exact equality between generator output and committed data.
-- [ ] Assert 57 cards, 57 symbols, 8 unique symbols per card, 8 appearances per
+- [x] Assert exact equality between generator output and committed data.
+- [x] Assert 57 cards, 57 symbols, 8 unique symbols per card, 8 appearances per
       symbol, and exactly one intersection for every pair of cards.
-- [ ] Assert 57 complete layouts, 456 valid placements, bounded sizes,
+- [x] Assert 57 complete layouts, 456 valid placements, bounded sizes,
       non-overlapping hit targets, no clipping, valid rotations, and stable
       fingerprints.
-- [ ] Allow reviewed, explicit per-card layout overrides without making
+- [x] Allow reviewed, explicit per-card layout overrides without making
       regeneration silently erase them.
 
 ## Phase 4: server game module

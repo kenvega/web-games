@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc -b",
+    "generate:symbol-match-artifacts": "node dist/game/symbol-match/artifacts/generateArtifacts.js",
     "start": "node dist/server.js",
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc -b --pretty false && tsc -p tsconfig.test.json --pretty false"
