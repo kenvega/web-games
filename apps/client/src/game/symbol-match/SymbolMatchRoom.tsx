@@ -1,6 +1,5 @@
 import {
   SYMBOL_MATCH_TARGET_SCORE_OPTIONS,
-  type PublicSymbolMatchGameState,
   type PublicSymbolMatchResult,
   type PublicSymbolMatchRoomState,
   type SymbolMatchGameAction,
@@ -15,6 +14,7 @@ import { PlayerList } from "../../components/PlayerList.js";
 import { ShareButton } from "../../components/ShareButton.js";
 import type { ConnectionStatus } from "../../hooks/SocketProvider.js";
 import { RoomShell } from "../../rooms/RoomShell.js";
+import { SymbolMatchGame } from "./SymbolMatchGame.js";
 import { SymbolMatchInstructions } from "./SymbolMatchInstructions.js";
 
 export function SymbolMatchRoom({
@@ -53,8 +53,6 @@ export function SymbolMatchRoom({
     </div>
   );
 
-  void onAction;
-
   return (
     <RoomShell
       brand={<SymbolMatchBrand />}
@@ -86,9 +84,10 @@ export function SymbolMatchRoom({
           room={room}
         />
       ) : (
-        <SymbolMatchActiveStatus
-          currentPlayerConnected={currentPlayer?.connected ?? false}
+        <SymbolMatchGame
+          connected={currentPlayer?.connected ?? false}
           currentPlayerId={currentPlayerId}
+          onAction={onAction}
           room={room}
         />
       )}
@@ -287,35 +286,6 @@ function SetupStartControls({
   );
 }
 
-function SymbolMatchActiveStatus({
-  currentPlayerConnected,
-  currentPlayerId,
-  room
-}: {
-  currentPlayerConnected: boolean;
-  currentPlayerId: string;
-  room: PublicSymbolMatchRoomState;
-}) {
-  return (
-    <section className="grid content-center gap-5 rounded-md border border-cyan-200/15 bg-slate-950/30 p-5 text-center shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
-      <ScoreSummary currentPlayerId={currentPlayerId} room={room} />
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300">
-          Match synchronized
-        </p>
-        <h2 className="mt-2 text-2xl font-extrabold text-white">
-          {activeStatusTitle(room.game.state)}
-        </h2>
-        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-400">
-          {currentPlayerConnected
-            ? activeStatusDescription(room.game.state)
-            : "Your connection is currently unavailable. The server is preserving your seat."}
-        </p>
-      </div>
-    </section>
-  );
-}
-
 function SymbolMatchFinishedSetup({
   currentPlayerId,
   isHost,
@@ -343,7 +313,11 @@ function SymbolMatchFinishedSetup({
   };
 
   return (
-    <section className="grid content-start gap-5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)]">
+    <section
+      aria-atomic="true"
+      aria-live="polite"
+      className="grid content-start gap-5 rounded-md border border-cyan-200/15 bg-slate-950/45 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.22)]"
+    >
       <div className="grid justify-items-center gap-3 text-center">
         <div className="grid h-14 w-14 place-items-center rounded-full border border-amber-300/40 bg-amber-400/15 text-amber-200">
           <Trophy size={28} />
@@ -423,46 +397,6 @@ function ScoreSummary({
       <span className="truncate">{opponent?.displayName ?? "Opponent"}</span>
     </div>
   );
-}
-
-function activeStatusTitle(state: PublicSymbolMatchGameState | null): string {
-  switch (state?.status) {
-    case "countdown":
-      return "Get ready";
-    case "challenge-open":
-      return "Find the shared symbol";
-    case "challenge-feedback":
-      return "Match found";
-    case "ending-feedback":
-      return "Final point awarded";
-    case "paused":
-      return "Match paused";
-    case "finished":
-      return "Match complete";
-    default:
-      return "Preparing the match";
-  }
-}
-
-function activeStatusDescription(
-  state: PublicSymbolMatchGameState | null
-): string {
-  switch (state?.status) {
-    case "countdown":
-      return "The first challenge will open when the server countdown finishes.";
-    case "challenge-open":
-      return "The current two-card challenge is open and accepting selections.";
-    case "challenge-feedback":
-      return "The server is showing the accepted match before dealing the next pair.";
-    case "ending-feedback":
-      return "The match result will appear when the final feedback completes.";
-    case "paused":
-      return "Waiting briefly for every seated player to reconnect.";
-    case "finished":
-      return "The server has recorded the final result.";
-    default:
-      return "Waiting for the authoritative game state.";
-  }
 }
 
 function resultTitle(

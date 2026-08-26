@@ -1,6 +1,6 @@
 # Symbol Match implementation plan
 
-**Status:** implementation in progress; Phases 1 through 7 are complete.
+**Status:** implementation in progress; Phases 1 through 8 are complete.
 
 This plan translates the approved [rules](./rules.md) and
 [technical design](./technical-design.md) into repository-specific work. Those
@@ -263,36 +263,36 @@ Create one original client asset for every approved symbol under
 Create game-owned React components and `symbolMatch.css` with globally scoped
 selectors and keyframes prefixed `sm-` or `symbol-match-`.
 
-- [ ] Keep the central board transparent over the existing `RoomShell`
+- [x] Keep the central board transparent over the existing `RoomShell`
       background.
-- [ ] Render the opponent's assigned card above and the current player's card
+- [x] Render the opponent's assigned card above and the current player's card
       below on every client and viewport. Only lower-card symbols are buttons.
-- [ ] Keep circular faces white with bold near-black borders and soft offset
+- [x] Keep circular faces white with bold near-black borders and soft offset
       card shadows; do not tie colors to host or guest.
-- [ ] Position symbols from normalized committed layout data, apply local
+- [x] Position symbols from normalized committed layout data, apply local
       rotations, then rotate the entire card by the server-provided angle. Do
       not mirror cards.
-- [ ] Scale the same SVG asset for every occurrence; never create size-specific
+- [x] Scale the same SVG asset for every occurrence; never create size-specific
       copies.
-- [ ] Place `You 4 • 3 Sarah`-style score/status content between the cards and
+- [x] Place `You 4 • 3 Sarah`-style score/status content between the cards and
       truncate long names without hiding scores.
-- [ ] Give every lower symbol a forgiving, non-overlapping minimum 44-by-44-px
+- [x] Give every lower symbol a forgiving, non-overlapping minimum 44-by-44-px
       hit target while preserving the visual 18%–30% scale.
-- [ ] Render countdown cards without visible symbols until the server deadline.
-- [ ] Render wrong X feedback on the mistaken card for both clients without
+- [x] Render countdown cards without visible symbols until the server deadline.
+- [x] Render wrong X feedback on the mistaken card for both clients without
       locking the open challenge.
-- [ ] During correct feedback, grayscale unrelated symbols, preserve both
+- [x] During correct feedback, grayscale unrelated symbols, preserve both
       matching symbols in color, show stars around the clicked instance, and
       allow an existing X to finish.
-- [ ] Show pause status and the authoritative reconnect countdown; reject
+- [x] Show pause status and the authoritative reconnect countdown; reject
       optimistic local score or phase changes.
-- [ ] Show winner, tie, forfeit, deck-score, or abandoned results and the
+- [x] Show winner, tie, forfeit, deck-score, or abandoned results and the
       approved host/guest rematch controls.
-- [ ] Use shared timing constants as CSS custom properties so animation and
+- [x] Use shared timing constants as CSS custom properties so animation and
       server deadlines stay aligned.
-- [ ] Honor reduced motion, visible keyboard focus, accessible button names,
+- [x] Honor reduced motion, visible keyboard focus, accessible button names,
       live score/result announcements, touch input, and browser zoom.
-- [ ] Keep the vertical board playable on portrait mobile, landscape mobile,
+- [x] Keep the vertical board playable on portrait mobile, landscape mobile,
       short desktop viewports, and the existing desktop instructions/chat
       columns without requiring page rotation.
 
