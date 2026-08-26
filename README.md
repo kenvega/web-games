@@ -180,7 +180,7 @@ Symbol Match server logic and committed deck artifacts live in:
 
 - `apps/server/src/game/symbol-match`
 
-Symbol Match React UI and original SVG assets live in:
+Symbol Match React UI and pinned Noto Emoji SVG assets live in:
 
 - `apps/client/src/game/symbol-match`
 

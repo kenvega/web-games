@@ -91,6 +91,15 @@ export function GameCatalogPage() {
               <RoomJoinForm guestDisplayName={guestDisplayName} />
             </section>
           </div>
+
+          <footer className="text-center text-xs text-slate-500">
+            <a
+              className="underline decoration-slate-600 underline-offset-4 transition hover:text-slate-300"
+              href="/licenses/noto-emoji-apache-2.0.txt"
+            >
+              Open-source licenses
+            </a>
+          </footer>
         </div>
       </div>
     </main>

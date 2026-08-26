@@ -8,7 +8,7 @@ import type { SymbolMatchDeck, SymbolMatchDeckCard } from "./types.js";
 
 export const SYMBOL_MATCH_FINITE_FIELD_ORDER = 7;
 export const SYMBOL_MATCH_DECK_GENERATOR_VERSION =
-  "projective-plane-order-7-v1";
+  "projective-plane-order-7-v2-noto-roster";
 
 function affinePointIndex(x: number, y: number): number {
   return x * SYMBOL_MATCH_FINITE_FIELD_ORDER + y;

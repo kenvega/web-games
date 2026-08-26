@@ -58,8 +58,14 @@ describe("Symbol Match shared contract", () => {
     );
     expect(SYMBOL_MATCH_SYMBOL_IDS).toContain("dice");
     expect(SYMBOL_MATCH_SYMBOL_IDS).toContain("flying-saucer");
+    expect(SYMBOL_MATCH_SYMBOL_IDS).toContain("test-tube");
+    expect(SYMBOL_MATCH_SYMBOL_IDS).toContain("money-bag");
+    expect(SYMBOL_MATCH_SYMBOL_IDS).toContain("cyclone");
     expect(SYMBOL_MATCH_SYMBOL_IDS).not.toContain("die");
     expect(SYMBOL_MATCH_SYMBOL_IDS).not.toContain("ufo");
+    expect(SYMBOL_MATCH_SYMBOL_IDS).not.toContain("potion");
+    expect(SYMBOL_MATCH_SYMBOL_IDS).not.toContain("treasure-chest");
+    expect(SYMBOL_MATCH_SYMBOL_IDS).not.toContain("spiral");
 
     for (const symbolId of SYMBOL_MATCH_SYMBOL_IDS) {
       expect(symbolMatchSymbolIdSchema.parse(symbolId)).toBe(symbolId);

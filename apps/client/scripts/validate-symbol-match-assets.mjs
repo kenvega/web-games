@@ -1,4 +1,5 @@
 import { SYMBOL_MATCH_SYMBOL_IDS } from "@multiplayer-blueprint/shared";
+import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import process from "node:process";
 import { fileURLToPath, URL } from "node:url";
@@ -9,29 +10,47 @@ const assetDirectory = fileURLToPath(
 const catalogPath = fileURLToPath(
   new URL("../src/game/symbol-match/symbolCatalog.ts", import.meta.url)
 );
-const allowedColors = new Set([
-  "#171717",
-  "#36A7E8",
-  "#49D6D0",
-  "#F15B5A",
-  "#E43D49",
-  "#FF9F43",
-  "#FFC94A",
-  "#76C84A",
-  "#3D9D59",
-  "#9B6BD3",
-  "#E77EB3",
-  "#A96A48",
-  "#83909E",
-  "#66717E",
-  "#F7F3E8"
-]);
-const forbiddenMarkup =
-  /<(?:text|title|desc|linearGradient|radialGradient|filter|mask|pattern|image|foreignObject|style)\b/i;
-const forbiddenEffects = /(?:opacity|filter|mask|clip-path)\s*=/i;
+const manifestPath = fileURLToPath(
+  new URL(
+    "../src/game/symbol-match/notoEmojiAssetManifest.json",
+    import.meta.url
+  )
+);
+const licensePath = fileURLToPath(
+  new URL("../public/licenses/noto-emoji-apache-2.0.txt", import.meta.url)
+);
+const forbiddenElements =
+  /<(?:script|foreignObject|image|iframe|object|embed|audio|video|text)\b/i;
+const externalHref = /\b(?:href|xlink:href)\s*=\s*["'](?!#)[^"']+/i;
+const externalUrl = /url\(\s*["']?(?!#)[^)"']+/i;
 
 function fail(message) {
   throw new Error(`Symbol Match asset validation failed: ${message}`);
+}
+
+function gitBlobSha(bytes) {
+  return createHash("sha1")
+    .update(`blob ${bytes.length}\0`)
+    .update(bytes)
+    .digest("hex");
+}
+
+const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+if (
+  manifest.assetSet !== "Noto Emoji" ||
+  manifest.upstreamRepository !== "https://github.com/googlefonts/noto-emoji" ||
+  manifest.license !== "Apache-2.0" ||
+  manifest.deployedLicensePath !== "/licenses/noto-emoji-apache-2.0.txt" ||
+  !/^[0-9a-f]{40}$/.test(manifest.revision)
+) {
+  fail("the Noto provenance manifest contains invalid snapshot metadata");
+}
+
+const manifestIds = Object.keys(manifest.symbols);
+if (manifestIds.join("\n") !== SYMBOL_MATCH_SYMBOL_IDS.join("\n")) {
+  fail(
+    "the Noto provenance manifest does not exactly follow the canonical symbol roster"
+  );
 }
 
 const expectedFiles = SYMBOL_MATCH_SYMBOL_IDS.map(
@@ -50,34 +69,33 @@ if (actualFiles.join("\n") !== [...expectedFiles].sort().join("\n")) {
   fail("SVG filenames do not exactly match the canonical symbol roster");
 }
 
-for (const fileName of actualFiles) {
-  const source = await readFile(`${assetDirectory}/${fileName}`, "utf8");
-  if (!source.startsWith("<svg ")) {
-    fail(`${fileName} must begin with an SVG root element`);
+for (const symbolId of SYMBOL_MATCH_SYMBOL_IDS) {
+  const fileName = `${symbolId}.svg`;
+  const bytes = await readFile(`${assetDirectory}/${fileName}`);
+  const source = bytes.toString("utf8");
+  const provenance = manifest.symbols[symbolId];
+
+  if (!/<svg\b/i.test(source)) {
+    fail(`${fileName} does not contain an SVG root element`);
   }
-  if (!source.includes('viewBox="0 0 128 128"')) {
+  if (!/<svg\b[^>]*\bviewBox=["']0 0 128 128["']/i.test(source)) {
     fail(`${fileName} must use viewBox="0 0 128 128"`);
   }
-  if (!source.includes('stroke-linecap="round"')) {
-    fail(`${fileName} must use rounded stroke caps`);
+  if (forbiddenElements.test(source)) {
+    fail(`${fileName} contains executable, external-media, or text markup`);
   }
-  if (!source.includes('stroke-linejoin="round"')) {
-    fail(`${fileName} must use rounded stroke joins`);
+  if (
+    externalHref.test(source) ||
+    externalUrl.test(source) ||
+    /\bdata:/i.test(source)
+  ) {
+    fail(`${fileName} references an external or embedded resource`);
   }
-  if (!source.includes("#171717")) {
-    fail(`${fileName} must use the canonical near-black outline color`);
+  if (!/^svg\/emoji_u[0-9a-f_]+\.svg$/.test(provenance.sourcePath)) {
+    fail(`${fileName} has an invalid upstream source path`);
   }
-  if (forbiddenMarkup.test(source) || forbiddenEffects.test(source)) {
-    fail(`${fileName} contains forbidden text, media, or visual effects`);
-  }
-  if (/\b(?:width|height)="128"/.test(source)) {
-    fail(`${fileName} appears to contain an opaque full-canvas background`);
-  }
-  const colors = source.match(/#[0-9A-Fa-f]{6}/g) ?? [];
-  for (const color of colors) {
-    if (!allowedColors.has(color.toUpperCase())) {
-      fail(`${fileName} uses unsupported color ${color}`);
-    }
+  if (gitBlobSha(bytes) !== provenance.gitBlobSha) {
+    fail(`${fileName} no longer matches its pinned upstream Noto Emoji blob`);
   }
 }
 
@@ -92,6 +110,16 @@ if (catalogIds.join("\n") !== SYMBOL_MATCH_SYMBOL_IDS.join("\n")) {
   fail("the typed catalog does not exactly follow the canonical symbol roster");
 }
 
+const licenseText = await readFile(licensePath, "utf8");
+if (
+  !licenseText.includes("Apache License") ||
+  !licenseText.includes("Version 2.0")
+) {
+  fail(
+    "the deployed Noto Emoji Apache 2.0 license text is missing or incomplete"
+  );
+}
+
 process.stdout.write(
-  `Validated ${actualFiles.length} original Symbol Match SVG assets and catalog entries.\n`
+  `Validated ${actualFiles.length} pinned Noto Emoji SVG assets, provenance hashes, license, and catalog entries.\n`
 );

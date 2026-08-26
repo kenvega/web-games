@@ -23,6 +23,10 @@
   design.
 - [Symbol Match implementation plan](./games/symbol-match/implementation-plan.md):
   ordered repository changes, asset work, tests, and verification gates.
+- [Symbol Match Noto Emoji mapping](./games/symbol-match/noto-emoji-mapping.md):
+  approved icon concepts, pinned sources, and license policy.
+- [Symbol Match icon replacement guide](./games/symbol-match/icon-redesign-guide.md):
+  contract and workflow for swapping a vendored Noto SVG safely.
 
 Future games should use `docs/games/<game-id>/` for their rules and planning.
 

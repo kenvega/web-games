@@ -220,16 +220,17 @@ and short timers.
 Do not start client board work until the shared contract, artifacts, server
 rules, and deterministic tests are passing.
 
-## Phase 6: original SVG symbol library
+## Phase 6: SVG symbol library
 
-Create one original client asset for every approved symbol under
-`apps/client/src/game/symbol-match/symbols/`.
+Create one client asset for every approved symbol under
+`apps/client/src/game/symbol-match/symbols/`. The original hand-authored set was
+later replaced by a pinned, vendored selection from Noto Emoji.
 
-- [x] Use exactly one SVG per symbol with `viewBox="0 0 128 128"`, transparent
-      background, approximately 10 units of safe padding, approximately 8-unit
-      near-black outlines, rounded joins/caps, and no text.
-- [x] Use flat canonical fills only: no internal highlights, shadows,
-      gradients, filters, or textures.
+- [x] Use exactly one SVG per symbol with `viewBox="0 0 128 128"` and a
+      transparent background.
+- [x] Vendor unmodified official Noto Emoji SVGs at a pinned revision; keep the
+      deployed Apache 2.0 license, third-party notice, and per-file provenance
+      hashes.
 - [x] Create an exhaustive typed client catalog mapping every `SymbolId` to its
       SVG and accessible label. Avoid aliases such as both `die` and `dice`.
 - [x] Validate the file count and one-to-one catalog coverage automatically.
@@ -324,5 +325,5 @@ Symbol Match is complete when two players on separate browsers can create or
 join a room, configure and start a match, race through the fixed shuffled deck,
 receive server-ordered scoring and synchronized feedback, pause and reconnect,
 finish by every approved outcome, and set up a host-controlled rematch—all with
-original SVG artwork, responsive accessible interaction, and no regressions to
-Card Banking or the reusable multiplayer foundation.
+licensed pinned SVG artwork, responsive accessible interaction, and no
+regressions to Card Banking or the reusable multiplayer foundation.

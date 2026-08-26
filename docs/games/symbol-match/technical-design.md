@@ -509,26 +509,25 @@ edge clipping, so regeneration and validation must not be skipped.
 
 ## Approved initial symbol library
 
-The game needs these 57 distinct, independently drawn symbols. The catalog is
-deliberately broader than the screenshot set. Silhouette testing remains an
-asset-quality check rather than a pending catalog decision.
+The game needs these 57 distinct symbols. The catalog is deliberately broader
+than the screenshot set. Silhouette testing remains an asset-quality check
+rather than a pending catalog decision.
 
-| Group              | Symbols                                                                     |
-| ------------------ | --------------------------------------------------------------------------- |
-| Tools and objects  | hammer, key, anchor, wrench, magnet, bell, lock, camera                     |
-| Nature and weather | sun, moon, cloud, lightning bolt, flame, leaf, cactus, snowflake            |
-| Animals            | cat, whale, owl, turtle, butterfly, frog, snail, bee                        |
-| Food               | apple, cherries, watermelon, mushroom, cupcake, pretzel, carrot, lemon      |
-| Travel and space   | rocket, sailboat, bicycle, airplane, train, balloon, planet, flying saucer  |
-| Fantasy and games  | crown, shield, potion, wand, treasure chest, ghost, dice, puzzle piece      |
-| Shapes and signs   | star, heart, diamond, spiral, water drop, four-leaf clover, eye, music note |
-| Additional         | boot                                                                        |
+| Group              | Symbols                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| Tools and objects  | hammer, key, anchor, wrench, magnet, bell, lock, camera                              |
+| Nature and weather | sun, crescent moon, cloud, lightning bolt, flame, fallen leaf, cactus, snowflake     |
+| Animals            | cat, whale, owl, turtle, butterfly, frog, snail, bee                                 |
+| Food               | apple, cherries, watermelon, mushroom, cupcake, pretzel, carrot, lemon               |
+| Travel and space   | rocket, sailboat, bicycle, airplane, passenger train, balloon, planet, flying saucer |
+| Fantasy and games  | crown, shield, test tube, wand, money bag, ghost, dice, puzzle piece                 |
+| Shapes and signs   | star, heart, diamond, cyclone, water drop, four-leaf clover, eye, music note         |
+| Additional         | boot                                                                                 |
 
-The artwork should use consistent stroke weight and a distinct original style,
-but the icons must remain distinguishable by shape. Planet/UFO and
-rocket/airplane need particular silhouette testing. Wrench replaces compass,
-cactus replaces flower, frog replaces fish, and boot replaces feather to avoid
-other close silhouettes.
+The artwork uses one pinned Noto Emoji snapshot, but the icons must remain
+distinguishable by shape. Planet/flying-saucer, rocket/airplane,
+money-bag/balloon, test-tube/wand, and train/camera need particular small-size
+testing.
 
 ## Originality and asset policy
 
@@ -542,8 +541,8 @@ Therefore the project should:
 - not extract, trace, redraw, or ship icons from the reference screenshots
 - not use the names, logos, characters, card backs, sound effects, or trade
   dress of the referenced products
-- commission or generate a complete original symbol set with documented
-  provenance, or use a suitably licensed icon set and comply with its license
+- use the pinned Apache-2.0 Noto Emoji SVG set, retain its license and
+  provenance manifest, and do not silently modify the imported paths
 - create its own product name, color system, typography, layout, feedback
   effects, and instructions
 - run a name/trademark clearance check before a public commercial launch
@@ -634,27 +633,18 @@ authoritative countdown reaches zero.
 
 ## Symbol asset direction
 
-The approved first-version asset direction is a coherent set of 57 original,
-colored SVG illustrations with playful thick outlines. SVG keeps edges sharp at
-different card sizes and rotations.
+The approved first-version asset direction is a coherent set of 57 colored SVG
+illustrations selected from Google Noto Emoji. The files are vendored at a
+pinned upstream revision, remain byte-for-byte unchanged, and require no
+runtime package or network request. SVG keeps edges sharp when scaled down or
+up and at different card rotations.
 
-Each symbol uses flat color fills and a near-black outline. Do not add internal
-highlights, cast shadows, gradients, or textures to some symbols, because those
-extra treatments could make them disproportionately easy to recognize. The
-soft offset shadow beneath an entire white circular card is separate and
-remains approved.
-
-Use this approved visual specification before producing the full set:
-
-- a `viewBox="0 0 128 128"` canvas;
-- a transparent canvas background;
-- approximately 10 units of safe padding around the illustration;
-- an approximately 8-unit near-black outline;
-- rounded stroke caps and joins; and
-- no text inside an icon.
-
-Do not substitute raster images or a generic icon library in the first-version
-art direction unless the user explicitly revisits this decision.
+Every selected asset uses a `viewBox="0 0 128 128"` and transparent canvas.
+Noto's own geometry, gradients, clipping paths, styles, opacity, and internal
+details are retained. Do not hand-edit an unsuitable image; choose another
+official Noto SVG and update its pinned provenance instead. The soft offset
+shadow beneath an entire white circular card is application styling and remains
+approved.
 
 ### One asset, several printed sizes
 
@@ -692,10 +682,11 @@ type SymbolDefinition = {
 ```
 
 Use the same natural concept in the ID and label wherever possible. The catalog
-therefore uses `dice`, `flying-saucer`, `lightning-bolt`, `water-drop`, and
-`four-leaf-clover`, with corresponding human labels “Dice,” “Flying saucer,”
-“Lightning bolt,” “Water drop,” and “Four-leaf clover.” These are canonical
-names, not special-case mappings or additional symbols.
+therefore uses `dice`, `flying-saucer`, `lightning-bolt`, `test-tube`,
+`money-bag`, `cyclone`, `water-drop`, and `four-leaf-clover`, with corresponding
+natural human labels. `leaf`, `train`, and `cat` retain their concise IDs while
+using the approved labels “Fallen leaf,” “Passenger train,” and “Cat.” These are
+canonical names, not aliases or additional symbols.
 
 ## Board and card direction
 
@@ -703,9 +694,8 @@ names, not special-case mappings or additional symbols.
   background remains visible. Do not add another solid-color or rounded desktop
   panel behind the cards.
 - Keep circular card faces white.
-- Give both card edges and original symbol illustrations bold dark/black
-  outlines with rounded visual treatment, inspired by the readability of the
-  references but without copying their exact artwork.
+- Give card edges a bold dark outline. Render the pinned Noto symbol artwork
+  unchanged rather than imposing a new outline treatment on it.
 - Add soft offset shadows beneath cards.
 - Let the brightly colored SVG symbols provide most of the visual variety.
 - Do not tie card or board colors to host or guest identity.

@@ -8,7 +8,14 @@ const criticalComparisonIds = [
   "planet",
   "flying-saucer",
   "rocket",
-  "airplane"
+  "airplane",
+  "money-bag",
+  "balloon",
+  "test-tube",
+  "wand",
+  "train",
+  "camera",
+  "cloud"
 ] as const;
 
 export function SymbolContactSheet() {
@@ -18,8 +25,8 @@ export function SymbolContactSheet() {
         <p className="sm-contact-sheet__eyebrow">Development artifact</p>
         <h1>Symbol Match contact sheet</h1>
         <p>
-          Every original asset at three sizes and three rotations. This page is
-          not imported by the game application.
+          Every pinned Noto Emoji asset at three sizes and three rotations. This
+          page is not imported by the game application.
         </p>
       </header>
 

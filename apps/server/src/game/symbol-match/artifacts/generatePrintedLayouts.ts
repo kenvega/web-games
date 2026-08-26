@@ -13,7 +13,8 @@ import type {
   SymbolMatchPrintedSymbolPlacement
 } from "./types.js";
 
-export const SYMBOL_MATCH_LAYOUT_GENERATOR_VERSION = "seeded-circle-packing-v1";
+export const SYMBOL_MATCH_LAYOUT_GENERATOR_VERSION =
+  "seeded-circle-packing-v2-noto-roster";
 export const SYMBOL_MATCH_LAYOUT_SEED = 0x51f15e7;
 export const SYMBOL_MATCH_LAYOUT_EDGE_PADDING = 0.025;
 export const SYMBOL_MATCH_LAYOUT_SYMBOL_GAP = 0.018;

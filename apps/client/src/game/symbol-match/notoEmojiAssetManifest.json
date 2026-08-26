@@ -1,0 +1,237 @@
+{
+  "assetSet": "Noto Emoji",
+  "upstreamRepository": "https://github.com/googlefonts/noto-emoji",
+  "revision": "8998f5dd683424a73e2314a8c1f1e359c19e8742",
+  "license": "Apache-2.0",
+  "deployedLicensePath": "/licenses/noto-emoji-apache-2.0.txt",
+  "symbols": {
+    "hammer": {
+      "sourcePath": "svg/emoji_u1f528.svg",
+      "gitBlobSha": "46f2c2700cb38892daaf350543ad547563ac0fd1"
+    },
+    "key": {
+      "sourcePath": "svg/emoji_u1f511.svg",
+      "gitBlobSha": "c24fe44cd32546835b1ae9776844b1bbea04d95a"
+    },
+    "anchor": {
+      "sourcePath": "svg/emoji_u2693.svg",
+      "gitBlobSha": "e9c44db6e9cd686bb51f97509abda7de55b76a2c"
+    },
+    "wrench": {
+      "sourcePath": "svg/emoji_u1f527.svg",
+      "gitBlobSha": "effc5280cb8701aa4d8a85b212605ac7da5af907"
+    },
+    "magnet": {
+      "sourcePath": "svg/emoji_u1f9f2.svg",
+      "gitBlobSha": "e808bdebc8d1a242afc60122736e09eb1aceeba3"
+    },
+    "bell": {
+      "sourcePath": "svg/emoji_u1f514.svg",
+      "gitBlobSha": "aa2fd17a53434a4e7c12179416fa769cc4b170cd"
+    },
+    "lock": {
+      "sourcePath": "svg/emoji_u1f512.svg",
+      "gitBlobSha": "6e6bf7df57c1edb7e4ef1abc25d1067a591f5c48"
+    },
+    "camera": {
+      "sourcePath": "svg/emoji_u1f4f7.svg",
+      "gitBlobSha": "623a4241c67f1675903d57400ac3dc43ed55aa2a"
+    },
+    "sun": {
+      "sourcePath": "svg/emoji_u2600.svg",
+      "gitBlobSha": "f5f26693a721992c216b755bdd287c7235edb3c2"
+    },
+    "moon": {
+      "sourcePath": "svg/emoji_u1f319.svg",
+      "gitBlobSha": "175db6c63121a2c66850096bec1f7a8ac7f8abc6"
+    },
+    "cloud": {
+      "sourcePath": "svg/emoji_u2601.svg",
+      "gitBlobSha": "3c86290e6b35b3c6ae34eac410a1cc1a43939513"
+    },
+    "lightning-bolt": {
+      "sourcePath": "svg/emoji_u26a1.svg",
+      "gitBlobSha": "e82079a8de629966f0d627a7fbe173cde446b405"
+    },
+    "flame": {
+      "sourcePath": "svg/emoji_u1f525.svg",
+      "gitBlobSha": "e94a652938f7c0d4524eb2ffaf685af39ce97040"
+    },
+    "leaf": {
+      "sourcePath": "svg/emoji_u1f342.svg",
+      "gitBlobSha": "bb62029fcda0ba460722c564e3486c355fa87347"
+    },
+    "cactus": {
+      "sourcePath": "svg/emoji_u1f335.svg",
+      "gitBlobSha": "c16e7a2870e9218179c8ea81d76bf3cd227e6538"
+    },
+    "snowflake": {
+      "sourcePath": "svg/emoji_u2744.svg",
+      "gitBlobSha": "18fca4e74b80fd5d709250a2a2b04963e6855ddd"
+    },
+    "cat": {
+      "sourcePath": "svg/emoji_u1f408.svg",
+      "gitBlobSha": "daa358ab6bcd10d95c8d37622fa97bb029373e86"
+    },
+    "whale": {
+      "sourcePath": "svg/emoji_u1f40b.svg",
+      "gitBlobSha": "319b5a7f249e2b9530e9a8a0769224ecbcac57f0"
+    },
+    "owl": {
+      "sourcePath": "svg/emoji_u1f989.svg",
+      "gitBlobSha": "a2d02b526124a1cdb1b476d79a1ab8ffca5e2526"
+    },
+    "turtle": {
+      "sourcePath": "svg/emoji_u1f422.svg",
+      "gitBlobSha": "787db2f3b3359352b70cc182a0a89b1ada4d6dfb"
+    },
+    "butterfly": {
+      "sourcePath": "svg/emoji_u1f98b.svg",
+      "gitBlobSha": "bd87d873bbc02988621082be4f92bc0fda5fb6d7"
+    },
+    "frog": {
+      "sourcePath": "svg/emoji_u1f438.svg",
+      "gitBlobSha": "ea558e1d48de8a2110e760a23be6c0376db8fde5"
+    },
+    "snail": {
+      "sourcePath": "svg/emoji_u1f40c.svg",
+      "gitBlobSha": "d8910bd03e8768ebc9df1c155cc5bfdf81c3c0a6"
+    },
+    "bee": {
+      "sourcePath": "svg/emoji_u1f41d.svg",
+      "gitBlobSha": "7411501564c53864474d66d205dcc05b48f80846"
+    },
+    "apple": {
+      "sourcePath": "svg/emoji_u1f34e.svg",
+      "gitBlobSha": "6a25a220e8d2fee5e8b330ae2fb5aeafd355435f"
+    },
+    "cherries": {
+      "sourcePath": "svg/emoji_u1f352.svg",
+      "gitBlobSha": "38f0a5f32d1307ef5f4f51d14579a2f517feb826"
+    },
+    "watermelon": {
+      "sourcePath": "svg/emoji_u1f349.svg",
+      "gitBlobSha": "cccec56558df25411c0f8279e66de025e007c1cd"
+    },
+    "mushroom": {
+      "sourcePath": "svg/emoji_u1f344.svg",
+      "gitBlobSha": "bda83018cd79766812b7f361b83d8f4feb65cf4c"
+    },
+    "cupcake": {
+      "sourcePath": "svg/emoji_u1f9c1.svg",
+      "gitBlobSha": "fd14f493bf3194a44335ef3ea791af45ecd8cca9"
+    },
+    "pretzel": {
+      "sourcePath": "svg/emoji_u1f968.svg",
+      "gitBlobSha": "dac4f3db14fb17586cb9d3620460c94c1c386629"
+    },
+    "carrot": {
+      "sourcePath": "svg/emoji_u1f955.svg",
+      "gitBlobSha": "91b93473543741404f63920e9d687d07152f6637"
+    },
+    "lemon": {
+      "sourcePath": "svg/emoji_u1f34b.svg",
+      "gitBlobSha": "2d946d06a0a261c75df3dfcecdd44c244c1898e2"
+    },
+    "rocket": {
+      "sourcePath": "svg/emoji_u1f680.svg",
+      "gitBlobSha": "4a4f061c5df4e742925d1a654cc0379255563bb1"
+    },
+    "sailboat": {
+      "sourcePath": "svg/emoji_u26f5.svg",
+      "gitBlobSha": "739ab191192f2441918948ea0bb0dec776cca8cb"
+    },
+    "bicycle": {
+      "sourcePath": "svg/emoji_u1f6b2.svg",
+      "gitBlobSha": "fcb6237c357940d89a7adc2e86f90d6a021f28d6"
+    },
+    "airplane": {
+      "sourcePath": "svg/emoji_u2708.svg",
+      "gitBlobSha": "e942b8dd18f6b2abcdb335f1487d0366bc32d31c"
+    },
+    "train": {
+      "sourcePath": "svg/emoji_u1f686.svg",
+      "gitBlobSha": "e6b13632dbbdc926db1d361b68c8ec77dc347be3"
+    },
+    "balloon": {
+      "sourcePath": "svg/emoji_u1f388.svg",
+      "gitBlobSha": "39d20d079d6368f01e95a5c47a2278aef9894e3b"
+    },
+    "planet": {
+      "sourcePath": "svg/emoji_u1fa90.svg",
+      "gitBlobSha": "4a5be78e57bd17500335203f011fbe2a08bafda3"
+    },
+    "flying-saucer": {
+      "sourcePath": "svg/emoji_u1f6f8.svg",
+      "gitBlobSha": "56a6e433357f3105e4d801efa60d721e6b2e70f4"
+    },
+    "crown": {
+      "sourcePath": "svg/emoji_u1f451.svg",
+      "gitBlobSha": "e0697713abc14e84522a99f33ddf2a45dd834566"
+    },
+    "shield": {
+      "sourcePath": "svg/emoji_u1f6e1.svg",
+      "gitBlobSha": "fcf09703ef4289aa3ec80442d42ae2546a208d2c"
+    },
+    "test-tube": {
+      "sourcePath": "svg/emoji_u1f9ea.svg",
+      "gitBlobSha": "b384da4a276823618307d706e456524ac1af927d"
+    },
+    "wand": {
+      "sourcePath": "svg/emoji_u1fa84.svg",
+      "gitBlobSha": "8f14a968832a727aa955a95eaf8e66075fd845ff"
+    },
+    "money-bag": {
+      "sourcePath": "svg/emoji_u1f4b0.svg",
+      "gitBlobSha": "0d281d87d8c5a163a867b1faaf615810a5aafe4c"
+    },
+    "ghost": {
+      "sourcePath": "svg/emoji_u1f47b.svg",
+      "gitBlobSha": "02c3addca583d2de80c1f280fa8d766682a3748c"
+    },
+    "dice": {
+      "sourcePath": "svg/emoji_u1f3b2.svg",
+      "gitBlobSha": "52f6bdbdf1198a75d6e1c2bbb125be48df93e12d"
+    },
+    "puzzle-piece": {
+      "sourcePath": "svg/emoji_u1f9e9.svg",
+      "gitBlobSha": "5e8121abae7896fca6e1a437c96a65601c34cf5e"
+    },
+    "star": {
+      "sourcePath": "svg/emoji_u2b50.svg",
+      "gitBlobSha": "15b21182037c2d9f3ab5c19cf787ef61fb8fb3ee"
+    },
+    "heart": {
+      "sourcePath": "svg/emoji_u2764.svg",
+      "gitBlobSha": "8951fc906e54074ed463e47b1f8acec5fd5231d9"
+    },
+    "diamond": {
+      "sourcePath": "svg/emoji_u1f48e.svg",
+      "gitBlobSha": "0e254cebc80e8fc6e18118135e14fb448873c867"
+    },
+    "cyclone": {
+      "sourcePath": "svg/emoji_u1f300.svg",
+      "gitBlobSha": "993899e726333e855b1ce20884d81f5111c27b73"
+    },
+    "water-drop": {
+      "sourcePath": "svg/emoji_u1f4a7.svg",
+      "gitBlobSha": "72d450032118ca479b384297485eb41d1e98da65"
+    },
+    "four-leaf-clover": {
+      "sourcePath": "svg/emoji_u1f340.svg",
+      "gitBlobSha": "8ac5cc60c2c4620146c533e554d7645fe4c15db7"
+    },
+    "eye": {
+      "sourcePath": "svg/emoji_u1f441.svg",
+      "gitBlobSha": "4086d5e2829bbdc8858c24fb0402d1474efcd835"
+    },
+    "music-note": {
+      "sourcePath": "svg/emoji_u1f3b5.svg",
+      "gitBlobSha": "4977a8faaefa3b79fa3223d42e38fa1c9b1ced5f"
+    },
+    "boot": {
+      "sourcePath": "svg/emoji_u1f97e.svg",
+      "gitBlobSha": "e1fc43f94dab9e738bb64424644702ee51a4b19c"
+    }
+  }
+}

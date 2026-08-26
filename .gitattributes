@@ -1,0 +1,2 @@
+# Preserve vendored Noto Emoji SVG bytes, including upstream trailing whitespace.
+apps/client/src/game/symbol-match/symbols/*.svg whitespace=-blank-at-eol
