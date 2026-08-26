@@ -124,72 +124,72 @@ Create `apps/server/src/game/symbol-match/` with private room/state types and a
 
 ### Match creation
 
-- [ ] Require exactly two connected seated players.
-- [ ] Validate and freeze the selected target score for the match.
-- [ ] Shuffle all 57 committed card IDs with injected server RNG, set the final
+- [x] Require exactly two connected seated players.
+- [x] Validate and freeze the selected target score for the match.
+- [x] Shuffle all 57 committed card IDs with injected server RNG, set the final
       ID aside, and retain 56 playable IDs.
-- [ ] Reset scores and begin the authoritative three-second countdown without
+- [x] Reset scores and begin the authoritative three-second countdown without
       dealing visible symbols early.
-- [ ] At countdown completion, consume the next two cards, assign the first to
+- [x] At countdown completion, consume the next two cards, assign the first to
       the host and second to the guest, choose independent random whole-card
       rotations in `[0, 360)`, and open the challenge.
 
 ### Selection processing
 
-- [ ] Reject selections outside `challenge-open`, from non-seated or
+- [x] Reject selections outside `challenge-open`, from non-seated or
       disconnected players, for stale challenge IDs, or for symbols absent
       from that player's assigned card.
-- [ ] Derive the one shared symbol from authoritative card data.
-- [ ] Apply the 500-millisecond repeat window per player, challenge, and symbol.
+- [x] Derive the one shared symbol from authoritative card data.
+- [x] Apply the 500-millisecond repeat window per player, challenge, and symbol.
       Suppress only an accidental repeat of the same symbol; different wrong
       symbols each count.
-- [ ] On a wrong selection, award the opponent one point, add an expiring
+- [x] On a wrong selection, award the opponent one point, add an expiring
       shared X-feedback entry, and keep the challenge open.
-- [ ] If that penalty reaches the target, lock actions immediately, retain the
+- [x] If that penalty reaches the target, lock actions immediately, retain the
       X for 500 milliseconds, and then publish the finished result.
-- [ ] On the first correct selection, award the answering player one point,
+- [x] On the first correct selection, award the answering player one point,
       close the challenge, publish both highlighted matches plus stars around
       the clicked instance, and retain any unexpired wrong X entries.
-- [ ] After 900 milliseconds, either finish at the target or deal the next pair
+- [x] After 900 milliseconds, either finish at the target or deal the next pair
       immediately without another countdown.
-- [ ] Let server processing order decide close races. A processed wrong answer
+- [x] Let server processing order decide close races. A processed wrong answer
       followed by a correct answer can award two points; an action processed
       after the correct answer is rejected as stale or closed.
 
 ### Exhaustion, pause, and results
 
-- [ ] Mark both displayed cards used when a challenge opens; never return them
+- [x] Mark both displayed cards used when a challenge opens; never return them
       to the same match's draw order.
-- [ ] Finish by current score when no complete pair remains; publish a tie for
+- [x] Finish by current score when no complete pair remains; publish a tie for
       equal scores.
-- [ ] On an open-challenge disconnect, discard the challenge and keep its cards
+- [x] On an open-challenge disconnect, discard the challenge and keep its cards
       used. If they were the final pair, finish immediately by deck score.
-- [ ] On a countdown disconnect, cancel the countdown without consuming cards.
-- [ ] On a feedback disconnect, preserve accepted points and used cards, then
+- [x] On a countdown disconnect, cancel the countdown without consuming cards.
+- [x] On a feedback disconnect, preserve accepted points and used cards, then
       pause before the next deal.
-- [ ] While paused, reject actions and publish disconnected seat IDs plus an
+- [x] While paused, reject actions and publish disconnected seat IDs plus an
       authoritative grace deadline.
-- [ ] After reconnection, begin a fresh three-second countdown and then consume
+- [x] After reconnection, begin a fresh three-second countdown and then consume
       the next unused pair.
-- [ ] If exactly one player remains disconnected for 60 seconds, finish with
+- [x] If exactly one player remains disconnected for 60 seconds, finish with
       the connected opponent winning by forfeit.
-- [ ] If both disconnect, abandon after the shared 60-second interval unless
+- [x] If both disconnect, abandon after the shared 60-second interval unless
       one returns; if one returns, start a fresh interval for the other.
-- [ ] Preserve finished results across presence changes.
-- [ ] On host-started rematch, return to setup, allow target-score changes,
+- [x] Preserve finished results across presence changes.
+- [x] On host-started rematch, return to setup, allow target-score changes,
       reset scores, restore all 57 cards, and reshuffle only when Start is
       pressed.
 
 ### Scheduling and projection
 
-- [ ] Keep countdown, correct-feedback, ending-X, and disconnect deadlines in
+- [x] Keep countdown, correct-feedback, ending-X, and disconnect deadlines in
       game state and schedule them through the module-owned transition hook.
-- [ ] Make timer callbacks idempotent by checking the expected state phase,
+- [x] Make timer callbacks idempotent by checking the expected state phase,
       challenge ID, and deadline before transitioning.
-- [ ] Cancel all room timers in `dispose`.
-- [ ] Prune expired wrong-feedback entries while keeping their client expiry
+- [x] Cancel all room timers in `dispose`.
+- [x] Prune expired wrong-feedback entries while keeping their client expiry
       timestamps authoritative.
-- [ ] Project only current public information and verify that server-only draw
+- [x] Project only current public information and verify that server-only draw
       order, set-aside card, RNG details, and duplicate-suppression history
       never reach clients.
 

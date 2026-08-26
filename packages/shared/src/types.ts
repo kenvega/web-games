@@ -64,7 +64,7 @@ export type UpdateRoomSettingsInput =
 export type GameActionInput = GameContractMap[GameId]["gameActionInput"];
 export type CommandErrorCode =
   | CoreCommandErrorCode
-  | GameContractMap[GameId]["errorCode"];
+  | GameContractMap[keyof GameContractMap]["errorCode"];
 
 export type CommandError = {
   code: CommandErrorCode;

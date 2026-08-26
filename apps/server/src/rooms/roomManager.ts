@@ -9,14 +9,16 @@ import {
   updateRoomSettingsInputSchema,
   type CommandError,
   type CommandResult,
+  type GameContractMap,
   type PublicRoomState,
   type RoomStateResult,
   type SendChatMessageResult
 } from "@multiplayer-blueprint/shared";
 import { createChatMessage, appendChatMessage } from "../chat/chatService.js";
+import type { GameModule } from "../game/GameModule.js";
 import { createGameRegistry, type GameRegistry } from "../game/gameRegistry.js";
 import { defaultRoomCodeFactory, generateRoomCode } from "./roomCodes.js";
-import type { Player, Room } from "./types.js";
+import type { Player, Room, RoomBase } from "./types.js";
 
 export const ABANDONED_ROOM_TTL_MS = 60 * 60 * 1000;
 
@@ -40,6 +42,27 @@ type LeaveRoomResult = {
 };
 
 type ScheduledTransitionListener = (result: RoomStateResult) => void;
+
+type RegisteredGameContract = GameContractMap[keyof GameContractMap];
+type RegisteredGameSettings = RegisteredGameContract["settings"];
+type RegisteredGameAction = RegisteredGameContract["action"];
+type RegisteredGameState = NonNullable<Room["game"]["state"]>;
+type RegisteredPublicGameState = NonNullable<
+  RegisteredGameContract["publicRoom"]["game"]["state"]
+>;
+type RegisteredRoom = RoomBase<
+  keyof GameContractMap,
+  RegisteredGameSettings,
+  RegisteredGameState
+>;
+type RegisteredGameModule = GameModule<
+  RegisteredRoom,
+  RegisteredGameSettings,
+  RegisteredGameState,
+  RegisteredGameAction,
+  RegisteredPublicGameState,
+  CommandError["code"]
+>;
 
 function ok<T>(data: T): CommandResult<T> {
   return {
@@ -400,7 +423,10 @@ export class RoomManager {
       );
     }
 
-    room.game.settings = settingsResult.data;
+    // The schema came from the module selected by this room's gameId. Widening
+    // here preserves that runtime correlation without putting game rules in the
+    // room manager.
+    (room as RegisteredRoom).game.settings = settingsResult.data;
 
     return ok({
       state: this.commit(room)
@@ -709,7 +735,7 @@ export class RoomManager {
   }
 
   private toPublicState(room: Room): PublicRoomState {
-    return {
+    const state = {
       code: room.code,
       gameId: room.gameId,
       phase: room.phase,
@@ -732,6 +758,11 @@ export class RoomManager {
       },
       version: room.version
     };
+
+    // The selected module projects the state belonging to the same gameId.
+    // TypeScript cannot retain that correlation after the generic registry
+    // boundary, so restore the declared public discriminated union here.
+    return state as PublicRoomState;
   }
 
   private getConnectedPlayers(room: Room): Player[] {
@@ -753,13 +784,18 @@ export class RoomManager {
     room: Room,
     nextState: NonNullable<Room["game"]["state"]>
   ): void {
-    room.game.state = nextState;
+    (room as RegisteredRoom).game.state = nextState;
     if (this.getGameModule(room).isFinished(nextState)) {
       room.phase = "finished";
     }
   }
 
-  private getGameModule(room: Room) {
-    return this.gameRegistry.get(room.gameId);
+  private getGameModule(room: Room): RegisteredGameModule {
+    // This is the sole type-erasure point for the registry. The Room union and
+    // GameModuleMap are both keyed by the same gameId; callers therefore always
+    // pass a room to its matching module.
+    return this.gameRegistry.get(
+      room.gameId
+    ) as unknown as RegisteredGameModule;
   }
 }

@@ -140,6 +140,7 @@ export type PublicSymbolMatchWrongFeedback = {
   attemptId: string;
   challengeId: string;
   answeringPlayerId: string;
+  pointRecipientPlayerId: string;
   selectedCardId: number;
   symbolId: SymbolMatchSymbolId;
   expiresAt: number;
@@ -148,6 +149,7 @@ export type PublicSymbolMatchWrongFeedback = {
 export type PublicSymbolMatchCorrectFeedback = {
   challengeId: string;
   answeringPlayerId: string;
+  pointRecipientPlayerId: string;
   selectedCardId: number;
   symbolId: SymbolMatchSymbolId;
   expiresAt: number;
