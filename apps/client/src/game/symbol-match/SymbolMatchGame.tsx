@@ -150,18 +150,18 @@ export function SymbolMatchGame({
         cardOwnerLabel={`${opponent?.displayName ?? "Opponent"}'s card`}
         correctFeedbackExpiresAt={correctFeedbackExpiresAt}
         correctSymbolId={correctSymbolId}
+        displayName={opponent?.displayName ?? "Opponent"}
         interactive={false}
         onSelect={selectSymbol}
+        score={getScore(gameState, opponent?.id)}
         selectedCorrectCardId={selectedCorrectCardId}
         wrongFeedback={wrongFeedback}
       />
 
       <BoardStatus
-        currentPlayer={currentPlayer}
         currentPlayerId={currentPlayerId}
         gameState={gameState}
         now={now}
-        opponent={opponent}
         playerLookup={playerLookup}
       />
 
@@ -170,21 +170,23 @@ export function SymbolMatchGame({
         cardOwnerLabel="Your card"
         correctFeedbackExpiresAt={correctFeedbackExpiresAt}
         correctSymbolId={correctSymbolId}
+        displayName={currentPlayer?.displayName ?? "You"}
         interactive={connected && isChallengeOpen}
         onSelect={selectSymbol}
+        score={getScore(gameState, currentPlayerId)}
         selectedCorrectCardId={selectedCorrectCardId}
         wrongFeedback={wrongFeedback}
       />
 
-      <p
-        aria-live="polite"
-        className={`sm-game-board__action-message ${
-          actionMessage === null ? "sm-game-board__action-message--empty" : ""
-        }`}
-        role="status"
-      >
-        {actionMessage ?? "No selection error"}
-      </p>
+      {actionMessage === null ? null : (
+        <p
+          aria-live="polite"
+          className="sm-game-board__action-message"
+          role="status"
+        >
+          {actionMessage}
+        </p>
+      )}
     </section>
   );
 }
@@ -194,8 +196,10 @@ function SymbolCard({
   cardOwnerLabel,
   correctFeedbackExpiresAt,
   correctSymbolId,
+  displayName,
   interactive,
   onSelect,
+  score,
   selectedCorrectCardId,
   wrongFeedback
 }: {
@@ -203,8 +207,10 @@ function SymbolCard({
   cardOwnerLabel: string;
   correctFeedbackExpiresAt: number | null;
   correctSymbolId: SymbolMatchSymbolId | null;
+  displayName: string;
   interactive: boolean;
   onSelect: (symbolId: SymbolMatchSymbolId) => Promise<void>;
+  score: number;
   selectedCorrectCardId: number | null;
   wrongFeedback: PublicSymbolMatchWrongFeedback[];
 }) {
@@ -215,7 +221,16 @@ function SymbolCard({
 
   return (
     <figure className="sm-card-wrap">
-      <figcaption className="sm-card-wrap__label">{cardOwnerLabel}</figcaption>
+      <figcaption
+        aria-label={`${displayName}: ${score} points`}
+        aria-live="polite"
+        className="sm-card-wrap__meta"
+      >
+        <span className="sm-card-wrap__player-name" title={displayName}>
+          {displayName}
+        </span>
+        <strong className="sm-card-wrap__score">{score}</strong>
+      </figcaption>
       <div
         aria-label={
           card === null
@@ -344,22 +359,16 @@ function SuccessStars({ expiresAt }: { expiresAt: number }) {
 }
 
 function BoardStatus({
-  currentPlayer,
   currentPlayerId,
   gameState,
   now,
-  opponent,
   playerLookup
 }: {
-  currentPlayer: PublicPlayer | undefined;
   currentPlayerId: string;
   gameState: PublicSymbolMatchGameState;
   now: number;
-  opponent: PublicPlayer | undefined;
   playerLookup: Map<string, PublicPlayer>;
 }) {
-  const currentScore = getScore(gameState, currentPlayerId);
-  const opponentScore = getScore(gameState, opponent?.id);
   const presentation = getStatusPresentation(
     gameState,
     now,
@@ -367,34 +376,12 @@ function BoardStatus({
     playerLookup
   );
 
+  if (presentation === null) {
+    return null;
+  }
+
   return (
     <div className="sm-board-status">
-      <div
-        aria-atomic="true"
-        aria-live="polite"
-        className="sm-scoreboard"
-        role="status"
-      >
-        <span
-          className="sm-scoreboard__name"
-          title={currentPlayer?.displayName}
-        >
-          You
-        </span>
-        <strong className="sm-scoreboard__score">{currentScore}</strong>
-        <span aria-hidden="true" className="sm-scoreboard__divider">
-          •
-        </span>
-        <strong className="sm-scoreboard__score sm-scoreboard__score--opponent">
-          {opponentScore}
-        </strong>
-        <span
-          className="sm-scoreboard__name sm-scoreboard__name--opponent"
-          title={opponent?.displayName}
-        >
-          {opponent?.displayName ?? "Opponent"}
-        </span>
-      </div>
       <div aria-atomic="true" aria-live="polite" className="sm-status-copy">
         <strong key={presentation.key} className="sm-status-copy__title">
           {presentation.title}
@@ -410,7 +397,7 @@ function getStatusPresentation(
   now: number,
   currentPlayerId: string,
   playerLookup: Map<string, PublicPlayer>
-): { key: string; title: string; detail: string } {
+): { key: string; title: string; detail: string } | null {
   switch (state.status) {
     case "countdown": {
       const remaining = Math.max(
@@ -424,11 +411,7 @@ function getStatusPresentation(
       };
     }
     case "challenge-open":
-      return {
-        key: state.challenge.challengeId,
-        title: "Find the shared symbol",
-        detail: "Select it on your lower card"
-      };
+      return null;
     case "challenge-feedback": {
       const answeringPlayer = playerLookup.get(
         state.correctFeedback.answeringPlayerId

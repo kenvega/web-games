@@ -18,23 +18,53 @@
 }
 
 .sm-card-wrap {
+  position: relative;
   display: grid;
   justify-items: center;
-  gap: 0.2rem;
   margin: 0;
 }
 
-.sm-card-wrap__label {
-  max-width: var(--sm-card-size);
+.sm-card-wrap__meta {
+  position: absolute;
+  top: clamp(0.65rem, 2.8vw, 1rem);
+  right: 8%;
+  left: 8%;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.sm-card-wrap__player-name,
+.sm-card-wrap__score {
+  border: 1px solid rgba(165, 243, 252, 0.22);
+  border-radius: 9999px;
+  background: rgba(2, 8, 23, 0.84);
+  color: #f8fafc;
+  box-shadow: 0 0.2rem 0.65rem rgba(2, 8, 23, 0.28);
+}
+
+.sm-card-wrap__player-name {
+  min-width: 0;
+  max-width: calc(100% - 3rem);
   overflow: hidden;
-  color: #94a3b8;
-  font-size: 0.6875rem;
+  padding: 0.26rem 0.55rem;
+  font-size: clamp(0.75rem, 3.4vw, 1rem);
   font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1rem;
+  line-height: 1.1;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
+}
+
+.sm-card-wrap__score {
+  min-width: 2rem;
+  padding: 0.2rem 0.45rem;
+  font-size: clamp(1rem, 4.6vw, 1.4rem);
+  line-height: 1;
+  text-align: center;
 }
 
 .sm-card {
@@ -169,48 +199,6 @@ button.sm-symbol:focus-visible {
   padding: 0.2rem 0;
 }
 
-.sm-scoreboard {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
-  align-items: baseline;
-  gap: clamp(0.35rem, 2vw, 0.75rem);
-  min-width: 0;
-  border: 1px solid rgba(165, 243, 252, 0.18);
-  border-radius: 0.5rem;
-  background: rgba(2, 8, 23, 0.78);
-  padding: 0.55rem 0.75rem;
-  color: #f8fafc;
-  box-shadow: 0 0.55rem 1.7rem rgba(0, 0, 0, 0.22);
-}
-
-.sm-scoreboard__name {
-  min-width: 0;
-  overflow: hidden;
-  font-size: clamp(0.78rem, 3.6vw, 1rem);
-  font-weight: 800;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sm-scoreboard__name--opponent {
-  text-align: right;
-}
-
-.sm-scoreboard__score {
-  color: #a5f3fc;
-  font-size: clamp(1.1rem, 5vw, 1.55rem);
-  line-height: 1;
-}
-
-.sm-scoreboard__score--opponent {
-  color: #fde68a;
-}
-
-.sm-scoreboard__divider {
-  color: #64748b;
-  font-weight: 900;
-}
-
 .sm-status-copy {
   display: grid;
   min-height: 2.45rem;
@@ -250,10 +238,6 @@ button.sm-symbol:focus-visible {
   font-size: 0.75rem;
   font-weight: 700;
   text-align: center;
-}
-
-.sm-game-board__action-message--empty {
-  visibility: hidden;
 }
 
 @keyframes sm-wrong-pop {
