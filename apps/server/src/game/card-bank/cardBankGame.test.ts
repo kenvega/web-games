@@ -2,6 +2,8 @@ import {
   CARD_BANK_GAME_ID,
   type CardBankCardValue,
   type CommandResult,
+  type PublicCardBankRoomState,
+  type PublicRoomState,
   type RoomStateResult
 } from "@multiplayer-blueprint/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -11,13 +13,17 @@ import { RoomManager } from "../../rooms/roomManager.js";
 const aliceId = "11111111-1111-4111-8111-111111111111";
 const bobId = "22222222-2222-4222-8222-222222222222";
 
-function expectOk<T>(result: CommandResult<T>): T {
+type WithCardBankState<T> = T extends { state: PublicRoomState }
+  ? Omit<T, "state"> & { state: PublicCardBankRoomState }
+  : T;
+
+function expectOk<T>(result: CommandResult<T>): WithCardBankState<T> {
   expect(result.ok).toBe(true);
   if (!result.ok) {
     throw new Error(result.error.message);
   }
 
-  return result.data;
+  return result.data as WithCardBankState<T>;
 }
 
 function expectError<T>(result: CommandResult<T>, code: string): void {
@@ -86,6 +92,16 @@ function joinBob(manager: RoomManager) {
       socketId: "socket-b"
     })
   );
+}
+
+function getCardBankPublicState(
+  manager: RoomManager
+): PublicCardBankRoomState | null {
+  const state = manager.getPublicState("23456789AB");
+  if (state !== null && state.gameId !== CARD_BANK_GAME_ID) {
+    throw new Error("Expected a Card Banking room.");
+  }
+  return state;
 }
 
 describe("Card Banking through RoomManager", () => {
@@ -195,7 +211,7 @@ describe("Card Banking through RoomManager", () => {
       }),
       "INVALID_INPUT"
     );
-    expect(manager.getPublicState("23456789AB")?.version).toBe(
+    expect(getCardBankPublicState(manager)?.version).toBe(
       started.state.version
     );
   });
@@ -298,7 +314,7 @@ describe("Card Banking through RoomManager", () => {
       );
     }
 
-    const state = manager.getPublicState("23456789AB");
+    const state = getCardBankPublicState(manager);
     expect(
       state?.game.state?.players.find((player) => player.playerId === aliceId)
         ?.securedCardCount
@@ -386,7 +402,7 @@ describe("Card Banking through RoomManager", () => {
       );
     }
 
-    const state = manager.getPublicState("23456789AB");
+    const state = getCardBankPublicState(manager);
     expect(state?.game.state?.currentPlayerId).toBe(aliceId);
     expect(state?.game.state?.turnPhase).toBe("awaiting-decision");
     expect(state?.game.state?.pendingBust).toBeNull();
@@ -428,7 +444,7 @@ describe("Card Banking through RoomManager", () => {
       );
     }
 
-    const state = manager.getPublicState("23456789AB");
+    const state = getCardBankPublicState(manager);
     expect(state?.game.state?.currentPlayerId).toBe(aliceId);
     expect(state?.game.state?.turnPhase).toBe("revealing-bust");
     expect(state?.game.state?.pendingBust).toEqual({
@@ -452,7 +468,7 @@ describe("Card Banking through RoomManager", () => {
 
     await vi.advanceTimersByTimeAsync(20);
 
-    const resolved = manager.getPublicState("23456789AB");
+    const resolved = getCardBankPublicState(manager);
     expect(vi.getTimerCount()).toBe(0);
     expect(transitions).toHaveLength(1);
     expect(resolved?.game.state?.currentPlayerId).toBe(bobId);
@@ -491,9 +507,9 @@ describe("Card Banking through RoomManager", () => {
     }
 
     // After 3, 4, 6, 7 no run of three consecutive values exists yet.
-    let alice = manager
-      .getPublicState("23456789AB")
-      ?.game.state?.players.find((player) => player.playerId === aliceId);
+    let alice = getCardBankPublicState(manager)?.game.state?.players.find(
+      (player) => player.playerId === aliceId
+    );
     expect(alice?.extraLives).toBe(0);
 
     // Drawing the 5 completes 3-4-5, 4-5-6 and 5-6-7 at once: three lives.
@@ -536,9 +552,9 @@ describe("Card Banking through RoomManager", () => {
       );
     }
 
-    let alice = manager
-      .getPublicState("23456789AB")
-      ?.game.state?.players.find((player) => player.playerId === aliceId);
+    let alice = getCardBankPublicState(manager)?.game.state?.players.find(
+      (player) => player.playerId === aliceId
+    );
     expect(alice?.extraLives).toBe(1);
 
     // Drawing a duplicate 3 with three active cards would normally bust, but the
@@ -582,9 +598,9 @@ describe("Card Banking through RoomManager", () => {
       );
     }
 
-    let alice = manager
-      .getPublicState("23456789AB")
-      ?.game.state?.players.find((player) => player.playerId === aliceId);
+    let alice = getCardBankPublicState(manager)?.game.state?.players.find(
+      (player) => player.playerId === aliceId
+    );
     expect(alice?.extraLives).toBe(1);
 
     const stopped = expectOk(
@@ -654,9 +670,9 @@ describe("Card Banking through RoomManager", () => {
     }
 
     // 3-4-5 would grant a life if the rule were on; with it off there is none.
-    let alice = manager
-      .getPublicState("23456789AB")
-      ?.game.state?.players.find((player) => player.playerId === aliceId);
+    let alice = getCardBankPublicState(manager)?.game.state?.players.find(
+      (player) => player.playerId === aliceId
+    );
     expect(alice?.extraLives).toBe(0);
 
     // Drawing the duplicate 3 busts because there is no life to shield it.
@@ -704,7 +720,7 @@ describe("Card Banking through RoomManager", () => {
       "INVALID_INPUT"
     );
     expect(
-      manager.getPublicState("23456789AB")?.game.settings.extraLivesEnabled
+      getCardBankPublicState(manager)?.game.settings.extraLivesEnabled
     ).toBe(true);
 
     // Non-host cannot change it.
@@ -786,7 +802,7 @@ describe("Card Banking through RoomManager", () => {
         action: { type: "stop-turn" }
       })
     );
-    const finalState: RoomStateResult = expectOk(
+    const finalState = expectOk(
       manager.handleGameAction({
         roomCode: "23456789AB",
         guestId: aliceId,
@@ -895,7 +911,7 @@ describe("Card Banking through RoomManager", () => {
 
     // The game module resolves the ending — the game finishes and cards bank.
     await vi.advanceTimersByTimeAsync(20);
-    const finalState = manager.getPublicState("23456789AB");
+    const finalState = getCardBankPublicState(manager);
 
     expect(vi.getTimerCount()).toBe(0);
     expect(finalState?.phase).toBe("finished");
@@ -941,6 +957,10 @@ describe("Card Banking through RoomManager", () => {
       socketId: "socket-a"
     });
 
+    expect(disconnected?.gameId).toBe(CARD_BANK_GAME_ID);
+    if (disconnected !== null && disconnected.gameId !== CARD_BANK_GAME_ID) {
+      throw new Error("Expected a Card Banking room.");
+    }
     expect(disconnected?.game.state?.currentPlayerId).toBe(bobId);
     expect(
       disconnected?.game.state?.players.find(

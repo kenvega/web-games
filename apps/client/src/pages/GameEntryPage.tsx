@@ -1,7 +1,12 @@
-import { CARD_BANK_GAME_ID, gameIdSchema } from "@multiplayer-blueprint/shared";
+import {
+  CARD_BANK_GAME_ID,
+  SYMBOL_MATCH_GAME_ID,
+  gameIdSchema
+} from "@multiplayer-blueprint/shared";
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { CardBankEntryPage } from "../game/card-bank/CardBankEntryPage.js";
+import { SymbolMatchEntryPage } from "../game/symbol-match/SymbolMatchEntryPage.js";
 
 export function GameEntryPage() {
   const { gameId: routeGameId } = useParams();
@@ -14,6 +19,8 @@ export function GameEntryPage() {
   switch (parsedGameId.data) {
     case CARD_BANK_GAME_ID:
       return <CardBankEntryPage />;
+    case SYMBOL_MATCH_GAME_ID:
+      return <SymbolMatchEntryPage />;
     default:
       return <UnavailableGame />;
   }

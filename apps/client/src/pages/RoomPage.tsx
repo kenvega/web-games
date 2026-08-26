@@ -1,4 +1,7 @@
-import { CARD_BANK_GAME_ID } from "@multiplayer-blueprint/shared";
+import {
+  CARD_BANK_GAME_ID,
+  SYMBOL_MATCH_GAME_ID
+} from "@multiplayer-blueprint/shared";
 import { Play } from "lucide-react";
 import type { FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -6,6 +9,7 @@ import { Button } from "../components/Button.js";
 import { ConnectionBadge } from "../components/ConnectionBadge.js";
 import { TextInput } from "../components/TextInput.js";
 import { CardBankRoom } from "../game/card-bank/CardBankRoom.js";
+import { SymbolMatchRoom } from "../game/symbol-match/SymbolMatchRoom.js";
 import { useRoomSession } from "../hooks/useRoomSession.js";
 
 export function RoomPage() {
@@ -107,6 +111,25 @@ export function RoomPage() {
           onStart={session.start}
           onUpdateSettings={(settings) =>
             session.updateSettings(CARD_BANK_GAME_ID, settings)
+          }
+          room={session.room}
+        />
+      );
+    case SYMBOL_MATCH_GAME_ID:
+      return (
+        <SymbolMatchRoom
+          connectionStatus={session.connectionStatus}
+          currentPlayerId={session.guestId}
+          message={session.message}
+          onAction={(action) =>
+            session.sendGameAction(SYMBOL_MATCH_GAME_ID, action)
+          }
+          onLeave={handleLeave}
+          onRestart={session.restart}
+          onSendChatMessage={session.sendChatMessage}
+          onStart={session.start}
+          onUpdateSettings={(settings) =>
+            session.updateSettings(SYMBOL_MATCH_GAME_ID, settings)
           }
           room={session.room}
         />

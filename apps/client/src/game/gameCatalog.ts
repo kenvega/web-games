@@ -1,5 +1,6 @@
 import {
   CARD_BANK_GAME_ID,
+  SYMBOL_MATCH_GAME_ID,
   SUPPORTED_GAME_IDS,
   type GameId
 } from "@multiplayer-blueprint/shared";
@@ -20,6 +21,14 @@ const gameCatalog: Record<GameId, GameCatalogItem> = {
       "Draw, steal, and bank cards while deciding how far to push your luck.",
     playerCount: "2–6 players",
     path: `/games/${CARD_BANK_GAME_ID}`
+  },
+  [SYMBOL_MATCH_GAME_ID]: {
+    id: SYMBOL_MATCH_GAME_ID,
+    title: "Symbol Match",
+    description:
+      "Race a friend to find the one symbol shared by two rotating cards.",
+    playerCount: "Exactly 2 players",
+    path: `/games/${SYMBOL_MATCH_GAME_ID}`
   }
 };
 

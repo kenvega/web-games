@@ -6,6 +6,7 @@ import {
   type CreateRoomResult,
   type GameActionInput,
   type JoinRoomInput,
+  type PublicCardBankRoomState,
   type PublicRoomState,
   type RoomCommandInput,
   type RoomStateResult,
@@ -76,8 +77,8 @@ function waitForConnect(client: TestClient): Promise<void> {
 
 function waitForState(
   client: TestClient,
-  predicate: (state: PublicRoomState) => boolean
-): Promise<PublicRoomState> {
+  predicate: (state: PublicCardBankRoomState) => boolean
+): Promise<PublicCardBankRoomState> {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       cleanup();
@@ -90,7 +91,7 @@ function waitForState(
     };
 
     const handleState = (state: PublicRoomState) => {
-      if (predicate(state)) {
+      if (state.gameId === CARD_BANK_GAME_ID && predicate(state)) {
         cleanup();
         resolve(state);
       }

@@ -1,6 +1,6 @@
 # Symbol Match implementation plan
 
-**Status:** implementation in progress; Phases 1 through 3 are complete.
+**Status:** implementation in progress; Phases 1 through 7 are complete.
 
 This plan translates the approved [rules](./rules.md) and
 [technical design](./technical-design.md) into repository-specific work. Those
@@ -242,20 +242,20 @@ Create one original client asset for every approved symbol under
 
 ## Phase 7: catalog, entry, and lobby UI
 
-- [ ] Activate `symbol-match` in `SUPPORTED_GAME_IDS` only after its server
+- [x] Activate `symbol-match` in `SUPPORTED_GAME_IDS` only after its server
       module and client entry/room renderers are registered in the same
       deployable change.
-- [ ] Add Symbol Match metadata to `gameCatalog.ts` as a two-player game.
-- [ ] Add a `SymbolMatchEntryPage` selected by `GameEntryPage`.
-- [ ] Reuse display-name, room-code joining, connection, and room-creation
+- [x] Add Symbol Match metadata to `gameCatalog.ts` as a two-player game.
+- [x] Add a `SymbolMatchEntryPage` selected by `GameEntryPage`.
+- [x] Reuse display-name, room-code joining, connection, and room-creation
       components.
-- [ ] Present “Points to win” options `5`, `7`, and `10`, defaulting to `5`.
-- [ ] Add a `SymbolMatchRoom` selected only after `RoomPage` narrows
+- [x] Present “Points to win” options `5`, `7`, and `10`, defaulting to `5`.
+- [x] Add a `SymbolMatchRoom` selected only after `RoomPage` narrows
       `room.gameId`.
-- [ ] Reuse `RoomShell`, invitation controls, Leave behavior, chat, and mobile
+- [x] Reuse `RoomShell`, invitation controls, Leave behavior, chat, and mobile
       panels.
-- [ ] Put the approved instructions in the left room menu.
-- [ ] Show player presence and settings in waiting/rematch setup. Only the host
+- [x] Put the approved instructions in the left room menu.
+- [x] Show player presence and settings in waiting/rematch setup. Only the host
       can change target points or press Start; the guest sees waiting text.
 
 ## Phase 8: responsive game board

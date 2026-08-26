@@ -2,9 +2,11 @@ import {
   displayNameSchema,
   roomCodeSchema,
   type GameAction,
+  type GameActionInput,
   type GameId,
   type GameSettings,
-  type PublicRoomState
+  type PublicRoomState,
+  type UpdateRoomSettingsInput
 } from "@multiplayer-blueprint/shared";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -272,11 +274,12 @@ export function useRoomSession(routeRoomCode?: string): RoomSession {
         return mismatchedGameMessage;
       }
 
-      const result = await updateRoomSettingsCommand(socket, {
+      const commandInput = {
         roomCode,
         gameId,
         settings
-      });
+      } as UpdateRoomSettingsInput;
+      const result = await updateRoomSettingsCommand(socket, commandInput);
       if (!result.ok) {
         return result.error.message;
       }
@@ -319,10 +322,11 @@ export function useRoomSession(routeRoomCode?: string): RoomSession {
         return mismatchedGameMessage;
       }
 
-      const result = await sendGameActionCommand(socket, {
+      const commandInput = {
         roomCode,
         action
-      });
+      } as GameActionInput;
+      const result = await sendGameActionCommand(socket, commandInput);
       if (!result.ok) {
         return result.error.message;
       }

@@ -151,8 +151,12 @@ describe("RoomManager", () => {
     expect(manager.getRoomCount()).toBe(0);
   });
 
-  it("keeps registered staged games disabled by default", () => {
-    const { manager } = createManager();
+  it("honors an explicitly restricted enabled-game list", () => {
+    const manager = new RoomManager({
+      enabledGameIds: [CARD_BANK_GAME_ID],
+      gameRegistry: createGameRegistry(),
+      codeFactory: () => "23456789AB"
+    });
 
     const result = manager.createRoom({
       gameId: SYMBOL_MATCH_GAME_ID,
@@ -499,6 +503,10 @@ describe("RoomManager", () => {
       })
     );
 
+    expect(reconnected.state.gameId).toBe(CARD_BANK_GAME_ID);
+    if (reconnected.state.gameId !== CARD_BANK_GAME_ID) {
+      throw new Error("Expected a Card Banking room.");
+    }
     expect(reconnected.state.game.state?.currentPlayerId).toBe(bobId);
   });
 
