@@ -8,10 +8,21 @@ import {
   type CardBankUpdateRoomSettingsInput,
   type PublicCardBankRoomState
 } from "./game/card-bank/types.js";
+import {
+  SYMBOL_MATCH_GAME_ID,
+  type PublicSymbolMatchRoomState,
+  type SymbolMatchCommandErrorCode,
+  type SymbolMatchCreateRoomInput,
+  type SymbolMatchGameAction,
+  type SymbolMatchGameActionInput,
+  type SymbolMatchSettings,
+  type SymbolMatchUpdateRoomSettingsInput
+} from "./game/symbol-match/types.js";
 import type { GameId } from "./gameIds.js";
 import type { CoreCommandErrorCode, PublicChatMessage } from "./multiplayer.js";
 
 export * from "./game/card-bank/types.js";
+export * from "./game/symbol-match/types.js";
 export * from "./gameIds.js";
 export * from "./multiplayer.js";
 
@@ -27,6 +38,15 @@ export type GameContractMap = {
     updateRoomSettingsInput: CardBankUpdateRoomSettingsInput;
     gameActionInput: CardBankGameActionInput;
     errorCode: CardBankCommandErrorCode;
+  };
+  [SYMBOL_MATCH_GAME_ID]: {
+    settings: SymbolMatchSettings;
+    action: SymbolMatchGameAction;
+    publicRoom: PublicSymbolMatchRoomState;
+    createRoomInput: SymbolMatchCreateRoomInput;
+    updateRoomSettingsInput: SymbolMatchUpdateRoomSettingsInput;
+    gameActionInput: SymbolMatchGameActionInput;
+    errorCode: SymbolMatchCommandErrorCode;
   };
 };
 

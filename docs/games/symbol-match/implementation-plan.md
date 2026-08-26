@@ -1,6 +1,6 @@
 # Symbol Match implementation plan
 
-**Status:** ready for implementation; no gameplay code has been implemented.
+**Status:** implementation in progress; Phase 1 is complete.
 
 This plan translates the approved [rules](./rules.md) and
 [technical design](./technical-design.md) into repository-specific work. Those
@@ -20,24 +20,25 @@ normal build and start commands.
 
 ## Phase 1: shared contract
 
-- [ ] Create `packages/shared/src/game/symbol-match/types.ts`.
-- [ ] Export the stable `SYMBOL_MATCH_GAME_ID` value, player limits, target
+- [x] Create `packages/shared/src/game/symbol-match/types.ts`.
+- [x] Export the stable `SYMBOL_MATCH_GAME_ID` value, player limits, target
       options, timing constants, scale bounds, symbol IDs, settings, action,
       public-state, result, feedback, and command-error types.
-- [ ] Represent the only client action as a symbol selection containing the
+- [x] Represent the only client action as a symbol selection containing the
       current `challengeId` and selected `symbolId`. Never accept a score,
       claimed match, client timestamp, card assignment, or transform from a
       client.
-- [ ] Define public challenge cards with only the current card ID, assigned
+- [x] Define public challenge cards with only the current card ID, assigned
       player ID, whole-card rotation, and eight printed symbol instances. Do
       not publish the draw order, set-aside card, future pairs, or repeat-window
       bookkeeping.
-- [ ] Create `packages/shared/src/game/symbol-match/schemas.ts` with strict
+- [x] Create `packages/shared/src/game/symbol-match/schemas.ts` with strict
       runtime validation for settings and actions.
-- [ ] Add `symbol-match` to `SUPPORTED_GAME_IDS`, `GameContractMap`, shared
-      exports, and the derived command/public-room unions without weakening
-      existing types.
-- [ ] Add contract tests for allowed target scores (`5`, `7`, and `10`), the
+- [x] Add the Symbol Match entry to `GameContractMap` and shared exports without
+      weakening existing types. Keep runtime activation out of
+      `SUPPORTED_GAME_IDS` until its server module and client renderer exist, so
+      an intermediate deployment cannot create an unplayable room.
+- [x] Add contract tests for allowed target scores (`5`, `7`, and `10`), the
       default of `5`, malformed selections, and exhaustive symbol IDs.
 
 ### Planned public phases
@@ -238,6 +239,9 @@ Create one original client asset for every approved symbol under
 
 ## Phase 7: catalog, entry, and lobby UI
 
+- [ ] Activate `symbol-match` in `SUPPORTED_GAME_IDS` only after its server
+      module and client entry/room renderers are registered in the same
+      deployable change.
 - [ ] Add Symbol Match metadata to `gameCatalog.ts` as a two-player game.
 - [ ] Add a `SymbolMatchEntryPage` selected by `GameEntryPage`.
 - [ ] Reuse display-name, room-code joining, connection, and room-creation
