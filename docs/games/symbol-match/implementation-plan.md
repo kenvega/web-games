@@ -225,19 +225,19 @@ rules, and deterministic tests are passing.
 Create one original client asset for every approved symbol under
 `apps/client/src/game/symbol-match/symbols/`.
 
-- [ ] Use exactly one SVG per symbol with `viewBox="0 0 128 128"`, transparent
+- [x] Use exactly one SVG per symbol with `viewBox="0 0 128 128"`, transparent
       background, approximately 10 units of safe padding, approximately 8-unit
       near-black outlines, rounded joins/caps, and no text.
-- [ ] Use flat canonical fills only: no internal highlights, shadows,
+- [x] Use flat canonical fills only: no internal highlights, shadows,
       gradients, filters, or textures.
-- [ ] Create an exhaustive typed client catalog mapping every `SymbolId` to its
+- [x] Create an exhaustive typed client catalog mapping every `SymbolId` to its
       SVG and accessible label. Avoid aliases such as both `die` and `dice`.
-- [ ] Validate the file count and one-to-one catalog coverage automatically.
-- [ ] Produce a development contact sheet at several sizes and rotations for
+- [x] Validate the file count and one-to-one catalog coverage automatically.
+- [x] Produce a development contact sheet at several sizes and rotations for
       visual inspection, without shipping it in the game UI.
-- [ ] Specifically compare planet/flying saucer and rocket/airplane silhouettes
+- [x] Specifically compare planet/flying saucer and rocket/airplane silhouettes
       at the smallest printed size and in grayscale.
-- [ ] Record asset provenance and confirm none of the screenshot art was
+- [x] Record asset provenance and confirm none of the screenshot art was
       extracted, traced, or redrawn.
 
 ## Phase 7: catalog, entry, and lobby UI

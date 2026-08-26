@@ -12,8 +12,9 @@
     "dev": "npm run build -w @multiplayer-blueprint/shared && concurrently -k -n server,client -c cyan,green \"npm run dev -w @multiplayer-blueprint/server\" \"npm run dev -w @multiplayer-blueprint/client\"",
     "build": "npm run build -w @multiplayer-blueprint/shared && npm run build -w @multiplayer-blueprint/client && npm run build -w @multiplayer-blueprint/server",
     "generate:symbol-match-artifacts": "npm run build -w @multiplayer-blueprint/shared && npm run build -w @multiplayer-blueprint/server && npm run generate:symbol-match-artifacts -w @multiplayer-blueprint/server && prettier --write apps/server/src/game/symbol-match/artifacts/generatedDeck.ts apps/server/src/game/symbol-match/artifacts/generatedPrintedLayouts.ts",
+    "validate:symbol-match-assets": "npm run build -w @multiplayer-blueprint/shared && npm run validate:symbol-match-assets -w @multiplayer-blueprint/client",
     "start": "npm run start -w @multiplayer-blueprint/server",
-    "test": "npm run build -w @multiplayer-blueprint/shared && npm run test -w @multiplayer-blueprint/server",
+    "test": "npm run build -w @multiplayer-blueprint/shared && npm run validate:symbol-match-assets -w @multiplayer-blueprint/client && npm run test -w @multiplayer-blueprint/server",
     "lint": "eslint .",
     "typecheck": "npm run typecheck -w @multiplayer-blueprint/shared && npm run typecheck -w @multiplayer-blueprint/client && npm run typecheck -w @multiplayer-blueprint/server",
     "format": "prettier --write ."

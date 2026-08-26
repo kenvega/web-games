@@ -1,0 +1,93 @@
+:root {
+  color: #171717;
+  background: #eee9df;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.sm-contact-sheet {
+  width: min(1480px, 100%);
+  margin: 0 auto;
+  padding: 32px;
+}
+
+.sm-contact-sheet header,
+.sm-contact-sheet section {
+  margin-bottom: 36px;
+}
+
+.sm-contact-sheet h1,
+.sm-contact-sheet h2,
+.sm-contact-sheet h3,
+.sm-contact-sheet p {
+  margin-top: 0;
+}
+
+.sm-contact-sheet__eyebrow {
+  color: #66717e;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sm-contact-sheet__comparison,
+.sm-contact-sheet__grid {
+  display: grid;
+  gap: 14px;
+}
+
+.sm-contact-sheet__comparison {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.sm-contact-sheet__grid {
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+.sm-contact-sheet__comparison-card,
+.sm-contact-sheet__card {
+  border: 3px solid #171717;
+  border-radius: 18px;
+  background: #fff;
+  padding: 16px;
+}
+
+.sm-contact-sheet__comparison-card h3,
+.sm-contact-sheet__card h3 {
+  margin-bottom: 4px;
+}
+
+.sm-contact-sheet__card code {
+  color: #66717e;
+}
+
+.sm-contact-sheet__comparison-row,
+.sm-contact-sheet__samples {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  min-height: 100px;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.sm-contact-sheet__sample {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  min-width: 48px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sm-contact-sheet__grayscale {
+  filter: grayscale(1);
+}
