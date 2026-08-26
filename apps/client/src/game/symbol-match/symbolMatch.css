@@ -2,6 +2,7 @@
   --sm-card-border: clamp(0.35rem, 1.35vw, 0.55rem);
   --sm-card-size: clamp(14.5rem, min(90vw, 31vh, 26rem), 26rem);
   --sm-card-content-size: calc(var(--sm-card-size) - 2 * var(--sm-card-border));
+  position: relative;
   display: grid;
   min-width: 0;
   justify-items: center;
@@ -192,11 +193,15 @@ button.sm-symbol:focus-visible {
 }
 
 .sm-board-status {
+  position: absolute;
+  top: calc(0.15rem + var(--sm-card-size) + 0.225rem);
+  left: 50%;
   z-index: 8;
   display: grid;
-  width: min(var(--sm-card-size), 100%);
-  gap: 0.25rem;
-  padding: 0.2rem 0;
+  width: max-content;
+  max-width: min(var(--sm-card-size), calc(100% - 1rem));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .sm-status-copy {
@@ -204,8 +209,12 @@ button.sm-symbol:focus-visible {
   min-height: 2.45rem;
   justify-items: center;
   align-content: center;
-  padding: 0 0.5rem;
+  border: 1px solid rgba(165, 243, 252, 0.22);
+  border-radius: 0.75rem;
+  background: rgba(2, 8, 23, 0.9);
+  padding: 0.55rem 0.85rem;
   text-align: center;
+  box-shadow: 0 0.45rem 1.25rem rgba(2, 8, 23, 0.38);
 }
 
 .sm-status-copy__title {

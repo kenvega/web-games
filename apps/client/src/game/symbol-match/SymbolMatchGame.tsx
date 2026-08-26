@@ -386,7 +386,9 @@ function BoardStatus({
         <strong key={presentation.key} className="sm-status-copy__title">
           {presentation.title}
         </strong>
-        <span className="sm-status-copy__detail">{presentation.detail}</span>
+        {presentation.detail === undefined ? null : (
+          <span className="sm-status-copy__detail">{presentation.detail}</span>
+        )}
       </div>
     </div>
   );
@@ -397,7 +399,7 @@ function getStatusPresentation(
   now: number,
   currentPlayerId: string,
   playerLookup: Map<string, PublicPlayer>
-): { key: string; title: string; detail: string } | null {
+): { key: string; title: string; detail?: string } | null {
   switch (state.status) {
     case "countdown": {
       const remaining = Math.max(
@@ -406,26 +408,13 @@ function getStatusPresentation(
       );
       return {
         key: `countdown-${remaining}`,
-        title: `${remaining}`,
-        detail: "Get ready to find the shared symbol"
+        title: `${remaining}`
       };
     }
     case "challenge-open":
       return null;
-    case "challenge-feedback": {
-      const answeringPlayer = playerLookup.get(
-        state.correctFeedback.answeringPlayerId
-      );
-      const answerer =
-        answeringPlayer?.id === currentPlayerId
-          ? "You"
-          : (answeringPlayer?.displayName ?? "Your opponent");
-      return {
-        key: `correct-${state.challenge.challengeId}`,
-        title: `${answerer} found it!`,
-        detail: `${getSymbolMatchSymbol(state.correctFeedback.symbolId).label} was the match`
-      };
-    }
+    case "challenge-feedback":
+      return null;
     case "ending-feedback": {
       const winner =
         state.result.kind === "winner"
