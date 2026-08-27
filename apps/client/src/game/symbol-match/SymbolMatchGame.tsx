@@ -293,7 +293,7 @@ function SymbolCard({
                 <button
                   aria-label={`Select ${definition.label} on your card`}
                   className={symbolClassName}
-                  key={printedSymbol.symbolId}
+                  key={`${card.cardId}:${printedSymbol.symbolId}`}
                   onClick={() => void onSelect(printedSymbol.symbolId)}
                   style={placementStyle}
                   type="button"
@@ -304,7 +304,7 @@ function SymbolCard({
                 <div
                   aria-label={definition.label}
                   className={symbolClassName}
-                  key={printedSymbol.symbolId}
+                  key={`${card.cardId}:${printedSymbol.symbolId}`}
                   role="img"
                   style={placementStyle}
                 >
