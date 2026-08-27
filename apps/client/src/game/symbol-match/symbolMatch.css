@@ -292,6 +292,13 @@ button.sm-symbol:focus-visible {
   }
 }
 
+@media (min-width: 1024px) {
+  .sm-game-board {
+    --sm-card-size: clamp(14.5rem, min(42vw, 38vh), 28.75rem);
+    gap: clamp(1.5rem, 2vh, 2rem);
+  }
+}
+
 @media (max-width: 639px) {
   .sm-game-board {
     --sm-card-size: clamp(17.5rem, min(89vw, 38vh), 22rem);
